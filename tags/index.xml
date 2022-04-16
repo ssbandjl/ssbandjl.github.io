@@ -5,6 +5,52 @@
     <link>https://logread.cn/tags/</link>
     <description>Recent content in Tags on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>zh-CN</language><atom:link href="https://logread.cn/tags/index.xml" rel="self" type="application/rss+xml" />
+    <language>zh-CN</language>
+    <lastBuildDate>Sat, 16 Apr 2022 13:14:40 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>gin</title>
+      <link>https://logread.cn/tags/gin/</link>
+      <pubDate>Sat, 16 Apr 2022 13:14:40 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/gin/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>golang</title>
+      <link>https://logread.cn/tags/golang/</link>
+      <pubDate>Sat, 16 Apr 2022 13:14:40 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/golang/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>aio</title>
+      <link>https://logread.cn/tags/aio/</link>
+      <pubDate>Sat, 16 Apr 2022 09:43:27 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/aio/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>c&#43;&#43;</title>
+      <link>https://logread.cn/tags/c&#43;&#43;/</link>
+      <pubDate>Sat, 16 Apr 2022 09:43:27 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/c&#43;&#43;/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>linux</title>
+      <link>https://logread.cn/tags/linux/</link>
+      <pubDate>Sat, 16 Apr 2022 09:43:27 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/linux/</guid>
+      <description></description>
+    </item>
+    
   </channel>
 </rss>

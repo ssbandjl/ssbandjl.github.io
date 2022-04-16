@@ -3,7 +3,27 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://logread.cn/categories/</loc>
+    <lastmod>2022-04-16T13:14:40+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/gin/</loc>
+    <lastmod>2022-04-16T13:14:40+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://logread.cn/post/GinWeb%E6%A1%86%E6%9E%B6/</loc>
+    <lastmod>2022-04-16T13:14:40+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/golang/</loc>
+    <lastmod>2022-04-16T13:14:40+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/golang/</loc>
     <lastmod>2022-04-16T13:14:40+08:00</lastmod>
   </url>
   
@@ -13,7 +33,17 @@
   </url>
   
   <url>
+    <loc>https://logread.cn/tags/</loc>
+    <lastmod>2022-04-16T13:14:40+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://logread.cn/</loc>
+    <lastmod>2022-04-16T13:14:40+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/%E6%A1%86%E6%9E%B6/</loc>
     <lastmod>2022-04-16T13:14:40+08:00</lastmod>
   </url>
   
@@ -58,21 +88,38 @@
   </url>
   
   <url>
+    <loc>https://logread.cn/tags/aio/</loc>
+    <lastmod>2022-04-16T09:43:27+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/aio/</loc>
+    <lastmod>2022-04-16T09:43:27+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/c&#43;&#43;/</loc>
+    <lastmod>2022-04-16T09:43:27+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://logread.cn/posts/how-to-use-linux-aio/</loc>
+    <lastmod>2022-04-16T09:43:27+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/linux/</loc>
+    <lastmod>2022-04-16T09:43:27+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</loc>
     <lastmod>2022-04-16T09:43:27+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/post/stolonpostgresql/</loc>
     <lastmod>2021-04-19T20:51:38+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/</loc>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/</loc>
   </url>
   
 </urlset>
