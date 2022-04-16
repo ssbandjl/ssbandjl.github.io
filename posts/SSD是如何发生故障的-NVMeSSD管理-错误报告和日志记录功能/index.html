@@ -9,20 +9,20 @@
     <meta name="referrer" content="no-referrer-when-downgrade">
     
 
-    <title>Golang的23种设计模式之代码示例和图解 | 晓兵</title>
-    <meta property="og:title" content="Golang的23种设计模式之代码示例和图解 - 晓兵">
+    <title>SSD是如何发生故障的 NVMe™SSD管理 错误报告和日志记录功能 | 晓兵</title>
+    <meta property="og:title" content="SSD是如何发生故障的 NVMe™SSD管理 错误报告和日志记录功能 - 晓兵">
     <meta property="og:type" content="article">
         
-    <meta property="article:published_time" content='2022-04-16T11:01:29&#43;08:00'>
+    <meta property="article:published_time" content='2022-04-16T11:08:53&#43;08:00'>
         
         
-    <meta property="article:modified_time" content='2022-04-16T11:01:29&#43;08:00'>
+    <meta property="article:modified_time" content='2022-04-16T11:08:53&#43;08:00'>
         
     <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储">
-    <meta name="description" content="Golang的23种设计模式之代码示例和图解">
+    <meta name="description" content="SSD是如何发生故障的 NVMe™SSD管理 错误报告和日志记录功能">
         
     <meta name="author" content="晓兵">
-    <meta property="og:url" content="https://logread.cn/posts/Golang%E7%9A%8423%E7%A7%8D%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B%E5%92%8C%E5%9B%BE%E8%A7%A3/">
+    <meta property="og:url" content="https://logread.cn/posts/SSD%E6%98%AF%E5%A6%82%E4%BD%95%E5%8F%91%E7%94%9F%E6%95%85%E9%9A%9C%E7%9A%84-NVMeSSD%E7%AE%A1%E7%90%86-%E9%94%99%E8%AF%AF%E6%8A%A5%E5%91%8A%E5%92%8C%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95%E5%8A%9F%E8%83%BD/">
     <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
 
     <link rel="stylesheet" href='/css/normalize.css'>
@@ -139,18 +139,13 @@
     <div class="post-toc-content">
         <nav id="TableOfContents">
   <ul>
-    <li><a href="#什么是设计模式">什么是设计模式?</a></li>
-    <li><a href="#项目简介">项目简介</a></li>
-    <li><a href="#云原生">云原生</a></li>
-    <li><a href="#参考文档">参考文档:</a></li>
-    <li><a href="#原则">原则</a></li>
-    <li><a href="#golang的23种设计模式">Golang的23种设计模式</a>
-      <ul>
-        <li><a href="#创建型模式">创建型模式</a></li>
-        <li><a href="#结构型模式">结构型模式</a></li>
-        <li><a href="#行为型模式">行为型模式</a></li>
-      </ul>
-    </li>
+    <li><a href="#简介">简介</a></li>
+    <li><a href="#日志页面">日志页面</a></li>
+    <li><a href="#事件和错误报告">事件和错误报告</a></li>
+    <li><a href="#管理">管理</a></li>
+    <li><a href="#测试">测试</a></li>
+    <li><a href="#你如何参与">你如何参与？</a></li>
+    <li><a href="#参考">参考</a></li>
   </ul>
 </nav>
     </div>
@@ -184,7 +179,7 @@
 </script>
     <article class="post">
         <header>
-            <h1 class="post-title">Golang的23种设计模式之代码示例和图解</h1>
+            <h1 class="post-title">SSD是如何发生故障的 NVMe™SSD管理 错误报告和日志记录功能</h1>
         </header>
         <date class="post-meta meta-date">
             2022年4月16日
@@ -198,200 +193,88 @@
         
         
         <div class="post-content">
-            <h1 id="golang的23种设计模式之代码示例图解设计模式原则资料">Golang的23种设计模式之代码示例+图解+设计模式/原则资料</h1>
-<p><a href="https://travis-ci.org/senghoo/golang-design-pattern">
-        <img class="mx-auto" alt="Build Status" src="https://travis-ci.org/senghoo/golang-design-pattern.svg?branch=master" />   
-    </a></p>
-<h2 id="什么是设计模式">什么是设计模式?</h2>
-<p>设计模式是一套理论, 由软件界先辈们总结出的一套可以反复使用的经验, 可以提高代码可重用性, 增强系统可维护性, 以及巧妙解决一系列逻辑复杂的问题(运用套路).</p>
-<p>1995 年，艾瑞克·伽马（ErichGamma）、理査德·海尔姆（Richard Helm）、拉尔夫·约翰森（Ralph Johnson）、约翰·威利斯迪斯（John Vlissides）等 4 位作者合作出版了《设计模式：可复用面向对象软件的基础》（Design Patterns: Elements of Reusable Object-Oriented Software）一书，在本教程中收录了 23 个设计模式，这是设计模式领域里程碑的事件，导致了软件设计模式的突破。这 4 位作者在软件开发领域里也以他们的“四人组”（Gang of Four，GoF）匿名著称.</p>
-<h2 id="项目简介">项目简介</h2>
-<p>Golang的23种设计模式之代码示例+图解+设计模式/原则等资料</p>
-<p>项目地址: <a href="https://github.com/ssbandjl/golang-design-pattern">https://github.com/ssbandjl/golang-design-pattern</a></p>
-<h2 id="云原生">云原生</h2>
-<p>更多云原生相关技术干货, 欢迎大家关注我的微信公众号:<strong>云原生云</strong></p>
-<p>
-        <img class="mx-auto" alt="云原生云二维码" src="img/%e4%ba%91%e5%8e%9f%e7%94%9f%e4%ba%91%e4%ba%8c%e7%bb%b4%e7%a0%81%e5%a4%a7.gif" />   
-    </p>
-<h2 id="参考文档">参考文档:</h2>
-<ul>
-<li><a href="https://www.liaoxuefeng.com/wiki/1252599548343744/1281319417937953">廖雪峰</a></li>
-<li><a href="http://c.biancheng.net/view/1397.html">图解设计模式</a></li>
-<li><a href="https://github.com/senghoo/golang-design-pattern">golang-design-patttern</a></li>
-<li>设计
-<ul>
-<li><a href="https://tech.meituan.com/2017/12/22/ddd-in-practice.html">DDD领域驱动设计在互联网业务开发中的实践</a></li>
-</ul>
-</li>
-</ul>
-<h2 id="原则">原则</h2>
-<ul>
-<li><a href="./ref">依赖倒置原则</a>
-<ul>
-<li><a href="./ref/%E7%A8%8B%E5%BA%8F%E5%91%98%E8%BF%9B%E9%98%B6%E6%8C%87%E5%8D%97-%E6%96%87%E6%A1%A3%E5%9B%A2%E9%98%9FGolang%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5%E5%92%8CCR%E6%A1%88%E4%BE%8B%E9%9B%86%E5%88%86%E4%BA%AB.md">程序员进阶指南-文档团队Golang最佳实践和CR案例集分享</a>
-<ul>
-<li><a href="./principle/dip/">示例代码</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<h2 id="golang的23种设计模式">Golang的23种设计模式</h2>
-<h3 id="创建型模式">创建型模式</h3>
+            <h1 id="ssd-是如何发生故障的nvme-ssd-管理错误报告和日志记录功能">SSD 是如何发生故障的——NVMe™ SSD 管理、错误报告和日志记录功能</h1>
+<h2 id="简介">简介</h2>
+<p>NVMe™ 技术是从头开始为 SSD 构建的，最初的 NVMe 规范包括一个标准的 SMART（自我监控、分析和报告技术）日志，用于监控错误、设备运行状况和耐用性。当时，SAS/SATA 驱动器具有 SMART 功能，但它是特定于供应商的（工具必须由供应商解析数据）并且数据并未得到广泛信任。我不能低估这在 NVMe 架构中的重要性——创建一个行业标准的 SMART 日志页面，其中包含监控 SSD 所需的最常见信息。最终，它是一种帮助供应商保持对准确和正确数据报告负责的工具。</p>
+<p>从那以后，NVMe 技术中内置了许多功能，包括增强错误报告、日志记录、管理、调试和遥测。这些功能可以内置到从开源管理工具到 OEM 管理控制台的各种工具中，以帮助支持监控 SSD 的状态和运行状况（例如在发生 SSD 故障时通知用户）。更重要的是，客户希望确保他们的 SSD 顺利和正常运行，并能够了解故障的位置和原因以及故障发生的时间。</p>
+<p>管理工具、日志页面、耐久性监控等可以帮助识别和查明设备何时发生故障、错误数量和错误类型。这些错误可能包括硬件故障、完整性错误、介质错误、温度问题等。在深入了解 NVMe 技术的功能之前，重要的是要了解 SSD 是如何发生故障的，然后我们可以使用这些工具来帮助预测和预防它们。 SSD故障通常属于这些类别</p>
 <ul>
 <li>
-<p><a href="./00_simple_factory">简单工厂模式（Simple Factory）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103164219481" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e7%ae%80%e5%8d%95%e5%b7%a5%e5%8e%82%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
+<p>系统不兼容 – 在这种情况下，SSD 没有问题，但兼容性错误阻碍了正常运行。一个示例是系统挂起或未枚举 SSD。如果发生这种情况，客户通常会将 SSD 退回给制造商。</p>
 </li>
 <li>
-<p><a href="./04_factory_method">工厂方法模式（Factory Method）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103164256869" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e5%b7%a5%e5%8e%82%e6%96%b9%e6%b3%95%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
+<p>SSD 耐用性 – SSD 耐用性是有限的，写入数据最终会磨损 SSD。好消息是，这可以通过了解工作负载和 SSD 来准确预测和建模，并且 NVMe 技术可以报告统计数据以实时监控这一点。</p>
 </li>
 <li>
-<p><a href="./05_abstract_factory">抽象工厂模式（Abstract Factory）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103164329402" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e6%8a%bd%e8%b1%a1%e5%b7%a5%e5%8e%82%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
+<p>固件错误 – SSD 固件很复杂，必须处理许多工作负载和状态的极端情况才能传输数据。 SSD 供应商试图在投入生产之前尽可能多地消除固件问题，但完美的验证和验证无法捕捉到所有固件问题。固件故障占 SSD 故障的大部分！</p>
 </li>
 <li>
-<p><a href="./06_builder">创建者模式（Builder）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103164416271" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e5%88%9b%e5%bb%ba%e8%80%85%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
+<p>介质错误 – 有许多不同类别的 SSD，其中一些具有端到端数据保护、断电保护以及通过 RAID、XOR 或其他技术在 SSD 介质中实现冗余。但NAND闪存等存储和内存类没有故障切换，大多会导致SSD停止运行</p>
 </li>
 <li>
-<p><a href="./07_prototype">原型模式（Prototype）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103164457142" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e5%8e%9f%e5%9e%8b%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
-</li>
-<li>
-<p><a href="./03_singleton">单例模式（Singleton）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103164524348" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e5%8d%95%e4%be%8b%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
+<p>硬件错误——电容器,寄存器和电源管理电路可能出现故障。这些比较少见，但当它们发生时更具灾难性。</p>
 </li>
 </ul>
-<h3 id="结构型模式">结构型模式</h3>
+<h2 id="日志页面">日志页面</h2>
+<p>日志页面保存在 SSD 中，可以随时被主机软件读取。以下是 NVMe 技术使用的各种日志页面：</p>
 <ul>
 <li>
-<p><a href="./01_facade">外观模式（Facade）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103164552758" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e5%a4%96%e8%a7%82%e6%a8%a1%e5%bc%8f.png" />   
+<p>错误日志页面
+错误日志页面用于记录所有错误，这样所有错误都会上报。 NVMe 驱动器维护一个错误日志页面，记录所有发生的错误。此日志页面维护有关错误数量、错误来自哪个队列以及哪些数据和命名空间受到影响的重要信息。这对于识别有问题的驱动器和导致系统中可能导致错误的根源至关重要。</p>
+</li>
+<li>
+<p>SMART 日志页面
+SMART 日志页面用于报告有关驱动器的一般健康信息。它的主要健康指标称为严重警告，用于警告驱动器出现问题。然后，NVMe 驱动器将通知主机有关问题的类型。问题可能意味着驱动器由于介质错误而处于降级或只读模式，驱动器当前超过温度阈值或可能存在硬件介质故障。 SMART 日志页面还用于总结介质或数据完整性错误的错误日志页面，并列出因断电事件导致的不安全关机次数。最后，SMART 页面对于监测耐力非常有用。通过检查 SMART Percentage Used 字段，系统集成商可以将 SSD 剩余寿命视为已用/可用总寿命的易于读取的百分比。为了最好地利用此功能，供应商可以设置可用备件字段，以便在备件低于某个阈值时向主机发送通知。</p>
+</li>
+<li>
+<p>持久事件日志
+在 <a href="https://nvmexpress.org/changes-in-nvme-revision-1-4/">NVMe 1.4 规范变更</a>中添加的持久事件日志可以比作 SSD 的黑盒记录器。这可以记录 SSD 上发生的事件，例如错误、更新固件、格式化等，以便人类可以阅读并带有时间戳。这对于希望识别和管理他们的设备和精确定位的 OEM 或操作系统供应商非常有用
+
+        <img class="mx-auto" alt="" src="./Error-Reporting-Blog_1.png" />   
     </p>
 </li>
 <li>
-<p><a href="./02_adapter">适配器模式（Adapter）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103164615892" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e9%80%82%e9%85%8d%e5%99%a8%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
-</li>
-<li>
-<p><a href="./09_proxy">代理模式（Proxy）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103164633592" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e4%bb%a3%e7%90%86%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
-</li>
-<li>
-<p><a href="./13_composite">组合模式（Composite）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103164703131" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e7%bb%84%e5%90%88%e6%a8%a1%e5%bc%8f.png" />   
-    
-        <img class="mx-auto" alt="image-20210103164728438" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e7%bb%84%e5%90%88%e6%a8%a1%e5%bc%8f2.png" />   
-    </p>
-</li>
-<li>
-<p><a href="./18_flyweight">享元模式（Flyweight）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103164758921" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e4%ba%ab%e5%85%83%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
-</li>
-<li>
-<p><a href="./20_decorator">装饰模式（Decorator）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103164826679" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e8%a3%85%e9%a5%b0%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
-</li>
-<li>
-<p><a href="./22_bridge">桥接模式（Bridge）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103164857565" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e6%a1%a5%e6%8e%a5%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
+<p>遥测——为 NVMe 技术添加调试功能
+遥测使 SSD 供应商/制造商能够在设备故障时收集内部日志。 由于客户对 IP 和内部数据收集的敏感性，此处鼓励使用标准的人类可读日志。 该命令可以由主机或控制器启动，但通常对于主机（在这种情况下为客户）在设备发生故障时读出遥测日志并将其发送给他们购买它的 SSD 供应商或 OEM 以进行进一步分析是有意义的 . 正如我们从介绍中看到的，固件问题是 SSD 故障的主要原因，而遥测日志可以让供应商在现场发生故障时找到根本原因。</p>
 </li>
 </ul>
-<h3 id="行为型模式">行为型模式</h3>
+<h2 id="事件和错误报告">事件和错误报告</h2>
+<p>与日志页面一起，许多 NVMe 规范功能用于报告错误和操作失败。这些报告有助于识别每种特定类型的错误以及如何恢复控制器、驱动器和操作系统。</p>
 <ul>
 <li>
-<p><a href="./08_mediator">中介者模式（Mediator）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103165035523" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e4%b8%ad%e4%bb%8b%e8%80%85%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
+<p>异步事件请求
+异步事件用于通知主机软件各种事件的状态、错误和健康信息。 NVMe 控制器或驱动器在发生错误、驱动器更改属性、SMART 更改或管理事件完成时向主机软件报告事件。这里最重要的功能是 NVMe 控制器（大多数情况下是驱动器）可以在发生严重警告时异步通知主机，并且操作系统或系统控制台可以立即向用户报告。要了解有关定义的事件类型的更多详细信息，请访问 NVMe 1.4 规范的第 96 页。</p>
 </li>
 <li>
-<p><a href="./10_observer">观察者模式（Observer）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103165108726" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e8%a7%82%e5%af%9f%e8%80%85%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
+<p>操作失败
+NVMe 规范包括专门用于控制器/驱动器、驱动程序和操作系统使用的错误报告和恢复的部分。这主要用于设备驱动程序和主机软件系统，以识别 NVM 子系统和 NVMe 控制器的严重故障。此部分可在 NVMe 1.4 规范的第 400 页找到。</p>
 </li>
 <li>
-<p><a href="./11_command">命令模式（Command）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103165125851" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e5%91%bd%e4%bb%a4%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
-</li>
-<li>
-<p><a href="./12_iterator">迭代器模式（Iterator）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103165157356" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e8%bf%ad%e4%bb%a3%e5%99%a8%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
-</li>
-<li>
-<p><a href="./14_template_method">模板方法模式（Template Method）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103165219538" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e6%a8%a1%e6%9d%bf%e6%96%b9%e6%b3%95%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
-</li>
-<li>
-<p><a href="./15_strategy">策略模式（Strategy）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103165236575" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e7%ad%96%e7%95%a5%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
-</li>
-<li>
-<p><a href="./16_state">状态模式（State）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103165303649" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e7%8a%b6%e6%80%81%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
-</li>
-<li>
-<p><a href="./17_memento">备忘录模式（Memento）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103165318038" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e5%a4%87%e5%bf%98%e5%bd%95%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
-</li>
-<li>
-<p><a href="./19_interpreter">解释器模式（Interpreter）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103165338073" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e8%a7%a3%e9%87%8a%e5%99%a8%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
-</li>
-<li>
-<p><a href="./21_chain_of_responsibility">职责链模式（Chain of Responsibility）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103165403720" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e8%b4%a3%e4%bb%bb%e9%93%be%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
-</li>
-<li>
-<p><a href="./23_visitor">访问者模式（Visitor）</a></p>
-<p>
-        <img class="mx-auto" alt="image-20210103165421365" src="https://github.com/ssbandjl/golang-design-pattern/blob/master/img/%e8%ae%bf%e9%97%ae%e8%80%85%e6%a8%a1%e5%bc%8f.png" />   
-    </p>
+<p>重建辅助
+在 NVMe 1.4 规范中添加了重建辅助作为选项。 重建辅助定义了一个新的获取逻辑块地址状态功能，可以识别主机可能无法恢复的逻辑块地址。此状态用于确定设备上的哪些逻辑块地址需要由主机从另一个位置恢复并重写。重建辅助的主要用例之一可以帮助替换 SSD 的后台数据清理，因为 SSD 固件通常已经在内部进行此分析，并且现在可以将其报告给主机。主机通常具有数据的冗余副本，现在有机会从有效副本中恢复数据。</p>
 </li>
 </ul>
+<h2 id="管理">管理</h2>
+<p>NVMe Management Interface™ (NVMe-MI™) 技术的管理能力对于企业、云和数据中心部署至关重要。这些对于支持多种操作系统并受益于一个管理控制台的 OEM 尤其有用，这对最终客户来说是一种增值。</p>
+<ul>
+<li>NVMe-MI 规范
+NVMe-MI 规范通过 SMBUS/MCTP 和 PCIe/VDMs 接口在操作系统之外管理 NVMe SSD。 NVMe-MI 架构使用基板管理控制器来检查目录、监控错误、跟踪 SMART 日志和耐久性，并通过管理控制台报告这些情况。要了解有关 NVMe-MI 规范的更多信息，我们邀请您阅读我们的 <a href="https://nvmexpress.org/nvme-mi-1-1-why-manageability-is-critical-for-todays-enterprise-storage-demands/">NVMe-MI 技术博客</a>，以更深入地了解其特性和优势。 NVMe-MI 通过提供专门用于管理存储设备的完整规范，真正将 NVMe 标准与其他存储接口区分开来。</li>
+</ul>
+<p>
+        <img class="mx-auto" alt="" src="./Error-Reporting-Blog_2.png" />   
+    </p>
+<h2 id="测试">测试</h2>
+<p>测试功能有助于进行诊断并确保 NVMe 技术已正确实施。</p>
+<p>设备自检命令
+NVMe 1.4 规范第 107 页定义的设备自检命令功能允许主机启动短自检或长时间自检以运行离线诊断。 OEM、ODMS 和系统集成商在将新的 NVMe SSD 集成到更大的系统时经常使用此命令功能。 一个例子是在系统集成商或工厂，他们从 SSD 供应商处获取 SSD 并将其放入更大的服务器中，然后继续运行自检命令以确保驱动器全部正常运行。 NVMe 规范包括一个包含示例设备自检的信息图，如下图所示。</p>
+<p>
+        <img class="mx-auto" alt="" src="./Error-Reporting-Blog_3.png" />   
+    </p>
+<h2 id="你如何参与">你如何参与？</h2>
+<p>正如我们所见，NVMe 技术具有一套强大的特性和功能，可帮助大规模监控、管理和部署 NVMe SSD。 作为一个开放的标准组织，NVM Express 不断改进并从 SSD 供应商、OEM、ODM 和超大规模云服务提供商那里获得关于实际部署中重要事项的真实反馈。 为了跟上这种反馈和不断发展的存储环境，NVM Express 通过添加所需的功能来更新其规范，例如持久事件日志、NVMe 管理界面等。 今年，我们期待继续增强 NVM Express 技术，让最终用户体验既简单又无缝。</p>
+<p>我们鼓励有兴趣为 NVM Express 规范贡献其专业知识的成员加入我们的 <a href="https://workspace.nvmexpress.org//login?back=https%3a%2f%2fworkspace.nvmexpress.org%2fapps%2forg%2fworkgroup%2fportal%2f">NVM Express 工作组</a>之一。</p>
+<h2 id="参考">参考</h2>
+<p><a href="https://nvmexpress.org/how-ssds-fail-nvme-ssd-management-error-reporting-and-logging-capabilities/">How SSDs Fail – NVMe™ SSD Management, Error Reporting, and Logging Capabilities</a></p>
 
         </div>
 
@@ -399,7 +282,7 @@
 <div class="post-archive">
     <ul class="post-copyright">
         <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
-        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/posts/Golang%E7%9A%8423%E7%A7%8D%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B%E5%92%8C%E5%9B%BE%E8%A7%A3/">https://logread.cn/posts/Golang%E7%9A%8423%E7%A7%8D%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B%E5%92%8C%E5%9B%BE%E8%A7%A3/</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/posts/SSD%E6%98%AF%E5%A6%82%E4%BD%95%E5%8F%91%E7%94%9F%E6%95%85%E9%9A%9C%E7%9A%84-NVMeSSD%E7%AE%A1%E7%90%86-%E9%94%99%E8%AF%AF%E6%8A%A5%E5%91%8A%E5%92%8C%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95%E5%8A%9F%E8%83%BD/">https://logread.cn/posts/SSD%E6%98%AF%E5%A6%82%E4%BD%95%E5%8F%91%E7%94%9F%E6%95%85%E9%9A%9C%E7%9A%84-NVMeSSD%E7%AE%A1%E7%90%86-%E9%94%99%E8%AF%AF%E6%8A%A5%E5%91%8A%E5%92%8C%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95%E5%8A%9F%E8%83%BD/</a></li>
         <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
     </ul>
 </div>
@@ -412,6 +295,8 @@
 <div class="post-archive">
     <h2>See Also</h2>
     <ul class="listing">
+        
+        <li><a href="/posts/Golang%E7%9A%8423%E7%A7%8D%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B%E5%92%8C%E5%9B%BE%E8%A7%A3/">Golang的23种设计模式之代码示例和图解</a></li>
         
         <li><a href="/archives/%E5%BD%92%E6%A1%A3/">归档</a></li>
         

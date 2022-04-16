@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>什么是RDB和ROF,一文了解Redis持久化 | 晓兵</title>
+    <meta property="og:title" content="什么是RDB和ROF,一文了解Redis持久化 - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2022-04-16T11:11:05&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2022-04-16T11:11:05&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储">
+    <meta name="description" content="什么是RDB和ROF,一文了解Redis持久化">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/posts/%E4%BB%80%E4%B9%88%E6%98%AFRDB%E5%92%8CROF%E4%B8%80%E6%96%87%E4%BA%86%E8%A7%A3Redis%E6%8C%81%E4%B9%85%E5%8C%96/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储/linux/c/c&#43;&#43;/golang</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#rdb优点">RDB优点</a></li>
+    <li><a href="#rdb缺点">RDB缺点</a></li>
+    <li><a href="#aof优点">AOF优点</a></li>
+    <li><a href="#aof缺点">AOF缺点</a></li>
+    <li><a href="#那我该使用哪个">那我该使用哪个?</a></li>
+    <li><a href="#快照">快照</a>
+      <ul>
+        <li><a href="#它是如何工作的">它是如何工作的?</a></li>
+      </ul>
+    </li>
+    <li><a href="#aof仅追加文件">AOF仅追加文件</a>
+      <ul>
+        <li><a href="#日志重写">日志重写</a></li>
+        <li><a href="#aof怎么持久化">AOF怎么持久化?</a></li>
+        <li><a href="#如果aof文件被截断了应该怎么做">如果AOF文件被截断了应该怎么做?</a></li>
+        <li><a href="#aof文件被损坏了怎么办">AOF文件被损坏了怎么办?</a></li>
+        <li><a href="#它是怎样工作的">它是怎样工作的?</a></li>
+        <li><a href="#怎样从dumprdb快照切换到aof">怎样从dump.rdb快照切换到AOF</a></li>
+      </ul>
+    </li>
+    <li><a href="#在aof和rdb之间交互">在AOF和RDB之间交互</a></li>
+    <li><a href="#备份redis数据">备份Redis数据</a></li>
+    <li><a href="#灾难恢复">灾难恢复</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">什么是RDB和ROF,一文了解Redis持久化</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2022年4月16日
+        </date>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <p>参考文档: <a href="https://redis.io/topics/persistence">https://redis.io/topics/persistence</a></p>
+<h1 id="翻译自官方什么是rdb和rof-一文了解redis持久化">[翻译自官方]什么是RDB和ROF? 一文了解Redis持久化!</h1>
+<h1 id="概述">概述</h1>
+<p>本文提供Redis持久化技术说明,  建议所有Redis用户阅读. 如果您想更深入了解Redis持久性原理机制和底层持久性保证, 请参考文章 <a href="http://antirez.com/post/redis-persistence-demystified.html">揭秘Redis持久化</a></p>
+<h1 id="redis持久化">Redis持久化</h1>
+<p>Redis提供了不同级别的持久化选项:</p>
+<ul>
+<li><strong>RDB模式</strong>, Redis数据库备份文件(<strong>Redis Database Backup</strong>)持久化方式, 提供周期性基于时间点的数据集快照备份, 比如每小时生成一个快照备份.</li>
+<li><strong>AOF模式</strong>, 仅追加到文件(AppendOnlyFile)持久化方式, 在每次数据库服务收到写操作时记录日志文件, 当服务重启时, 自动回放该日志来重建原始数据集. 日志中使用Redis自己的协议, 并按照统一的格式, 采用只追加的方法记录. 当日志文件太大时, Redis可以在后台重写该日志, 生成一个最小化版本的日志文件.</li>
+<li>你也可以完全禁用持久化, 比如只要保证服务在运行中有数据或可以自动生成缓存数据即可.</li>
+<li>你还可以在同一个Redis实例上结合AOF和RDB两种持久化方式. 请注意: 这种方式在Redis重启时, AOF文件会被用来重建原始数据集, 因为, 相对RDB周期快照的方式, AOF被认为是更完整的数据备份, 比如它可以做到准实时备份(只丢失1秒的数据).</li>
+</ul>
+<p><strong>接下来, 让我们来对比RDB和AOF的优缺点:</strong></p>
+<h2 id="rdb优点">RDB优点</h2>
+<ul>
+<li>RDB采用一个压缩单文件来表示基于时间点的Redis数据, RDB文件是完美的备份. 例如, 你可以保留过去24小时的每小时的快照备份, 并且保存过去30天, 每天的快照备份, 当数据遇到丢失时, 你可以很方便的从不同的备份粒度(版本)来恢复数据集.</li>
+<li>RDB用来做灾备恢复非常好, 因为紧凑的单文件非常便于在远端数据中心或者亚马逊S3(对象存储,可以加密)间传输.</li>
+<li>RDB使Redis性能最大化, 因为Redis父进程只需要启动一个子进程完成快照备份即可, 父进程不执行由备份引起的磁盘I/O</li>
+<li>与AOF模式相比, RDB在大数据集的情况下, 数据恢复时, 服务重启速度更快.</li>
+</ul>
+<h2 id="rdb缺点">RDB缺点</h2>
+<ul>
+<li>如果你想要在Redis意外停止工作时(比如断电), 最小可能的丢失数据, RDB不是一个好的方案. 你可以在RDB生成的地方, 配置不同的保存点(比如每5分钟,对数据集产生至少100次写操作时,创建一个保存点, 你也可以配置多个保存点策略). 然而, 这样你通常会在每5分钟甚至更长时间间隔才创建RDB快照, 所以当Redis异常停止工作时, 你会丢失最后产生快照时间点到现在的数据.</li>
+<li>RDB会调用系统fork()方法派生一个子进程来完成数据持久化到硬盘. 如果数据集比较大, Fork()方法会非常耗时, 造成Redis停止为客户端服务, 停止时间可能是上微秒, 如果数据集非常大并且CPU性能不是很好, 停止时间可以达到1秒钟或更多. 在持久化时, AOF也会调用fork()方法, 但是你可以不带任何协商(trade-off), 调整重写日志的频率.</li>
+</ul>
+<h2 id="aof优点">AOF优点</h2>
+<ul>
+<li>
+<p>使用AOF持久化程度更高: 你可以配置不同的fsync策略:</p>
+<ul>
+<li>不带fsync</li>
+<li>每秒钟一次fsync</li>
+<li>每次查询的时候fsync</li>
+</ul>
+<p>注: <a href="https://man7.org/linux/man-pages/man2/fsync.2.html">fsync</a>是系统方法, 用于将内核态的缓存数据持久化到存储设备, 比如将内存数据写入硬盘</p>
+<p>默认使用每秒执行一次fsync的策略, 这种场景下, Redis的写性能也能非常好, 因为fsync运行在一个后台线程, 而主线程会尽力完成写操作. 所以你最多丢失1秒钟的数据.</p>
+</li>
+<li>
+<p>AOF日志是一个只能追加的文件, 所以在断电后, 该文件不会出现查找(<a href="http://man.cat-v.org/unix-6th/2/seek">seek</a>)或损坏的问题. 即使由于磁盘满或其他原因导致日志中存在只写了一半的命令, 也可以使用<code>redis-check-aof</code>工具轻松修复.</p>
+</li>
+<li>
+<p>Redis会在AOF文件太大的时候, 自动在后台重写日志. 重写十分安全, 重写时, Redis派生一个子进程将大的AOF文件重写为最小可用的数据集日志文件, 此时有写操作时, Redis继续追加到旧的AOF文件的同时也追加到AOF重写缓冲区aof_rewrite_buf, 重写完成时, 新的小AOF文件将合并缓冲区中的新数据, 最后将新的AOF文件重命名为老的AOF文件完成替换操作, 以后的数据将写入新的AOF文件.</p>
+</li>
+<li>
+<p>AOF日志文件以一种容易理解和解析的格式依次记录了所有的操作. 导出一个AOF文件非常容易.  甚至在失误执行了清除命令<a href="https://redis.io/commands/flushall">FLUSHALL</a> , 如果这时候重写操作没有被执行, 你仍然可以通过关闭服务, 删除文件最后的错误命令, 重启Redis完成数据恢复.</p>
+</li>
+</ul>
+<h2 id="aof缺点">AOF缺点</h2>
+<ul>
+<li>对于相同的数据集, AOF文件一般比RDB文件大.</li>
+<li>根据具体的fsync策略, AOF可能比RDB速度慢. 通常默认的每秒fsync策略下, Reids性能也非常高, 如果禁用fsync, 即使在高负载的情况下, AOF的速度应该和RDB一样快. 尽管如此, 在巨大写负载的情况下, RDB提供了更多最大延迟的保证.</li>
+<li>在过去, 当执行一些特殊的命令时(比如这里有一个涉及到阻塞的命令<a href="https://redis.io/commands/brpoplpush">BRPOPLPUSH</a>), Redis遇到了一些罕见的BUG, 它会导致AOF重建数据时, 数据出现不一致.这些问题非常罕见, 我们进行了单元测试, 自动创建随机复杂的数据集来执行重建测试, 没有出现这些问题.  但是如果使用RDB持久化, 几乎不可能出现这类问题. 为了清楚的说明这一点: AOF类似MySQL或者MongoDB, 采用增量更新现有状态的工作机制, 但是RDB快照是每次从头开始创建, 从概念上来说, RDB更具有鲁棒性(健壮). 但是有以下两点值得注意:
+<ol>
+<li>每次AOF被Redis重写的时候，它会从包含在数据集中的实际数据中从头开始重新创建，使新AOF文件对bug的抵抗力比不重写的, , 一直追加的AOF文件更强.</li>
+<li>在实际使用中, 我们重来没有收到过一个关于AOF文件出错的用户报告.</li>
+</ol>
+</li>
+</ul>
+<h2 id="那我该使用哪个">那我该使用哪个?</h2>
+<p>通常, 如果你想获得像PostgreSQL那样的数据安全性, 你应该结合RDB和AOF.</p>
+<p>如果你非常关心你的数据, 但是允许丢失几分钟的数据, 你可以只使用RDB持久化.</p>
+<p>有很多用户只使用AOF, 但是我们不建议那样做, 因为RDB的基于时间点的快照在做数据库备份, 快速重启, 或AOF引擎出现问题时, 非常有用.</p>
+<p><code>注意: 基于这些原因, 在将来(长期计划), 我们最终会统一AOF和RDB为一个持久化模型方案. </code></p>
+<p>下面几节, 我们来举例说明更多, 关于RDB和AOF的细节.</p>
+<h2 id="快照">快照</h2>
+<p>Redis默认保存快照到硬盘上的<code>dump.rdb</code>文件. 你可以配置, 每N分钟, 至少出现了M次数据集改变执行一次快照, 或者手动执行保存 <a href="https://redis.io/commands/save">SAVE</a> 或后台保存<a href="https://redis.io/commands/bgsave">BGSAVE</a> 命令.</p>
+<p>比如, 下面的配置表示, 每60秒, 如果发生改变的键的数量达到了1000个, Redis自动备份数据集到硬盘, 即自动快照策略.</p>
+<pre><code>save 60 1000
+</code></pre><h3 id="它是如何工作的">它是如何工作的?</h3>
+<p>每当Redis需要保存数据集到磁盘, 会执行下面的任务:</p>
+<ul>
+<li>Redis <a href="http://linux.die.net/man/2/fork">forks</a> 派生子进程, 这时候会存在一个父进程和一个子进程.</li>
+<li>子进程开始将数据集写到RDB临时文件.</li>
+<li>当子进程完成新RDB文件写入后, 会将原来的旧RDB文件替换.</li>
+</ul>
+<p>这种方法就是Redis的写即拷语义(copy-on-write)</p>
+<h2 id="aof仅追加文件">AOF仅追加文件</h2>
+<p>快照不是很持久, 如果Redis服务异常停止, 掉电停止, 或者意外执行了<code>kill -9</code>杀掉Redis服务进程, 最后的数据写入将会丢失. 虽然对于有些应用来说这是个小问题, 但对于要求完全持久化的场景, RDB不是一个很好的选择.</p>
+<p>所以AOF就是来代替RDB干这个事情的, 完全的持久化策略. 从Redis1.1版本开始支持该功能.</p>
+<p>按如下配置, 打开AOF功能开关:</p>
+<pre><code>appendonly yes
+</code></pre><p>从现在开始, 每当Redis收到一个改变数据集的命令(比如<a href="https://redis.io/commands/set">SET</a>), 该操作将追加到AOF文件, 当你重启Redis时, 会基于AOF文件重建数据集.</p>
+<h3 id="日志重写">日志重写</h3>
+<p>AOF文件大小随着操作的增加而增加. 举个例子, 如果你想递增计数100次, 最终数据集中只包含一个键值就是最终的结果, 但是在AOF文件中有100条记录, 实际上在重建数据集时, 不需要剩余的99次记录.</p>
+<p>所以Redis支持这个有趣的功能: 在不中断Redis服务的情况下, 后台进行AOF文件重写. 当执行后台重写命令 <a href="https://redis.io/commands/bgrewriteaof">BGREWRITEAOF</a> 时, Reids会将当前内存中的数据集以最短的有序命令集写下来. 如果你使用Redis2.2, 你需要定时执行 <a href="https://redis.io/commands/bgrewriteaof">BGREWRITEAOF</a> , 从Redis2.4开始, 它可以自动触发日志重写(更多信息可以查看2.4的配置示例, 不同版本的<a href="https://redis.io/topics/config">配置</a>).</p>
+<h3 id="aof怎么持久化">AOF怎么持久化?</h3>
+<p>你可以配置时间间隔, Redis来执行<a href="http://linux.die.net/man/2/fsync"><code>fsync</code></a>到磁盘. 这里有三个策略:</p>
+<ul>
+<li><code>appendfsync always</code>: 每个新的命令追加到AOF文件时执行<code>fsync</code>. 非常慢, 但是非常安全. 注意, 如果追加的命令来自多个客户端或管道的批量命令, 在发送响应之前, 这会被当做一次写操作, 只会执行一次fsync.</li>
+<li><code>appendfsync everysec</code>:  每秒执行一次<code>fsync</code>. 速度足够快(在Redis2.4版本中, 与RDB快照的速度一样快), 如果出现意外, 你最多丢失1秒的数据.</li>
+<li><code>appendfsync no</code>: 从不执行 <code>fsync</code>, 只把数据交给操作系统. 这虽然更快, 但是更不安全. 这种配置, 通常Linux会每30秒刷新一次数据到硬盘, 但实际时间可以通过内核配置调优.</li>
+</ul>
+<p>每秒执行一次<code>fsync</code>是建议并且是默认的方式. 它既快又安全. <code>appendfsync always</code>策略在实践中非常慢, 但是支持组提交, 所以可以将多个并行写操作合并, 执行一次<code>fsync</code>即可.</p>
+<h3 id="如果aof文件被截断了应该怎么做">如果AOF文件被截断了应该怎么做?</h3>
+<p>在写AOF文件时, 服务器出现crash或磁盘空间满了, 这时候AOF依然包含一致的数据, 代表了给定时间点版本的数据集(默认fsync策略可能会丢失1秒的数据), 但是最后的命令在AOF记录中会被截断, 最新的Redis主干版本依然会导入所有的AOF文件内容, 但是会忽略最后的不完整的命令, 这时候, 服务器会发出警告日志:</p>
+<pre><code>* Reading RDB preamble from AOF file...
+* Reading the remaining AOF tail...
+# !!! Warning: short read while loading the AOF file !!!
+# !!! Truncating the AOF at offset 439 !!!
+# AOF loaded anyway because aof-load-truncated is enabled
+</code></pre><p>你可以改变默认配置来强制停止这种事情发生, 但是默认配置会忽略最后这个不完整的命令, 为了保证服务重启后可用.</p>
+<p>老版本的Redis不会自动恢复, 需要做以下步骤来恢复:</p>
+<ul>
+<li>
+<p>对AOF文件进行备份.</p>
+</li>
+<li>
+<p>使用Redis提供的工具<code>redis-check-aof</code> 修复该AOF文件:</p>
+<p>$ redis-check-aof &ndash;fix</p>
+</li>
+<li>
+<p>可以执行 <code>diff -u</code> 检查两个AOF文件的差异, 确认错误被修复.</p>
+</li>
+<li>
+<p>用修复后的AOF文件重启Redis服务, 重建数据集.</p>
+</li>
+</ul>
+<h3 id="aof文件被损坏了怎么办">AOF文件被损坏了怎么办?</h3>
+<p>如果AOF文件不仅被截断了, 中间还被插入了无效的字节, 事情将变得更加复杂, Redis在启动的时候会中断并提示:</p>
+<pre><code>* Reading the remaining AOF tail...
+# Bad file format reading the append only file: make a backup of your AOF file, then use ./redis-check-aof --fix &lt;filename&gt;
+</code></pre><p>最好是用 <code>redis-check-aof</code> 工具修复, 首先不适用 <code>--fix</code> 选项, 找到问题, 跳过该文件的错误位置, 查看是否可以手动修复该文件, AOF使用与Reids一致的协议格式,所以非常便于手动修复,  否则就使用工具修复该文件, 这种情况, 从无效的位置到文件结束的数据都可能被丢失, 如果损坏位置发生在开头的位置, 则相当于丢失整个数据集.</p>
+<h3 id="它是怎样工作的">它是怎样工作的?</h3>
+<p>日志重写使用了与快照一致的拷贝即写(copy-on-write)的方式, 步骤如下:</p>
+<ul>
+<li>Redis执行 <a href="http://linux.die.net/man/2/fork">forks</a>派生, 这样就有一个主进程和一个子进程.</li>
+<li>子进程开始写入一个新的AOF到零时文件中.</li>
+<li>Redis继续追加到旧的AOF文件的同时也追加到AOF重写缓冲区aof_rewrite_buf, 所以即使重新失败, 也是数据安全的.</li>
+<li>当子进程完成了AOF文件重写, 父进程收到一个完成信号, 将缓存中的数据追加到新的AOF文件.</li>
+<li>最后将新的AOF文件重命名为老的AOF文件完成替换操作, 以后的数据将写入新的AOF文件.</li>
+</ul>
+<h3 id="怎样从dumprdb快照切换到aof">怎样从dump.rdb快照切换到AOF</h3>
+<p>在Redis2.0和Redis2.2用不同的步骤来切换到AOF, 而且Redis2.2切换到AOF更简单, 不需要重启.</p>
+<p><strong>Redis &gt;= 2.2</strong></p>
+<ul>
+<li>
+<p>将最近的dump.rdb文件备份.</p>
+</li>
+<li>
+<p>将备份文件传输到安全的地方.</p>
+</li>
+<li>
+<p>执行以下两个命令:</p>
+<ul>
+<li>
+<p>redis-cli config set appendonly yes  #开启AOF</p>
+</li>
+<li>
+<p>redis-cli config set save &quot;&quot;  #取消RDB</p>
+</li>
+</ul>
+</li>
+<li>
+<p>检查确认数据库中的键个数没有丢失.</p>
+</li>
+<li>
+<p>检查写操作都正确的追加进了AOF文件.</p>
+</li>
+</ul>
+<p>第一个配置命令表示启用AOF功能. 这样Redis会阻塞来生成初始的备份, 然后打开新文件来写入操作记录, 后面的写操作将会持续追加到该AOF文件中.</p>
+<p>第二个配置命令用来关闭RDB快照持久化. 这是可选的, 如果保留save表示同时使用RDB和AOF持久化.</p>
+<p><strong>重要</strong>: 记住同时修改redis.conf配置文件来打开AOF, 否则服务重启时将使用原来的配置.</p>
+<p><strong>Redis 2.0</strong></p>
+<ul>
+<li>将最近的dump.rdb文件备份.</li>
+<li>将备份文件传输到安全的地方.</li>
+<li>停止所有写操作.</li>
+<li>执行后台重写AOF命令<code>redis-cli BGREWRITEAOF</code>. 该操作会创建AOF文件.</li>
+<li>当AOF备份完成后, 停止Redis服务.</li>
+<li>编辑redis.conf, 启用AOF功能.</li>
+<li>重启服务</li>
+<li>检查确认数据库中的键个数没有丢失.</li>
+<li>检查写操作都正确的追加进了AOF文件.</li>
+</ul>
+<h2 id="在aof和rdb之间交互">在AOF和RDB之间交互</h2>
+<p>Redis &gt;= 2.4会保证当RDB快照在运行时, 避免触发一个AOF重写进程, 或者当AOF重写已经运行时, 不允许后台保存快照<a href="https://redis.io/commands/bgsave">BGSAVE</a>. 这可以防止两个后台进程同时产生高负载的磁盘I/O.</p>
+<p>当快照运行中, 用户显示请求一个AOF日志重写命令<a href="https://redis.io/commands/bgrewriteaof">BGREWRITEAOF</a>会收到OK状态, 表示操作已经被安排, 真正的重写操作会在快照完成后才开始.</p>
+<p>同时启用AOF和RDB持久化, Redis重启时, AOF文件会用来重建原始数据集, 因为AOF被认为是更全更完整的备份.</p>
+<h2 id="备份redis数据">备份Redis数据</h2>
+<p>开始本节内容前, 请确认已经对数据库进行备份, 如果磁盘损坏, 云实例消失等, 没有备份意味着数据面临着巨大风险, 会消失在&quot;黑洞&quot; <code>/dev/null</code>中.</p>
+<p>Redis对于数据备份非常友好, 即使数据库数据库运行中也允许你对数据进行拷贝备份: RDB文件产生时就不会被修改, 快照备份期间, 它会生成零时的文件, 当快照最终备份完成后采用重命名替换原来的RDB文件.</p>
+<p>这意味着服务在运行时, 拷贝RDB文件是非常安全的, 下面是我们的建议:</p>
+<ul>
+<li>在服务器上, 创建定时任务CronJob, 每小时执行一次RDB快照, 保存到一个目录,  并且在另外一个目录下保存每日快照.</li>
+<li>每次定时任务执行时, 确认使用<code>find</code>命令查找最旧的快照, 将它们删除, 对于每小时快照, 你可以保留最近48小时, 对于每天快照, 你可以保留1~2个月. 并确包快照名包含时间信息.</li>
+<li>每天至少做一次数据转存, 比如将RDB快照转存到其他数据中心, 或者至少从当前Redis服务物理机转存到其他地方.</li>
+</ul>
+<p>如果你使用ROF持久化方式, 仍然可以拷贝AOF文件来做备份. 这个AOF文件即使丢失最后一小段数据, Redis也可以重建它们(请参考上面的截断AOF文件处理方式)</p>
+<h2 id="灾难恢复">灾难恢复</h2>
+<p>灾难恢复和备份基本是一致的, 加上可以在许多不同的数据中心间转存这些备份数据. 这种情况下, 即使影响到最主要的数据中心, 其他地方的备份也是安全并且可以恢复的.</p>
+<p>针对刚起步, 没有太多的资金来做大型备份, 这里也提供了一些不需要太大开销的灾备恢复技术:</p>
+<ul>
+<li>AmazonS3对象存储或其他类似服务是一个实现灾备恢复系统的好方法. 只需将每小时或每日的RDB快照加密后传输到S3即可, 你可以使用<code>gpg -c</code>(使用对称加密模式)对数据加密. 请确认将密码保存到不同的安全的地方(比如拷贝一份交给最重要的人来管理). 建议使用多种存储服务来提高数据安全性.</li>
+<li>使用SCP(SSH的一部分)命令来将数据转存到其他服务器. 这是一个简单而且安全的方法: 在云端, 获取远离当前Redis服务的一个小型虚拟专用服务器VPS, 在数据端, 安装ssh, 生成不带密码的ssh客户端密钥, 将它添加到VPS的<code>authorized_keys</code>文件, 这样就可以继续实现自动免密转存备份数据到VPS, 为了提高数据安全, 可以使用不同运营商, 不同网络区域的VPS.</li>
+</ul>
+<p>这种方式可能会导致文件传输失败, 所以在传输完成后, 至少要增加文件完整性校验, 比如校验文件大小, 如果使用VPS, 甚至可以使用SHA1校验.</p>
+<p>你也需要部署独立的监控报警系统, 对备份过程进行监控, 在备份失败时能及时发现并修复.</p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/posts/%E4%BB%80%E4%B9%88%E6%98%AFRDB%E5%92%8CROF%E4%B8%80%E6%96%87%E4%BA%86%E8%A7%A3Redis%E6%8C%81%E4%B9%85%E5%8C%96/">https://logread.cn/posts/%E4%BB%80%E4%B9%88%E6%98%AFRDB%E5%92%8CROF%E4%B8%80%E6%96%87%E4%BA%86%E8%A7%A3Redis%E6%8C%81%E4%B9%85%E5%8C%96/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/posts/SSD%E6%98%AF%E5%A6%82%E4%BD%95%E5%8F%91%E7%94%9F%E6%95%85%E9%9A%9C%E7%9A%84-NVMeSSD%E7%AE%A1%E7%90%86-%E9%94%99%E8%AF%AF%E6%8A%A5%E5%91%8A%E5%92%8C%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95%E5%8A%9F%E8%83%BD/">SSD是如何发生故障的 NVMe™SSD管理 错误报告和日志记录功能</a></li>
+        
+        <li><a href="/posts/Golang%E7%9A%8423%E7%A7%8D%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B%E5%92%8C%E5%9B%BE%E8%A7%A3/">Golang的23种设计模式之代码示例和图解</a></li>
+        
+        <li><a href="/archives/%E5%BD%92%E6%A1%A3/">归档</a></li>
+        
+        <li><a href="/posts/how-to-use-linux-aio/">How to Use Linux Aio</a></li>
+        
+        <li><a href="/post/stolonpostgresql/">Stolon PostgreSQL高可用</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2022
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/posts/fio%E6%96%87%E6%A1%A3-%E8%AF%91/" title="Fio文档(译)">Fio文档(译)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/K8S-%E5%88%A9%E7%94%A8ExecWebsocket%E6%8E%A5%E5%8F%A3%E5%AE%9E%E7%8E%B0Pod%E9%97%B4%E7%9A%84%E6%96%87%E4%BB%B6%E6%8B%B7%E8%B4%9D/" title="K8S 利用ExecWebsocket接口实现Pod间的文件拷贝">K8S 利用ExecWebsocket接口实现Pod间的文件拷贝</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/%E4%BB%80%E4%B9%88%E6%98%AFRDB%E5%92%8CROF%E4%B8%80%E6%96%87%E4%BA%86%E8%A7%A3Redis%E6%8C%81%E4%B9%85%E5%8C%96/" title="什么是RDB和ROF,一文了解Redis持久化">什么是RDB和ROF,一文了解Redis持久化</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/SSD%E6%98%AF%E5%A6%82%E4%BD%95%E5%8F%91%E7%94%9F%E6%95%85%E9%9A%9C%E7%9A%84-NVMeSSD%E7%AE%A1%E7%90%86-%E9%94%99%E8%AF%AF%E6%8A%A5%E5%91%8A%E5%92%8C%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95%E5%8A%9F%E8%83%BD/" title="SSD是如何发生故障的 NVMe™SSD管理 错误报告和日志记录功能">SSD是如何发生故障的 NVMe™SSD管理 错误报告和日志记录功能</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/Golang%E7%9A%8423%E7%A7%8D%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B%E5%92%8C%E5%9B%BE%E8%A7%A3/" title="Golang的23种设计模式之代码示例和图解">Golang的23种设计模式之代码示例和图解</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/how-to-use-linux-aio/" title="How to Use Linux Aio">How to Use Linux Aio</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/stolonpostgresql/" title="Stolon PostgreSQL高可用">Stolon PostgreSQL高可用</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title" style="color:red">福利派送</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a href="https://www.aliyun.com/minisite/goods?userCode=jdg9oj97&amp;share_source=copy_link" title="【2019双12】ALL IN CLoud 低至1折" target="_blank" style="color:red">
+                
+                    <img src="https://img.alicdn.com/tfs/TB1_rYHo7P2gK0jSZPxXXacQpXa-690-388.jpg">
+                
+            </a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://www.logread.cn/" title="晓兵">晓兵</a>
+        </li>
+        
+        <li>
+            <a target="_blank" href="http://yuedu.baidu.com/ebook/14a722970740be1e640e9a3e" title="link">link</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
