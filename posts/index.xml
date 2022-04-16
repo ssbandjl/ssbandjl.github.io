@@ -6,7 +6,16 @@
     <description>Recent content in Posts on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 16 Apr 2022 09:43:27 +0800</lastBuildDate><atom:link href="https://logread.cn/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 16 Apr 2022 11:01:29 +0800</lastBuildDate><atom:link href="https://logread.cn/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Golang的23种设计模式之代码示例和图解</title>
+      <link>https://logread.cn/posts/Golang%E7%9A%8423%E7%A7%8D%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B%E5%92%8C%E5%9B%BE%E8%A7%A3/</link>
+      <pubDate>Sat, 16 Apr 2022 11:01:29 +0800</pubDate>
+      
+      <guid>https://logread.cn/posts/Golang%E7%9A%8423%E7%A7%8D%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B%E5%92%8C%E5%9B%BE%E8%A7%A3/</guid>
+      <description>Golang的23种设计模式之代码示例+图解+设计模式/原则资料 什么是设计模式? 设计模式是一套理论, 由软件界先辈们总结出的一套可以反复使用的经验, 可以提高代码可重用性, 增强系统可维护性, 以及巧妙解决一系列逻辑复杂的问题(运用套路). 1995 年，艾瑞克·伽马（ErichGamma）、理査</description>
+    </item>
+    
     <item>
       <title>How to Use Linux Aio</title>
       <link>https://logread.cn/posts/how-to-use-linux-aio/</link>

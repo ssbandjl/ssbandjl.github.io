@@ -3,6 +3,21 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://logread.cn/posts/Golang%E7%9A%8423%E7%A7%8D%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B%E5%92%8C%E5%9B%BE%E8%A7%A3/</loc>
+    <lastmod>2022-04-16T11:01:29+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/posts/</loc>
+    <lastmod>2022-04-16T11:01:29+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/</loc>
+    <lastmod>2022-04-16T11:01:29+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://logread.cn/archives/</loc>
     <lastmod>2022-04-16T10:26:38+08:00</lastmod>
   </url>
@@ -13,17 +28,7 @@
   </url>
   
   <url>
-    <loc>https://logread.cn/</loc>
-    <lastmod>2022-04-16T10:26:38+08:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://logread.cn/posts/how-to-use-linux-aio/</loc>
-    <lastmod>2022-04-16T09:43:27+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/posts/</loc>
     <lastmod>2022-04-16T09:43:27+08:00</lastmod>
   </url>
   
