@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
+  <url>
+    <loc>https://logread.cn/post/filename/</loc>
+    <lastmod>2021-04-19T20:51:38+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/</loc>
+    <lastmod>2021-04-19T20:51:38+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/stolonpostgresql/</loc>
+    <lastmod>2021-04-19T20:51:38+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/</loc>
+    <lastmod>2021-04-19T20:51:38+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/</loc>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/</loc>
+  </url>
+  
+</urlset>
