@@ -1,0 +1,1397 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>How to Use Linux Aio | 晓兵</title>
+    <meta property="og:title" content="How to Use Linux Aio - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2022-04-16T09:43:27&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2022-04-16T09:43:27&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储">
+    <meta name="description" content="How to Use Linux Aio">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/posts/how-to-use-linux-aio/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储/linux/c/c&#43;&#43;/golang</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#参考链接">参考链接</a></li>
+    <li><a href="#introduction-简介">Introduction 简介</a></li>
+    <li><a href="#what-is-aio-什么是异步io">What is AIO? 什么是异步IO</a></li>
+    <li><a href="#the-linux-aio-model-异步io模型流程">The Linux AIO model 异步IO模型(流程)</a></li>
+    <li><a href="#io-context-上下文">I/O context 上下文</a></li>
+    <li><a href="#submitting-requests-提交请求">Submitting requests 提交请求</a></li>
+    <li><a href="#processing-results-处理结果">Processing results 处理结果</a></li>
+    <li><a href="#use-with-epoll-使用epoll">Use with epoll 使用epoll</a></li>
+    <li><a href="#performance-considerations--性能注意事项">Performance considerations  性能注意事项</a></li>
+    <li><a href="#alternatives-to-linux-aio-替代方案">Alternatives to Linux AIO 替代方案</a></li>
+    <li><a href="#sample-code-示例代码">Sample code 示例代码</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">How to Use Linux Aio</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2022年4月16日
+        </date>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="linux-aio">linux-aio</h1>
+<h2 id="参考链接">参考链接</h2>
+<p><a href="https://github.com/littledan/linux-aio">linux-aio</a></p>
+<p><a href="https://man7.org/linux/man-pages/man2/io_submit.2.html">io_submit</a></p>
+<p><a href="https://man7.org/linux/man-pages/man7/aio.7.html">man aio POSIX</a></p>
+<p><a href="https://blog.csdn.net/Morphad/article/details/14138477">linux aio 实现概览</a></p>
+<h2 id="introduction-简介">Introduction 简介</h2>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">注意与POSIX语义的aio - POSIX asynchronous I/O overview  POSIX异步I/O接口, 有区别
+</code></pre></td></tr></table>
+</div>
+</div><p><em>Note, Linux AIO is now subsumed by the io_uring API (<a href="https://blogs.oracle.com/linux/an-introduction-to-the-io_uring-asynchronous-io-framework">tutorial</a>, <a href="https://lwn.net/Articles/810414/">LWN coverage</a>). The below explanation is mostly useful for old kernels.</em></p>
+<p>请注意，Linux AIO 现在包含在 io_uring API（教程，LWN 覆盖范围）中。 下面的解释对旧内核最有用。</p>
+<p>The Asynchronous Input/Output (AIO) interface allows many I/O requests to be submitted in parallel without the overhead of a thread per request. The purpose of this document is to explain how to use the Linux AIO interface, namely the function family <code>io_setup</code>, <code>io_submit</code>, <code>io_getevents</code>, <code>io_destroy</code>. Currently, the AIO interface is best for <code>O_DIRECT</code> access to a raw block device like a disk, flash drive or storage array.</p>
+<p>异步输入/输出 (AIO) 接口允许并行提交许多 I/O 请求，而不会产生每个请求的线程开销。 本文档的目的是解释如何使用 Linux AIO 接口，即函数家族 <code>io_setup</code>、<code>io_submit</code>、<code>io_getevents</code>、<code>io_destroy</code>。 目前，AIO 接口最适合直接“O_DIRECT”访问原始块设备，如磁盘、闪存驱动器或存储阵列。(访问裸盘)</p>
+<h2 id="what-is-aio-什么是异步io">What is AIO? 什么是异步IO</h2>
+<p>Input and output functions involve a device, like a disk or flash drive, which works much slower than the CPU. Consequently, the CPU can be doing other things while waiting for an operation on the device to complete. There are multiple ways to handle this:</p>
+<p>输入和输出功能涉及一个设备，如磁盘或闪存驱动器，它的工作速度比 CPU 慢得多。 因此，CPU 可以在等待设备上的操作完成时做其他事情。 有多种方法可以处理这个问题：</p>
+<ul>
+<li>
+<p>In the <strong>synchronous I/O model</strong>, the application issues a request from a thread. The thread blocks until the operation is complete. The operating system creates the illusion that issuing the request to the device and receiving the result was just like any other operation that would proceed just on the CPU, but in reality, it may switch in other threads or processes to make use of the CPU resources and to allow other device requests to be issued to the device in parallel, originating from the same CPU.</p>
+<p>在<strong>同步 I/O 模型</strong>中，应用程序从线程发出请求。 线程阻塞直到操作完成。 操作系统给人一种假象，认为向设备发出请求并接收结果就像任何其他只在 CPU 上进行的操作一样，但实际上它可能会切换到其他线程或进程以利用 CPU 资源 并允许从同一个 CPU 发出的其他设备请求并行发送到设备。</p>
+</li>
+<li>
+<p>In the <strong>asynchronous I/O (AIO) model</strong>, the application can submit one or many requests from a thread. Submitting a request does not cause the thread to block, and instead the thread can proceed to do other computations and submit further requests to the device while the original request is in flight. The application is expected to process completions and organize logical computations itself without depending on threads to organize the use of data.</p>
+<p>在<strong>异步 I/O (AIO) 模型</strong>中，应用程序可以从一个线程提交一个或多个请求。 提交请求不会导致线程阻塞，而是线程可以继续进行其他计算，并在原始请求进行时向设备提交更多请求。 该应用程序应自行处理完成并组织逻辑计算，而不依赖于线程来组织数据的使用。</p>
+</li>
+</ul>
+<p>Asynchronous I/O can be considered “lower level” than synchronous I/O because it does not make use of a system-provided concept of threads to organize its computation. However, it is often more efficient to use AIO than synchronous I/O due the nondeterministic overhead of threads.</p>
+<p>异步 I/O 可以被认为比同步 I/O “更低级别(更底层)”，因为它没有使用系统提供的线程概念来组织其计算。 但是，由于线程的不确定性开销，使用 AIO 通常比使用同步 I/O 更高效。</p>
+<h2 id="the-linux-aio-model-异步io模型流程">The Linux AIO model 异步IO模型(流程)</h2>
+<p>The Linux AIO model is used as follows:</p>
+<ol>
+<li>Open an I/O context to submit and reap I/O requests from. 打开 I/O 上下文以提交和获取 I/O 请求</li>
+<li>Create one or more request objects and set them up to represent the desired operation 创建一个或多个请求对象并设置它们以表示所需的操作</li>
+<li>Submit these requests to the I/O context, which will send them down to the device driver to process on the device 将这些请求提交到 I/O 上下文，这会将它们发送到设备驱动程序以在设备上进行处理</li>
+<li>Reap completions from the I/O context in the form of event completion objects, 以事件完成对象的形式从 I/O 上下文中完成IO(读取)</li>
+<li>Return to step 2 as needed. 回到第2步(如果需要)</li>
+</ol>
+<h2 id="io-context-上下文">I/O context 上下文</h2>
+<p><code>io_context_t</code> is a pointer-sized opaque datatype that represents an “AIO context”. It can be safely passed around by value. Requests in the form of a <code>struct iocb</code> are submitted to an <code>io_context_t</code> and completions are read from the <code>io_context_t</code>. Internally, this structure contains a queue of completed requests. The length of the queue forms an upper bound on the number of concurrent requests which may be submitted to the <code>io_context_t</code>.</p>
+<p><code>io_context_t</code> 是一个指针大小的不透明数据类型，表示“AIO 上下文”。 它可以通过值安全地传递。 <code>struct iocb</code> 形式的请求被提交到 <code>io_context_t</code> 并从 <code>io_context_t</code> 读取完成。 在内部，此结构包含已完成请求的队列。 队列的长度构成了可以提交给 io_context_t 的并发请求数的上限。</p>
+<p>To create a new <code>io_context_t</code>, use the function 使用io_setup创建io上下文io_context_t</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#458;font-weight:bold">int</span> <span style="color:#900;font-weight:bold">io_setup</span>(<span style="color:#458;font-weight:bold">int</span> maxevents, io_context_t <span style="color:#000;font-weight:bold">*</span>ctxp);
+</code></pre></td></tr></table>
+</div>
+</div><p>Here, <code>ctxp</code> is the output and <code>maxevents</code> is the input. The function creates an <code>io_context_t</code> with an internal queue of length <code>maxevents</code>. To deallocate an <code>io_context_t</code>, use</p>
+<p>这里，<code>ctxp</code> 是输出，<code>maxevents</code> 是输入。 该函数创建一个具有长度为“maxevents”的内部队列的“io_context_t”。 要释放 <code>io_context_t</code>，请使用</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#458;font-weight:bold">int</span> <span style="color:#900;font-weight:bold">io_destroy</span>(io_context_t ctx);
+</code></pre></td></tr></table>
+</div>
+</div><p>There is a system-wide maximum number of allocated <code>io_context_t</code> objects, set at 65536.</p>
+<p>系统范围内分配的 <code>io_context_t</code> 对象的最大数量设置为 65536。</p>
+<p>An <code>io_context_t</code> object can be shared between threads, both for submission and completion. No guarantees are provided about ordering of submission and completion with respect to interaction from multiple threads. There may be performance implications from sharing <code>io_context_t</code> objects between threads.</p>
+<p><code>io_context_t</code> 对象可以在线程之间共享，用于提交和完成。 对于来自多个线程的交互，不保证提交和完成的顺序。 在线程之间共享 <code>io_context_t</code> 对象可能会影响性能。</p>
+<h2 id="submitting-requests-提交请求">Submitting requests 提交请求</h2>
+<p><code>struct iocb</code> represents a single request for a read or write operation. The following struct shows a simplification on the struct definition; a full definition is found in <code>&lt;libaio.h&gt;</code> within the libaio source code.</p>
+<p><code>struct iocb</code> 表示对读取或写入操作的单个请求。 以下结构显示了结构定义的简化； 在 libaio 源代码中的 <code>&lt;libaio.h&gt;</code> 中可以找到完整的定义。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#000;font-weight:bold">struct</span> iocb {
+    <span style="color:#458;font-weight:bold">void</span> <span style="color:#000;font-weight:bold">*</span>data;
+    <span style="color:#458;font-weight:bold">short</span> aio_lio_opcode;
+    <span style="color:#458;font-weight:bold">int</span> aio_fildes;
+
+    <span style="color:#000;font-weight:bold">union</span> {
+        <span style="color:#000;font-weight:bold">struct</span> {
+            <span style="color:#458;font-weight:bold">void</span> <span style="color:#000;font-weight:bold">*</span>buf;
+            <span style="color:#458;font-weight:bold">unsigned</span> <span style="color:#458;font-weight:bold">long</span> nbytes;
+            <span style="color:#458;font-weight:bold">long</span> <span style="color:#458;font-weight:bold">long</span> offset;
+        } c;
+    } u;
+};
+</code></pre></td></tr></table>
+</div>
+</div><p>The meaning of the fields is as follows: 字段的含义如下：</p>
+<ul>
+<li>data is a pointer to a user-defined object used to represent the operation data 是指向用户自定义对象的指针，用来表示操作数据</li>
+<li><code>aio_lio_opcode</code> is a flag indicate whether the operation is a read (<code>IO_CMD_PREAD</code>) or a write (<code>IO_CMD_PWRITE</code>) or one of the other supported operations <code>aio_lio_opcode</code> 是一个标志，指示操作是读取（<code>IO_CMD_PREAD</code>）还是写入（<code>IO_CMD_PWRITE</code>）或其他支持的操作之一</li>
+<li><code>aio_fildes</code> is the fd of the file that the iocb reads or writes <code>aio_fildes</code> 是 iocb 读取或写入的文件的 fd</li>
+<li><code>buf</code> is the pointer to memory that is read or written <code>buf</code> 是指向被读取或写入的内存的指针</li>
+<li><code>nbytes</code> is the length of the request <code>nbytes</code> 是请求的字节长度</li>
+<li><code>offset</code> is the initial offset of the read or write within the file <code>offset</code> 是文件内(fd,可以是磁盘设备,如/dev/sda)读取或写入的初始偏移量</li>
+</ul>
+<p>The convenience functions <code>io_prep_pread</code> and <code>io_prep_pwrite</code> can be used to initialize a <code>struct iocb</code>.
+New operations are sent to the device with <code>io_submit</code>.</p>
+<p>便利函数 <code>io_prep_pread</code> 和 <code>io_prep_pwrite</code> 可用于初始化 <code>struct iocb</code>。
+新操作通过 <code>io_submit</code> 发送到设备。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#458;font-weight:bold">int</span> <span style="color:#900;font-weight:bold">io_submit</span>(io_context_t ctx, <span style="color:#458;font-weight:bold">long</span> nr, <span style="color:#000;font-weight:bold">struct</span> iocb <span style="color:#000;font-weight:bold">*</span>ios[]);
+</code></pre></td></tr></table>
+</div>
+</div><p><code>io_submit</code> allows an array of pointers to <code>struct iocb</code>s to be submitted all at once. In this function call, <code>nr</code> is the length of the <code>ios</code> array. If multiple operations are sent in one array, then no ordering guarantees are given between the <code>iocb</code>s. Submitting in larger batches sometimes results in a performance improvement due to a reduction in CPU usage. A performance improvement also sometimes results from keeping many I/Os ‘in flight’ simultaneously.</p>
+<p><code>io_submit</code> 允许一次提交所有指向 <code>struct iocb</code> 的指针数组。 在这个函数调用中，<code>nr</code> 是 <code>ios</code> 数组的长度。 如果在一个数组中发送多个操作，则在 <code>iocb</code> 之间不提供排序保证。 由于 CPU 使用率的降低，大批量提交有时会导致性能提升。 有时，同时保持许多 I/O 处于“运行状态”也会导致性能提升。</p>
+<p>If the submission includes too many iocbs such that the internal queue of the <code>io_context_t</code> would overfill on completion, then <code>io_submit</code> will return a non-zero number and set <code>errno</code> to <code>EAGAIN</code>.</p>
+<p>如果提交包含太多 iocb，以至于 <code>io_context_t</code> 的内部队列在完成时会溢出，则 <code>io_submit</code> 将返回一个非零数字并将 <code>errno</code> 设置为 <code>EAGAIN</code>(重试)。</p>
+<p>When used under the right conditions, <code>io_submit</code> should not block. However, when used in certain ways, it may block, undermining the purpose of asynchronous I/O. If this is a problem for your application, be sure to use the <code>O_DIRECT</code> flag when opening a file, and operate on a raw block device. Work is ongoing to fix the problem.</p>
+<p>在正确的条件下使用时，<code>io_submit</code> 不应阻塞。 但是，当以某些方式使用时，它可能会阻塞，从而破坏异步 I/O 的目的。 如果这对您的应用程序来说是个问题，请务必在打开文件时使用 <code>O_DIRECT</code> 标志，并在原始块设备上进行操作。 社区正在解决这个问题</p>
+<h2 id="processing-results-处理结果">Processing results 处理结果</h2>
+<p>Completions read from an <code>io_context_t</code> are of the type <code>struct io_event</code>, which contains the following relevant fields.</p>
+<p>从 <code>io_context_t</code> 读取的完成属于 <code>struct io_event</code> 类型，其中包含以下相关字段。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#000;font-weight:bold">struct</span> io_event {
+    <span style="color:#458;font-weight:bold">void</span> <span style="color:#000;font-weight:bold">*</span>data;
+    <span style="color:#000;font-weight:bold">struct</span> iocb <span style="color:#000;font-weight:bold">*</span>obj;
+    <span style="color:#458;font-weight:bold">long</span> <span style="color:#458;font-weight:bold">long</span> res;
+};
+</code></pre></td></tr></table>
+</div>
+</div><p>Here, <code>data</code> is the same data pointer that was passed in with the <code>struct iocb</code>, and <code>obj</code> is the original <code>struct iocb</code>. <code>res</code> is the return value of the read or write.</p>
+<p>这里，<code>data</code> 是与 <code>struct iocb</code> 一起传入的相同数据指针，而 <code>obj</code> 是原始的 <code>struct iocb</code>。 <code>res</code> 是读取或写入的返回值。</p>
+<p>Completions are reaped with <code>io_getevents</code>. 使用 <code>io_getevents</code> 获得处理完成的结果</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#458;font-weight:bold">int</span> <span style="color:#900;font-weight:bold">io_getevents</span>(io_context_t ctx_id, <span style="color:#458;font-weight:bold">long</span> min_nr, <span style="color:#458;font-weight:bold">long</span> nr, <span style="color:#000;font-weight:bold">struct</span> io_event <span style="color:#000;font-weight:bold">*</span>events, <span style="color:#000;font-weight:bold">struct</span> timespec <span style="color:#000;font-weight:bold">*</span>timeout);
+</code></pre></td></tr></table>
+</div>
+</div><p>This function has a good number of parameters, so an explanation is in order: 这个函数有很多参数，所以解释一下</p>
+<ul>
+<li><code>ctx_id</code> is the <code>io_context_t</code> that is being reaped from. <code>ctx_id</code> 是从中获取的<code>io_context_t</code>。</li>
+<li><code>min_nr</code> is the minimum number of <code>io_events</code> to return. <code>io_gevents</code> will block until there are <code>min_nr</code> completions to report, if this is not already the case when the function call is made. <code>min_nr</code> 是要返回的 <code>io_events</code> 的最小数量。 <code>io_gevents</code> 将阻塞，直到有 <code>min_nr</code> 完成报告，如果在进行函数调用时还没有这种情况。</li>
+<li><code>nr</code> is the maximum number of completions to return. It is expected to be the length of the <code>events</code> array. <code>nr</code> 是要返回的最大完成数。 它应该是 <code>events</code> 数组的长度</li>
+<li><code>events</code> is an array of <code>io_events</code> into which the information about completions is written. <code>events</code> 是 <code>io_events</code> 的数组，其中写入了有关完成的信息</li>
+<li><code>timeout</code> is the maximum time that a call to <code>io_getevents</code> may block until it will return. If <code>NULL</code> is passed, then <code>io_getevents</code> will block until <code>min_nr</code> completions are available.  <code>timeout</code> 是对 <code>io_getevents</code> 的调用在返回之前可能阻塞的最长时间。 如果传递了 <code>NULL</code>，则 <code>io_getevents</code> 将阻塞，直到 <code>min_nr</code> 完成可用。</li>
+</ul>
+<p>The return value represents how many completions were reported, i.e. how much of events was written. The return value will be between 0 and <code>nr</code>. The return value may be lower than <code>min_nr</code> if the timeout expires; if the timeout is <code>NULL</code>, then the return value will be between <code>min_nr</code> and <code>nr</code>.</p>
+<p>返回值表示报告了多少完成，即写入了多少事件。 返回值将介于 0 和 <code>nr</code> 之间。 如果超时，返回值可能低于<code>min_nr</code>； 如果超时为 <code>NULL</code>，则返回值将介于 <code>min_nr</code> 和 <code>nr</code> 之间。</p>
+<p>The parameters give a broad range of flexibility in how AIO can be used.  这些参数为如何使用 AIO 提供了广泛的灵活性。</p>
+<ul>
+<li><code>min_nr = 0</code> (or, equivalently, <code>timeout = 0</code>). This option forms a non-blocking polling technique: it will always return immediately, regardless of whether any completions are available. It makes sense to use <code>min_nr = 0</code> when calling <code>io_getevents</code> as part of a main run-loop of an application, on each iteration.  <code>min_nr = 0</code>（或者，等效地，<code>timeout = 0</code>）。 此选项形成了一种非阻塞轮询技术：无论是否有任何完成可用，它总是会立即返回。 在每次迭代中调用 <code>io_getevents</code> 作为应用程序的主运行循环的一部分时，使用 <code>min_nr = 0</code> 是有意义的。</li>
+<li><code>min_nr = 1</code>. This option blocks until a single completion is available. This parameter is the minimum value which will produce a blocking call, and therefore may be the best value for low latency operations for some users. When an application notices that an <code>eventfd</code> corresponding to an iocb is triggered (see the next section about <code>epoll</code>), then the application can call <code>io_getevents</code> on the corresponding <code>io_context_t</code> with a guarantee that no blocking will occur.  <code>min_nr = 1</code>。 此选项会阻塞，直到有一个完成可用。 该参数是产生阻塞调用的最小值，因此对于某些用户来说可能是低延迟操作的最佳值。 当应用程序注意到触发了对应于 iocb 的 <code>eventfd</code> 时（请参阅下一节有关 <code>epoll</code> 的内容），然后应用程序可以在相应的 <code>io_context_t</code> 上调用 <code>io_getevents</code>，并保证不会发生阻塞。</li>
+<li><code>min_nr &gt; 1</code>. This option waits for multiple completions to return, unless the timeout expires. Waiting for multiple completions may improve throughput due to reduced CPU usage, both due to fewer <code>io_getevents</code> calls and because if there is more space in the completion queue due to the removed completions, then a later <code>io_submit</code> call may have a larger granularity, as well as a reduced number of context switches back to the calling thread when the event is available. This option runs the risk of increasing the latency of operations, especially when the operation rate is lower.  <code>min_nr &gt; 1</code>。 此选项等待多个完成返回，除非超时到期。 由于减少了 CPU 使用率，等待多个完成可能会提高吞吐量，这既是由于更少的 io_getevents 调用，也是因为如果完成队列中由于删除完成而有更多空间，那么稍后的 io_submit 调用可能具有更大的粒度 ，以及在事件可用时减少上下文切换回调用线程的次数。 此选项存在增加操作延迟的风险，尤其是在操作率较低时。</li>
+</ul>
+<p>Even if <code>min_nr = 0</code> or <code>1</code>, it is useful to make nr a bit bigger for performance reasons: more than one event may be already complete, and it could be processed without multiple calls to <code>io_getevents</code>. The only cost of a larger nr value library is that the user must allocate a larger array of events and be prepared to accept them.</p>
+<p>即使 <code>min_nr = 0</code> 或 <code>1</code>，出于性能原因，将 nr 设置得更大一点也很有用：可能已经完成了多个事件，并且可以在不多次调用 <code>io_getevents</code> 的情况下对其进行处理。 更大的 nr 值库的唯一成本是用户必须分配更大的事件数组并准备好接受它们。</p>
+<h2 id="use-with-epoll-使用epoll">Use with epoll 使用epoll</h2>
+<p>Any <code>iocb</code> can be set to notify an <code>eventfd</code> on completion using the libaio function <code>io_set_eventfd</code>. The <code>eventfd</code> can be put in an <code>epoll</code> object. When the <code>eventfd</code> is triggered, then the <code>io_getevents</code> function can be called on the corresponding <code>io_context_t</code>.  任何 <code>iocb</code> 都可以使用 libaio 函数 <code>io_set_eventfd</code> 设置为在完成时通知 <code>eventfd</code>。 <code>eventfd</code> 可以放在<code>epoll</code> 对象中。 当 <code>eventfd</code> 被触发时，可以在对应的 <code>io_context_t</code> 上调用 <code>io_getevents</code> 函数。</p>
+<p>There is no way to use this API to trigger an eventfd only when multiple operations are complete&ndash;the eventfd will always be triggered on the first operation. Consequently, as described in the previous section, it will often make sense to use <code>min_nr = 1</code> when using <code>io_getevents</code> after an <code>epoll_wait</code> call that indicates an <code>eventfd</code> involved in AIO.  仅当多个操作完成时，无法使用此 API 触发 eventfd - eventfd 将始终在第一个操作时触发。 因此，如前一节所述，在指示 AIO 中涉及的 <code>eventfd</code> 的调用 <code>epoll_wait</code> 之后使用 <code>io_getevents</code> 时，使用 <code>min_nr = 1</code> 通常是有意义的。</p>
+<h2 id="performance-considerations--性能注意事项">Performance considerations  性能注意事项</h2>
+<ul>
+<li><strong>Blocking during <code>io_submit</code> on ext4, on buffered operations, network access, pipes, etc.</strong> Some operations are not well-represented by the AIO interface. With completely unsupported operations like buffered reads, operations on a socket or pipes, the entire operation will be performed during the io_submit syscall, with the completion available immediately for access with io_getevents. AIO access to a file on a filesystem like ext4 is partially supported: if a metadata read is required to look up the data block (ie if the metadata is not already in memory), then the io_submit call will block on the metadata read. Certain types of file-enlarging writes are completely unsupported and block for the entire duration of the operation.  <strong>在 ext4 上的 <code>io_submit</code> 期间，在缓冲操作、网络访问、管道等上阻塞</strong> 一些操作没有被 AIO 接口很好地表示。 对于缓冲读取、套接字或管道上的操作等完全不受支持的操作，整个操作将在 io_submit 系统调用期间执行，完成后可立即通过 io_getevents 访问。 部分支持对文件系统（如 ext4）上文件的 AIO 访问：如果需要读取元数据来查找数据块（即，如果元数据尚未在内存中），则 io_submit 调用将阻塞读取元数据。 某些类型的文件放大写入完全不受支持，并在整个操作期间阻塞。</li>
+<li><strong>CPU overhead.</strong> When performing small operations on a high-performance device and targeting a very high operation rate from single CPU, a CPU bottleneck may result. This can be resolved by submitting and reaping AIO from multiple threads.  <strong>CPU 开销。</strong> 在高性能设备上执行小操作并针对单个 CPU 的非常高的操作率时，可能会导致 CPU 瓶颈。 这可以通过从多个线程提交和获取 AIO 来解决。</li>
+<li><strong>Lock contention when many CPUs or requests share an io_context_t.</strong> There are several circumstances when the kernel datastructure corresponding to an io_context_t may be accessed from multiple CPUs. For example, multiple threads may submit and get events from the same io_context_t. Some devices may use a single interrupt line for all completions. This can cause the lock to be bounced around between cores or the lock to be heavily contended, resulting in higher CPU usage and potentially lower throughput. One solution is to shard into multiple io_context_t objects, for example by thread and a hash of the address.  <strong>当多个 CPU 或请求共享一个 io_context_t 时的锁争用。</strong> 在某些情况下，可以从多个 CPU 访问对应于 io_context_t 的内核数据结构。 例如，多个线程可以从同一个 io_context_t 提交和获取事件。 一些设备可能对所有完成使用单个中断线。 这可能导致锁在内核之间反弹或锁被严重竞争，从而导致更高的 CPU 使用率和潜在的更低吞吐量。 一种解决方案是分片成多个 io_context_t 对象，例如通过线程和地址的哈希。</li>
+<li><strong>Ensuring sufficient parallelism.</strong> Some devices require many concurrent operations to reach peak performance. This means making sure that there are several operations ‘in flight’ simultaneously. On some high-performance storage devices, when operations are small, tens or hundreds must be submitted in parallel in order to achieve maximum throughput. For disk drives, performance may improve with greater parallelism if the elevator scheduler can make better decisions with more operations simultaneously in flight, but the effect is expected to be small in many situations.  <strong>确保足够的并行性。</strong> 某些设备需要许多并发操作才能达到峰值性能。 这意味着要确保同时有多个“正在运行”的操作。 在一些高性能存储设备上，当操作量较小时，必须并行提交数十或数百个，才能达到最大吞吐量。 对于磁盘驱动器，如果电梯调度程序可以在飞行中同时进行更多操作做出更好的决策，则性能可能会随着更大的并行性而提高，但在许多情况下预计效果会很小。</li>
+</ul>
+<h2 id="alternatives-to-linux-aio-替代方案">Alternatives to Linux AIO 替代方案</h2>
+<ul>
+<li><strong>Thread pool of synchronous I/O threads.</strong> This can work for many use cases, and it may be easier to program with. Unlike with AIO, all functions can be parallelized via a thread pool. Some users find that a thread pool does not work well due to the overhead of threads in terms of CPU and memory bandwidth usage from context switching. This comes up as an especially big problem with small random reads on high-performance storage devices.  **同步 I/O 线程的线程池, **这适用于许多用例，并且可能更易于编程。 与 AIO 不同，所有功能都可以通过线程池并行化。 一些用户发现线程池不能很好地工作，因为线程在 CPU 和内存带宽使用方面的开销来自上下文切换。 对于高性能存储设备上的小随机读取，这是一个特别大的问题。</li>
+<li><strong>POSIX AIO.</strong> Another asynchronous I/O interface is POSIX AIO. It is implemented as part of glibc. However, the glibc implementation uses a thread pool internally. For cases where this is acceptable, it might be better to use your own thread pool instead. Joel Becker implemented <a href="https://oss.oracle.com/projects/libaio-oracle/files/">a version</a> of POSIX AIO based on the Linux AIO mechanism described above. IBM DeveloperWorks has <a href="http://www.ibm.com/developerworks/linux/library/l-async/index.html">a good introduction</a> to POSIX AIO.  **POSIX AIO, **另一个异步 I/O 接口是 POSIX AIO。 它是作为 glibc 的一部分实现的。 但是，glibc 实现在内部使用线程池。 对于可以接受的情况，最好改用您自己的线程池。 Joel Becker 基于上述 Linux AIO 机制实现了 POSIX AIO <a href="https://oss.oracle.com/projects/libaio-oracle/files/">一个版本</a>。 IBM DeveloperWorks 对 POSIX AIO 有 <a href="http://www.ibm.com/developerworks/linux/library/l-async/index.html">很好的介绍</a>。</li>
+<li><strong>epoll.</strong> Linux has limited support for using epoll as a mechanism for asynchronous I/O. For reads to a file opened in buffered mode (that is, without O_DIRECT), if the file is opened as O_NONBLOCK, then a read will return EAGAIN until the relevant part is in memory. Writes to a buffered file are usually immediate, as they are written out with another writeback thread. However, these mechanisms don’t give the level of control over I/O that direct I/O gives.  **epoll, ** Linux 对使用 epoll 作为异步 I/O 机制的支持有限。 对于以缓冲模式（即没有 O_DIRECT）打开的文件的读取，如果文件以 O_NONBLOCK 方式打开，则读取将返回 EAGAIN，直到相关部分在内存中。 对缓冲文件的写入通常是立即的，因为它们是通过另一个写回线程写出的。 但是，这些机制并没有提供直接 I/O 提供的对 I/O 的控制级别。</li>
+</ul>
+<h2 id="sample-code-示例代码">Sample code 示例代码</h2>
+<p>Below is some example code which uses Linux AIO. I wrote it at Google, so it uses the <a href="https://github.com/google/glog">Google glog logging library</a> and the <a href="http://gflags.github.io/gflags/">Google gflags command-line flags library</a>, as well as a loose interpretation of <a href="https://google.github.io/styleguide/cppguide.html">Google’s C++ coding conventions</a>. When compiling it with gcc, pass <code>-laio</code> to dynamically link with libaio. (It isn’t included in glibc, so it must be explicitly included.)</p>
+<p>下面是一些使用 Linux AIO 的示例代码。 我是在 Google 写的，所以它使用 <a href="https://github.com/google/glog">Google glog 日志库</a> 和 [Google gflags 命令行标志库](<a href="http://gflags.github.io">http://gflags.github.io</a> /gflags/)，以及对 <a href="https://google.github.io/styleguide/cppguide.html">Google 的 C++ 编码约定</a> 的松散解释。 使用 gcc 编译时，通过 <code>-laio</code> 与 libaio 动态链接。 （它不包含在 glibc 中，因此必须明确包含。）</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">102
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">103
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">104
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">105
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">106
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">107
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">108
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">109
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">110
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">111
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">112
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">113
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">114
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">115
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">116
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">117
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">118
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">119
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">120
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">121
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">122
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">123
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">124
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">125
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">126
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">127
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">128
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">129
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">130
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">131
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">132
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">133
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">134
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">135
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">136
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">137
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">138
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">139
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">140
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">141
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">142
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">143
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">144
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">145
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">146
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">147
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">148
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">149
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">150
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">151
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">152
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">153
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">154
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">155
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">156
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">157
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">158
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">159
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">160
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">161
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">162
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">163
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">164
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">165
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">166
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">167
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">168
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">169
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">170
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">171
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">172
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">173
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">174
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">175
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">176
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">177
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">178
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">179
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">180
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">181
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">182
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">183
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">184
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">185
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">186
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">187
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">188
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">189
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">190
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">191
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">192
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">193
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">194
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">195
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">196
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">197
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">198
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">199
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">200
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">201
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">202
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">203
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">204
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">205
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#998;font-style:italic">// Code written by Daniel Ehrenberg, released into the public domain
+</span><span style="color:#998;font-style:italic"></span>
+<span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;fcntl.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;gflags/gflags.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;glog/logging.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;libaio.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;stdlib.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;stdio.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;sys/stat.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;sys/types.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>
+DEFINE_string(path, <span style="color:#d14">&#34;/tmp/testfile&#34;</span>, <span style="color:#d14">&#34;Path to the file to manipulate&#34;</span>);
+DEFINE_int32(file_size, <span style="color:#099">1000</span>, <span style="color:#d14">&#34;Length of file in 4k blocks&#34;</span>);
+DEFINE_int32(concurrent_requests, <span style="color:#099">100</span>, <span style="color:#d14">&#34;Number of concurrent requests&#34;</span>);
+DEFINE_int32(min_nr, <span style="color:#099">1</span>, <span style="color:#d14">&#34;min_nr&#34;</span>);
+DEFINE_int32(max_nr, <span style="color:#099">1</span>, <span style="color:#d14">&#34;max_nr&#34;</span>);
+
+<span style="color:#998;font-style:italic">// The size of operation that will occur on the device
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">static</span> <span style="color:#000;font-weight:bold">const</span> <span style="color:#458;font-weight:bold">int</span> kPageSize <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">4096</span>;
+
+class AIORequest {
+ <span style="color:#900;font-weight:bold">public</span>:
+  <span style="color:#458;font-weight:bold">int</span><span style="color:#000;font-weight:bold">*</span> buffer_;
+
+  virtual <span style="color:#458;font-weight:bold">void</span> <span style="color:#900;font-weight:bold">Complete</span>(<span style="color:#458;font-weight:bold">int</span> res) <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>;
+
+  AIORequest() {
+    <span style="color:#458;font-weight:bold">int</span> ret <span style="color:#000;font-weight:bold">=</span> posix_memalign(reinterpret_cast<span style="color:#000;font-weight:bold">&lt;</span><span style="color:#458;font-weight:bold">void</span><span style="color:#000;font-weight:bold">**&gt;</span>(<span style="color:#000;font-weight:bold">&amp;</span>buffer_),
+                             kPageSize, kPageSize);
+    CHECK_EQ(ret, <span style="color:#099">0</span>);
+  }
+
+  virtual <span style="color:#000;font-weight:bold">~</span>AIORequest() {
+    free(buffer_);
+  }
+};
+
+class Adder {
+ <span style="color:#900;font-weight:bold">public</span>:
+  virtual <span style="color:#458;font-weight:bold">void</span> Add(<span style="color:#458;font-weight:bold">int</span> amount) <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>;
+
+  virtual <span style="color:#000;font-weight:bold">~</span>Adder() { };
+};
+
+class <span style="color:#900;font-weight:bold">AIOReadRequest</span> : public AIORequest {
+ <span style="color:#900;font-weight:bold">private</span>:
+  Adder<span style="color:#000;font-weight:bold">*</span> adder_;
+
+ <span style="color:#900;font-weight:bold">public</span>:
+  AIOReadRequest(Adder<span style="color:#000;font-weight:bold">*</span> adder) <span style="color:#000;font-weight:bold">:</span> AIORequest(), adder_(adder) { }
+
+  virtual <span style="color:#458;font-weight:bold">void</span> Complete(<span style="color:#458;font-weight:bold">int</span> res) {
+    CHECK_EQ(res, kPageSize) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Read incomplete or error &#34;</span> <span style="color:#000;font-weight:bold">&lt;&lt;</span> res;
+    <span style="color:#458;font-weight:bold">int</span> value <span style="color:#000;font-weight:bold">=</span> buffer_[<span style="color:#099">0</span>];
+    LOG(INFO) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Read of &#34;</span> <span style="color:#000;font-weight:bold">&lt;&lt;</span> value <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34; completed&#34;</span>;
+    adder_<span style="color:#000;font-weight:bold">-&gt;</span>Add(value);
+  }
+};
+
+class <span style="color:#900;font-weight:bold">AIOWriteRequest</span> : public AIORequest {
+ <span style="color:#900;font-weight:bold">private</span>:
+  <span style="color:#458;font-weight:bold">int</span> value_;
+
+ <span style="color:#900;font-weight:bold">public</span>:
+  AIOWriteRequest(<span style="color:#458;font-weight:bold">int</span> value) <span style="color:#000;font-weight:bold">:</span> AIORequest(), value_(value) {
+    buffer_[<span style="color:#099">0</span>] <span style="color:#000;font-weight:bold">=</span> value;
+  }
+
+  virtual <span style="color:#458;font-weight:bold">void</span> Complete(<span style="color:#458;font-weight:bold">int</span> res) {
+    CHECK_EQ(res, kPageSize) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Write incomplete or error &#34;</span> <span style="color:#000;font-weight:bold">&lt;&lt;</span> res;
+    LOG(INFO) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Write of &#34;</span> <span style="color:#000;font-weight:bold">&lt;&lt;</span> value_ <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34; completed&#34;</span>;
+  }
+};
+
+class <span style="color:#900;font-weight:bold">AIOAdder</span> : public Adder {
+ <span style="color:#900;font-weight:bold">public</span>:
+  <span style="color:#458;font-weight:bold">int</span> fd_;
+  io_context_t ioctx_;
+  <span style="color:#458;font-weight:bold">int</span> counter_;
+  <span style="color:#458;font-weight:bold">int</span> reap_counter_;
+  <span style="color:#458;font-weight:bold">int</span> sum_;
+  <span style="color:#458;font-weight:bold">int</span> length_;
+
+  AIOAdder(<span style="color:#458;font-weight:bold">int</span> length)
+      <span style="color:#000;font-weight:bold">:</span> ioctx_(<span style="color:#099">0</span>), counter_(<span style="color:#099">0</span>), reap_counter_(<span style="color:#099">0</span>), sum_(<span style="color:#099">0</span>), length_(length) { }
+
+  <span style="color:#458;font-weight:bold">void</span> Init() {
+    LOG(INFO) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Opening file&#34;</span>;
+    fd_ <span style="color:#000;font-weight:bold">=</span> open(FLAGS_path.c_str(), O_RDWR <span style="color:#000;font-weight:bold">|</span> O_DIRECT <span style="color:#000;font-weight:bold">|</span> O_CREAT, <span style="color:#099">0644</span>);
+    PCHECK(fd_ <span style="color:#000;font-weight:bold">&gt;=</span> <span style="color:#099">0</span>) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Error opening file&#34;</span>;
+    LOG(INFO) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Allocating enough space for the sum&#34;</span>;
+    PCHECK(fallocate(fd_, <span style="color:#099">0</span>, <span style="color:#099">0</span>, kPageSize <span style="color:#000;font-weight:bold">*</span> length_) <span style="color:#000;font-weight:bold">&gt;=</span> <span style="color:#099">0</span>) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Error in fallocate&#34;</span>;
+    LOG(INFO) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Setting up the io context&#34;</span>;
+    PCHECK(io_setup(<span style="color:#099">100</span>, <span style="color:#000;font-weight:bold">&amp;</span>ioctx_) <span style="color:#000;font-weight:bold">&gt;=</span> <span style="color:#099">0</span>) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Error in io_setup&#34;</span>;
+  }
+
+  virtual <span style="color:#458;font-weight:bold">void</span> Add(<span style="color:#458;font-weight:bold">int</span> amount) {
+    sum_ <span style="color:#000;font-weight:bold">+=</span> amount;
+    LOG(INFO) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Adding &#34;</span> <span style="color:#000;font-weight:bold">&lt;&lt;</span> amount <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34; for a total of &#34;</span> <span style="color:#000;font-weight:bold">&lt;&lt;</span> sum_;
+  }
+
+  <span style="color:#458;font-weight:bold">void</span> SubmitWrite() {
+    LOG(INFO) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Submitting a write to &#34;</span> <span style="color:#000;font-weight:bold">&lt;&lt;</span> counter_;
+    <span style="color:#000;font-weight:bold">struct</span> iocb iocb;
+    <span style="color:#000;font-weight:bold">struct</span> iocb<span style="color:#000;font-weight:bold">*</span> iocbs <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">&amp;</span>iocb;
+    AIORequest <span style="color:#000;font-weight:bold">*</span>req <span style="color:#000;font-weight:bold">=</span> new AIOWriteRequest(counter_);
+    io_prep_pwrite(<span style="color:#000;font-weight:bold">&amp;</span>iocb, fd_, req<span style="color:#000;font-weight:bold">-&gt;</span>buffer_, kPageSize, counter_ <span style="color:#000;font-weight:bold">*</span> kPageSize);
+    iocb.data <span style="color:#000;font-weight:bold">=</span> req;
+    <span style="color:#458;font-weight:bold">int</span> res <span style="color:#000;font-weight:bold">=</span> io_submit(ioctx_, <span style="color:#099">1</span>, <span style="color:#000;font-weight:bold">&amp;</span>iocbs);
+    CHECK_EQ(res, <span style="color:#099">1</span>);
+  }
+
+  <span style="color:#458;font-weight:bold">void</span> WriteFile() {
+    reap_counter_ <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>;
+    <span style="color:#000;font-weight:bold">for</span> (counter_ <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>; counter_ <span style="color:#000;font-weight:bold">&lt;</span> length_; counter_<span style="color:#000;font-weight:bold">++</span>) {
+      SubmitWrite();
+      Reap();
+    }
+    ReapRemaining();
+  }
+
+  <span style="color:#458;font-weight:bold">void</span> SubmitRead() {
+    LOG(INFO) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Submitting a read from &#34;</span> <span style="color:#000;font-weight:bold">&lt;&lt;</span> counter_;
+    <span style="color:#000;font-weight:bold">struct</span> iocb iocb;
+    <span style="color:#000;font-weight:bold">struct</span> iocb<span style="color:#000;font-weight:bold">*</span> iocbs <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">&amp;</span>iocb;
+    AIORequest <span style="color:#000;font-weight:bold">*</span>req <span style="color:#000;font-weight:bold">=</span> new AIOReadRequest(this);
+    io_prep_pread(<span style="color:#000;font-weight:bold">&amp;</span>iocb, fd_, req<span style="color:#000;font-weight:bold">-&gt;</span>buffer_, kPageSize, counter_ <span style="color:#000;font-weight:bold">*</span> kPageSize);
+    iocb.data <span style="color:#000;font-weight:bold">=</span> req;
+    <span style="color:#458;font-weight:bold">int</span> res <span style="color:#000;font-weight:bold">=</span> io_submit(ioctx_, <span style="color:#099">1</span>, <span style="color:#000;font-weight:bold">&amp;</span>iocbs);
+    CHECK_EQ(res, <span style="color:#099">1</span>);
+  }
+
+  <span style="color:#458;font-weight:bold">void</span> ReadFile() {
+    reap_counter_ <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>;
+    <span style="color:#000;font-weight:bold">for</span> (counter_ <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>; counter_ <span style="color:#000;font-weight:bold">&lt;</span> length_; counter_<span style="color:#000;font-weight:bold">++</span>) {
+        SubmitRead();
+        Reap();
+    }
+    ReapRemaining();
+  }
+
+  <span style="color:#458;font-weight:bold">int</span> DoReap(<span style="color:#458;font-weight:bold">int</span> min_nr) {
+    LOG(INFO) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Reaping between &#34;</span> <span style="color:#000;font-weight:bold">&lt;&lt;</span> min_nr <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34; and &#34;</span>
+              <span style="color:#000;font-weight:bold">&lt;&lt;</span> FLAGS_max_nr <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34; io_events&#34;</span>;
+    <span style="color:#000;font-weight:bold">struct</span> io_event<span style="color:#000;font-weight:bold">*</span> events <span style="color:#000;font-weight:bold">=</span> new io_event[FLAGS_max_nr];
+    <span style="color:#000;font-weight:bold">struct</span> timespec timeout;
+    timeout.tv_sec <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>;
+    timeout.tv_nsec <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">100000000</span>;
+    <span style="color:#458;font-weight:bold">int</span> num_events;
+    LOG(INFO) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Calling io_getevents&#34;</span>;
+    num_events <span style="color:#000;font-weight:bold">=</span> io_getevents(ioctx_, min_nr, FLAGS_max_nr, events,
+                              <span style="color:#000;font-weight:bold">&amp;</span>timeout);
+    LOG(INFO) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Calling completion function on results&#34;</span>;
+    <span style="color:#000;font-weight:bold">for</span> (<span style="color:#458;font-weight:bold">int</span> i <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>; i <span style="color:#000;font-weight:bold">&lt;</span> num_events; i<span style="color:#000;font-weight:bold">++</span>) {
+      <span style="color:#000;font-weight:bold">struct</span> io_event event <span style="color:#000;font-weight:bold">=</span> events[i];
+      AIORequest<span style="color:#000;font-weight:bold">*</span> req <span style="color:#000;font-weight:bold">=</span> static_cast<span style="color:#000;font-weight:bold">&lt;</span>AIORequest<span style="color:#000;font-weight:bold">*&gt;</span>(event.data);
+      req<span style="color:#000;font-weight:bold">-&gt;</span>Complete(event.res);
+      delete req;
+    }
+    delete events;
+    
+LOG(INFO) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Reaped &#34;</span> <span style="color:#000;font-weight:bold">&lt;&lt;</span> num_events <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34; io_events&#34;</span>;
+    reap_counter_ <span style="color:#000;font-weight:bold">+=</span> num_events;
+    <span style="color:#000;font-weight:bold">return</span> num_events;
+  }
+
+  <span style="color:#458;font-weight:bold">void</span> Reap() {
+    <span style="color:#000;font-weight:bold">if</span> (counter_ <span style="color:#000;font-weight:bold">&gt;=</span> FLAGS_min_nr) {
+      DoReap(FLAGS_min_nr);
+    }
+  }
+
+  <span style="color:#458;font-weight:bold">void</span> ReapRemaining() {
+    <span style="color:#000;font-weight:bold">while</span> (reap_counter_ <span style="color:#000;font-weight:bold">&lt;</span> length_) {
+      DoReap(<span style="color:#099">1</span>);
+    }
+  }
+
+  <span style="color:#000;font-weight:bold">~</span>AIOAdder() {
+    LOG(INFO) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Closing AIO context and file&#34;</span>;
+    io_destroy(ioctx_);
+    close(fd_);
+  }
+
+  <span style="color:#458;font-weight:bold">int</span> Sum() {
+    LOG(INFO) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Writing consecutive integers to file&#34;</span>;
+    WriteFile();
+    LOG(INFO) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Reading consecutive integers from file&#34;</span>;
+    ReadFile();
+    <span style="color:#000;font-weight:bold">return</span> sum_;
+  }
+};
+
+<span style="color:#458;font-weight:bold">int</span> <span style="color:#900;font-weight:bold">main</span>(<span style="color:#458;font-weight:bold">int</span> argc, <span style="color:#458;font-weight:bold">char</span><span style="color:#000;font-weight:bold">*</span> argv[]) {
+  google<span style="color:#000;font-weight:bold">::</span>ParseCommandLineFlags(<span style="color:#000;font-weight:bold">&amp;</span>argc, <span style="color:#000;font-weight:bold">&amp;</span>argv, <span style="color:#0086b3">true</span>);
+  AIOAdder adder(FLAGS_file_size);
+  adder.Init();
+  <span style="color:#458;font-weight:bold">int</span> sum <span style="color:#000;font-weight:bold">=</span> adder.Sum();
+  <span style="color:#458;font-weight:bold">int</span> expected <span style="color:#000;font-weight:bold">=</span> (FLAGS_file_size <span style="color:#000;font-weight:bold">*</span> (FLAGS_file_size <span style="color:#000;font-weight:bold">-</span> <span style="color:#099">1</span>)) <span style="color:#000;font-weight:bold">/</span> <span style="color:#099">2</span>;
+  LOG(INFO) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;AIO is complete&#34;</span>;
+  CHECK_EQ(sum, expected) <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34;Expected &#34;</span> <span style="color:#000;font-weight:bold">&lt;&lt;</span> expected <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#d14">&#34; Got &#34;</span> <span style="color:#000;font-weight:bold">&lt;&lt;</span> sum;
+  printf(<span style="color:#d14">&#34;Successfully calculated that the sum of integers from 0&#34;</span>
+         <span style="color:#d14">&#34; to %d is %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, FLAGS_file_size <span style="color:#000;font-weight:bold">-</span> <span style="color:#099">1</span>, sum);
+  <span style="color:#000;font-weight:bold">return</span> <span style="color:#099">0</span>;
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>另一个示例:</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">102
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">103
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">104
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">105
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">106
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">107
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">108
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">109
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">110
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">111
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">112
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">113
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">114
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">115
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">116
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">117
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">118
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">119
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">120
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">121
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">122
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">123
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">124
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">125
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">126
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">127
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">128
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">129
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">130
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">131
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">132
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">133
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">134
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">135
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">136
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">137
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">138
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">139
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">140
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">141
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">142
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">143
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">144
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">145
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">146
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">147
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">148
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">149
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">150
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">151
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">152
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">153
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">154
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">155
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">156
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">157
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">158
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">159
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">160
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">161
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">162
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">163
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">164
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">165
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">166
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">167
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">168
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">169
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">170
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">171
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">172
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">173
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">174
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">175
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">176
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">177
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#999;font-weight:bold;font-style:italic">#define _GNU_SOURCE
+</span><span style="color:#999;font-weight:bold;font-style:italic">#define __STDC_FORMAT_MACROS
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>
+<span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;stdio.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;errno.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;libaio.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;sys/eventfd.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;sys/epoll.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;stdlib.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;sys/types.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;unistd.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;stdint.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;sys/stat.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;fcntl.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;inttypes.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>
+<span style="color:#999;font-weight:bold;font-style:italic">#define TEST_FILE &#34;aio_test_file&#34;
+</span><span style="color:#999;font-weight:bold;font-style:italic">#define TEST_FILE_SIZE (127 * 1024)
+</span><span style="color:#999;font-weight:bold;font-style:italic">#define NUM_EVENTS 128
+</span><span style="color:#999;font-weight:bold;font-style:italic">#define ALIGN_SIZE 512
+</span><span style="color:#999;font-weight:bold;font-style:italic">#define RD_WR_SIZE 1024
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>
+<span style="color:#998;font-style:italic">/*
+</span><span style="color:#998;font-style:italic">环境: 在centos 6.2 (libaio-devel 0.3.107-10) 上运行通过
+</span><span style="color:#998;font-style:italic">参考: linux异步IO编程实例分析(https://zhuanlan.zhihu.com/p/258464210)
+</span><span style="color:#998;font-style:italic">执行:
+</span><span style="color:#998;font-style:italic">gcc aio.c -laio
+</span><span style="color:#998;font-style:italic">*/</span>
+
+<span style="color:#000;font-weight:bold">struct</span> <span style="color:#458;font-weight:bold">custom_iocb</span>
+{
+  <span style="color:#000;font-weight:bold">struct</span> <span style="color:#458;font-weight:bold">iocb</span> iocb;
+  <span style="color:#458;font-weight:bold">int</span> nth_request;
+};
+
+<span style="color:#458;font-weight:bold">void</span> <span style="color:#900;font-weight:bold">aio_callback</span>(io_context_t ctx, <span style="color:#000;font-weight:bold">struct</span> <span style="color:#458;font-weight:bold">iocb</span> <span style="color:#000;font-weight:bold">*</span>iocb, <span style="color:#458;font-weight:bold">long</span> res, <span style="color:#458;font-weight:bold">long</span> res2)
+{
+  <span style="color:#000;font-weight:bold">struct</span> <span style="color:#458;font-weight:bold">custom_iocb</span> <span style="color:#000;font-weight:bold">*</span>iocbp <span style="color:#000;font-weight:bold">=</span> (<span style="color:#000;font-weight:bold">struct</span> <span style="color:#458;font-weight:bold">custom_iocb</span> <span style="color:#000;font-weight:bold">*</span>)iocb;
+  printf(<span style="color:#d14">&#34;nth_request: %d, request_type: %s, offset: %lld, length: %lu, res: %ld, res2: %ld</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>,
+         iocbp<span style="color:#000;font-weight:bold">-&gt;</span>nth_request, (iocb<span style="color:#000;font-weight:bold">-&gt;</span>aio_lio_opcode <span style="color:#000;font-weight:bold">==</span> IO_CMD_PREAD) <span style="color:#000;font-weight:bold">?</span> <span style="color:#d14">&#34;READ&#34;</span> <span style="color:#000;font-weight:bold">:</span> <span style="color:#d14">&#34;WRITE&#34;</span>,
+         iocb<span style="color:#000;font-weight:bold">-&gt;</span>u.c.offset, iocb<span style="color:#000;font-weight:bold">-&gt;</span>u.c.nbytes, res, res2);
+}
+
+<span style="color:#458;font-weight:bold">int</span> <span style="color:#900;font-weight:bold">main</span>(<span style="color:#458;font-weight:bold">int</span> argc, <span style="color:#458;font-weight:bold">char</span> <span style="color:#000;font-weight:bold">*</span>argv[])
+{
+  <span style="color:#458;font-weight:bold">int</span> efd, fd, epfd;
+  io_context_t ctx;
+  <span style="color:#000;font-weight:bold">struct</span> <span style="color:#458;font-weight:bold">timespec</span> tms;
+  <span style="color:#000;font-weight:bold">struct</span> <span style="color:#458;font-weight:bold">io_event</span> events[NUM_EVENTS];
+  <span style="color:#000;font-weight:bold">struct</span> <span style="color:#458;font-weight:bold">custom_iocb</span> iocbs[NUM_EVENTS];
+  <span style="color:#000;font-weight:bold">struct</span> <span style="color:#458;font-weight:bold">iocb</span> <span style="color:#000;font-weight:bold">*</span>iocbps[NUM_EVENTS];
+  <span style="color:#000;font-weight:bold">struct</span> <span style="color:#458;font-weight:bold">custom_iocb</span> <span style="color:#000;font-weight:bold">*</span>iocbp;
+  <span style="color:#458;font-weight:bold">int</span> i, j, r;
+  <span style="color:#458;font-weight:bold">void</span> <span style="color:#000;font-weight:bold">*</span>buf;
+  <span style="color:#000;font-weight:bold">struct</span> <span style="color:#458;font-weight:bold">epoll_event</span> epevent;
+
+  <span style="color:#998;font-style:italic">// 这里的resfd是通过系统调用eventfd生成的, eventfd是linux 2.6.22内核之后加进来的syscall，作用是内核用来通知应用程序发生的事件的数量，从而使应用程序不用频繁地去轮询内核是否有时间发生，而是由内核将发生事件的数量写入到该fd，应用程序发现fd可读后，从fd读取该数值，并马上去内核读取, 有了eventfd，就可以很好地将libaio和epoll事件循环结合起来
+</span><span style="color:#998;font-style:italic"></span>  efd <span style="color:#000;font-weight:bold">=</span> eventfd(<span style="color:#099">0</span>, EFD_NONBLOCK <span style="color:#000;font-weight:bold">|</span> EFD_CLOEXEC);
+  <span style="color:#000;font-weight:bold">if</span> (efd <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>)
+  {
+    perror(<span style="color:#d14">&#34;eventfd&#34;</span>);
+    <span style="color:#000;font-weight:bold">return</span> <span style="color:#099">2</span>;
+  }
+
+  fd <span style="color:#000;font-weight:bold">=</span> open(TEST_FILE, O_RDWR <span style="color:#000;font-weight:bold">|</span> O_CREAT <span style="color:#000;font-weight:bold">|</span> O_DIRECT, <span style="color:#099">0644</span>);
+  <span style="color:#000;font-weight:bold">if</span> (fd <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>)
+  {
+    perror(<span style="color:#d14">&#34;open&#34;</span>);
+    <span style="color:#000;font-weight:bold">return</span> <span style="color:#099">3</span>;
+  }
+  ftruncate(fd, TEST_FILE_SIZE);
+
+  ctx <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>;
+  <span style="color:#998;font-style:italic">// 1. 建立IO任务   int io_setup (int maxevents, io_context_t *ctxp);
+</span><span style="color:#998;font-style:italic"></span>  <span style="color:#000;font-weight:bold">if</span> (io_setup(<span style="color:#099">8192</span>, <span style="color:#000;font-weight:bold">&amp;</span>ctx))
+  {
+    perror(<span style="color:#d14">&#34;io_setup&#34;</span>);
+    <span style="color:#000;font-weight:bold">return</span> <span style="color:#099">4</span>;
+  }
+
+  <span style="color:#998;font-style:italic">// 读写的buf都必须是按扇区对齐的，可以用posix_memalign来分配
+</span><span style="color:#998;font-style:italic"></span>  <span style="color:#000;font-weight:bold">if</span> (posix_memalign(<span style="color:#000;font-weight:bold">&amp;</span>buf, ALIGN_SIZE, RD_WR_SIZE))
+  {
+    perror(<span style="color:#d14">&#34;posix_memalign&#34;</span>);
+    <span style="color:#000;font-weight:bold">return</span> <span style="color:#099">5</span>;
+  }
+  printf(<span style="color:#d14">&#34;buf: %p</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, buf);
+
+  <span style="color:#000;font-weight:bold">for</span> (i <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>, iocbp <span style="color:#000;font-weight:bold">=</span> iocbs; i <span style="color:#000;font-weight:bold">&lt;</span> NUM_EVENTS; <span style="color:#000;font-weight:bold">++</span>i, <span style="color:#000;font-weight:bold">++</span>iocbp)
+  {
+    iocbps[i] <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">&amp;</span>iocbp<span style="color:#000;font-weight:bold">-&gt;</span>iocb;
+    <span style="color:#998;font-style:italic">// 填充iocb结构体, void io_prep_pread(struct iocb *iocb, int fd, void *buf, size_t count, long long offset)
+</span><span style="color:#998;font-style:italic"></span>    io_prep_pread(<span style="color:#000;font-weight:bold">&amp;</span>iocbp<span style="color:#000;font-weight:bold">-&gt;</span>iocb, fd, buf, RD_WR_SIZE, i <span style="color:#000;font-weight:bold">*</span> RD_WR_SIZE);
+    io_set_eventfd(<span style="color:#000;font-weight:bold">&amp;</span>iocbp<span style="color:#000;font-weight:bold">-&gt;</span>iocb, efd); <span style="color:#998;font-style:italic">// 将eventfd设置到iocb中
+</span><span style="color:#998;font-style:italic"></span>    io_set_callback(<span style="color:#000;font-weight:bold">&amp;</span>iocbp<span style="color:#000;font-weight:bold">-&gt;</span>iocb, aio_callback);
+    iocbp<span style="color:#000;font-weight:bold">-&gt;</span>nth_request <span style="color:#000;font-weight:bold">=</span> i <span style="color:#000;font-weight:bold">+</span> <span style="color:#099">1</span>;
+  }
+
+  <span style="color:#998;font-style:italic">// 2.提交IO任务, long io_submit (aio_context_t ctx_id, long nr, struct iocb **iocbpp);
+</span><span style="color:#998;font-style:italic"></span>  <span style="color:#000;font-weight:bold">if</span> (io_submit(ctx, NUM_EVENTS, iocbps) <span style="color:#000;font-weight:bold">!=</span> NUM_EVENTS)
+  {
+    perror(<span style="color:#d14">&#34;io_submit&#34;</span>);
+    <span style="color:#000;font-weight:bold">return</span> <span style="color:#099">6</span>;
+  }
+
+  <span style="color:#998;font-style:italic">// 创建一个epollfd，并将eventfd加到epoll中
+</span><span style="color:#998;font-style:italic"></span>  epfd <span style="color:#000;font-weight:bold">=</span> epoll_create(<span style="color:#099">1</span>);
+  <span style="color:#000;font-weight:bold">if</span> (epfd <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>)
+  {
+    perror(<span style="color:#d14">&#34;epoll_create&#34;</span>);
+    <span style="color:#000;font-weight:bold">return</span> <span style="color:#099">7</span>;
+  }
+
+  epevent.events <span style="color:#000;font-weight:bold">=</span> EPOLLIN <span style="color:#000;font-weight:bold">|</span> EPOLLET;
+  epevent.data.ptr <span style="color:#000;font-weight:bold">=</span> <span style="color:#0086b3">NULL</span>;
+  <span style="color:#000;font-weight:bold">if</span> (epoll_ctl(epfd, EPOLL_CTL_ADD, efd, <span style="color:#000;font-weight:bold">&amp;</span>epevent))
+  {
+    perror(<span style="color:#d14">&#34;epoll_ctl&#34;</span>);
+    <span style="color:#000;font-weight:bold">return</span> <span style="color:#099">8</span>;
+  }
+
+  i <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>;
+  <span style="color:#000;font-weight:bold">while</span> (i <span style="color:#000;font-weight:bold">&lt;</span> NUM_EVENTS)
+  {
+    <span style="color:#458;font-weight:bold">uint64_t</span> finished_aio;
+
+    <span style="color:#000;font-weight:bold">if</span> (epoll_wait(epfd, <span style="color:#000;font-weight:bold">&amp;</span>epevent, <span style="color:#099">1</span>, <span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>) <span style="color:#000;font-weight:bold">!=</span> <span style="color:#099">1</span>)
+    {
+      perror(<span style="color:#d14">&#34;epoll_wait&#34;</span>);
+      <span style="color:#000;font-weight:bold">return</span> <span style="color:#099">9</span>;
+    }
+
+    <span style="color:#998;font-style:italic">// 当eventfd可读时，从eventfd读出完成IO请求的数量，并调用io_getevents获取这些IO
+</span><span style="color:#998;font-style:italic"></span>    <span style="color:#000;font-weight:bold">if</span> (read(efd, <span style="color:#000;font-weight:bold">&amp;</span>finished_aio, <span style="color:#000;font-weight:bold">sizeof</span>(finished_aio)) <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">sizeof</span>(finished_aio))
+    {
+      perror(<span style="color:#d14">&#34;read&#34;</span>);
+      <span style="color:#000;font-weight:bold">return</span> <span style="color:#099">10</span>;
+    }
+
+    printf(<span style="color:#d14">&#34;finished io number: %&#34;</span> PRIu64 <span style="color:#d14">&#34;</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, finished_aio);
+
+    <span style="color:#000;font-weight:bold">while</span> (finished_aio <span style="color:#000;font-weight:bold">&gt;</span> <span style="color:#099">0</span>)
+    {
+      tms.tv_sec <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>;
+      tms.tv_nsec <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>;
+      <span style="color:#998;font-style:italic">// 3.获取完成的IO, 提供一个io_event数组给内核来copy完成的IO请求到这里，数组的大小是io_setup时指定的maxevents,timeout是指等待IO完成的超时时间，设置为NULL表示一直等待所有到IO的完成
+</span><span style="color:#998;font-style:italic"></span>      <span style="color:#998;font-style:italic">// long io_getevents (aio_context_t ctx_id, long min_nr, long nr, struct io_event *events, struct timespec *timeout);
+</span><span style="color:#998;font-style:italic"></span>      r <span style="color:#000;font-weight:bold">=</span> io_getevents(ctx, <span style="color:#099">1</span>, NUM_EVENTS, events, <span style="color:#000;font-weight:bold">&amp;</span>tms);
+      <span style="color:#998;font-style:italic">// printf(&#34;r:%d&#34;, r);
+</span><span style="color:#998;font-style:italic"></span>      <span style="color:#000;font-weight:bold">if</span> (r <span style="color:#000;font-weight:bold">&gt;</span> <span style="color:#099">0</span>)
+      {
+        <span style="color:#000;font-weight:bold">for</span> (j <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>; j <span style="color:#000;font-weight:bold">&lt;</span> r; <span style="color:#000;font-weight:bold">++</span>j)
+        {
+          ((io_callback_t)(events[j].data))(ctx, events[j].obj, events[j].res, events[j].res2);
+        }
+        i <span style="color:#000;font-weight:bold">+=</span> r;
+        finished_aio <span style="color:#000;font-weight:bold">-=</span> r;
+      }
+      <span style="color:#000;font-weight:bold">else</span>
+      {
+        finished_aio <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>;
+        printf(<span style="color:#d14">&#34;finished_aio:%&#34;</span> PRIu64 <span style="color:#d14">&#34;</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, finished_aio);
+      }
+    }
+  }
+
+  printf(<span style="color:#d14">&#34;end</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>);
+  close(epfd);
+  free(buf);
+  <span style="color:#998;font-style:italic">// 4.销毁IO任务, int io_destroy (io_context_t ctx);
+</span><span style="color:#998;font-style:italic"></span>  io_destroy(ctx);
+  close(fd);
+  close(efd);
+  remove(TEST_FILE);
+
+  <span style="color:#000;font-weight:bold">return</span> <span style="color:#099">0</span>;
+}
+</code></pre></td></tr></table>
+</div>
+</div>
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/posts/how-to-use-linux-aio/">https://logread.cn/posts/how-to-use-linux-aio/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/stolonpostgresql/">Stolon PostgreSQL高可用</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2022
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/posts/how-to-use-linux-aio/" title="How to Use Linux Aio">How to Use Linux Aio</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/stolonpostgresql/" title="Stolon PostgreSQL高可用">Stolon PostgreSQL高可用</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title" style="color:red">福利派送</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a href="https://www.aliyun.com/minisite/goods?userCode=jdg9oj97&amp;share_source=copy_link" title="【2019双12】ALL IN CLoud 低至1折" target="_blank" style="color:red">
+                
+                    <img src="https://img.alicdn.com/tfs/TB1_rYHo7P2gK0jSZPxXXacQpXa-690-388.jpg">
+                
+            </a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://www.logread.cn/" title="晓兵">晓兵</a>
+        </li>
+        
+        <li>
+            <a target="_blank" href="http://yuedu.baidu.com/ebook/14a722970740be1e640e9a3e" title="link">link</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
