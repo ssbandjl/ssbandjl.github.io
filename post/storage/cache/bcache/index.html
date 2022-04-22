@@ -1,0 +1,993 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>Bcache | 晓兵</title>
+    <meta property="og:title" content="Bcache - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2022-04-18T15:34:25&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2022-04-18T15:34:25&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储">
+    <meta name="description" content="Bcache">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/storage/cache/bcache/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储/linux/c/c&#43;&#43;/golang</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents"></nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Bcache</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2022年4月18日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E7%BC%93%E5%AD%98'>缓存</a></span>
+            
+            <span class="meta-category"><a href='/categories/bcache'>bcache</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="a-block-layer-cache-bcache">A block layer cache (bcache)</h1>
+<h1 id="what-is-bcache">What is bcache?</h1>
+<p>Bcache is a Linux kernel block layer cache. It allows one or more fast disk drives such as flash-based solid state drives (SSDs) to act as a cache for one or more slower hard disk drives.</p>
+<p>Hard drives are cheap and big, SSDs are fast but small and expensive. Wouldn&rsquo;t it be nice if you could transparently get the advantages of both? With Bcache, you can have your cake and eat it too.</p>
+<p>Bcache patches for the Linux kernel allow one to use SSDs to cache other block devices. It&rsquo;s analogous to L2Arc for ZFS, but Bcache also does writeback caching (besides just write through caching), and it&rsquo;s filesystem agnostic. It&rsquo;s designed to be switched on with a minimum of effort, and to work well without configuration on any setup. By default it won&rsquo;t cache sequential IO, just the random reads and writes that SSDs excel at. It&rsquo;s meant to be suitable for desktops, servers, high end storage arrays, and perhaps even embedded.</p>
+<p>The design goal is to be just as fast as the SSD and cached device (depending on cache hit vs. miss, and writethrough vs. writeback writes) to within the margin of error. It&rsquo;s not quite there yet, mostly for sequential reads. But testing has shown that it is emphatically possible, and even in some cases to do better - primarily random writes.</p>
+<p>It&rsquo;s also designed to be safe. Reliability is critical for anything that does writeback caching; if it breaks, you will lose data. Bcache is meant to be a superior alternative to battery backed up raid controllers, thus it must be reliable even if the power cord is yanked out. It won&rsquo;t return a write as completed until everything necessary to locate it is on stable storage, nor will writes ever be seen as partially completed (or worse, missing) in the event of power failure. A large amount of work has gone into making this work efficiently.</p>
+<p>Bcache is designed around the performance characteristics of SSDs. It&rsquo;s designed to minimize write inflation to the greatest extent possible, and never itself does random writes. It turns random writes into sequential writes - first when it writes them to the SSD, and then with writeback caching it can use your SSD to buffer gigabytes of writes and write them all out in order to your hard drive or raid array. If you&rsquo;ve got a RAID6, you&rsquo;re probably aware of the painful random write penalty, and the expensive controllers with battery backup people buy to mitigate them. Now, you can use Linux&rsquo;s excellent software RAID and still get fast random writes, even on cheap hardware.</p>
+<p>Bcache 是 Linux 内核块层缓存。它允许一个或多个快速磁盘驱动器（例如基于闪存的固态驱动器 (SSD)）充当一个或多个较慢硬盘驱动器的缓存。</p>
+<p>硬盘既便宜又大，SSD 速度快但又小又贵。如果您能透明地获得两者的优势，那不是很好吗？使用 Bcache，您可以吃蛋糕也可以吃。</p>
+<p>Linux 内核的 Bcache 补丁允许使用 SSD 缓存其他块设备。它类似于 ZFS 的 L2Arc，但 Bcache 也进行写回缓存（除了通过缓存写入之外），而且它与文件系统无关。它旨在以最少的努力打开，并且无需任何设置的配置即可正常工作。默认情况下，它不会缓存顺序 IO，只会缓存 SSD 擅长的随机读写。它适用于台式机、服务器、高端存储阵列，甚至可能是嵌入式的。</p>
+<p>设计目标是与 SSD 和缓存设备一样快（取决于缓存命中与未命中，以及直写与回写写入）在误差范围内。它还没有完全实现，主要用于顺序读取。但是测试表明它是绝对有可能的，甚至在某些情况下做得更好——主要是随机写入。</p>
+<p>它也被设计成安全的。可靠性对于任何进行回写缓存的东西都是至关重要的；如果它中断，您将丢失数据。 Bcache 旨在成为电池备份 raid 控制器的更好替代品，因此即使电源线被拉出，它也必须可靠。它不会将写入返回为已完成，直到找到它所需的一切都在稳定的存储上，在电源故障的情况下写入也不会被视为部分完成（或更糟糕的是，丢失）。为了有效地完成这项工作，我们付出了大量的努力。</p>
+<p>Bcache 是围绕 SSD 的性能特点而设计的。它旨在最大程度地减少写入膨胀，并且它本身从不进行随机写入。它将随机写入转换为顺序写入 - 首先将它们写入 SSD，然后通过回写缓存，它可以使用您的 SSD 缓冲千兆字节的写入并将它们全部写入硬盘驱动器或 RAID 阵列。如果你有一个 RAID6，你可能知道痛苦的随机写入惩罚，以及人们购买的带有备用电池的昂贵控制器来减轻它们。现在，您可以使用 Linux 出色的软件 RAID 并且仍然可以获得快速的随机写入，即使在廉价硬件上也是如此。</p>
+<p>Bcache（块缓存）允许将 SSD 用作读/写缓存（在回写模式下）或读取缓存（直写或 writearound）用于另一个块设备（通常是旋转 HDD 或阵列）。 本文将展示如何使用 Bcache 作为根分区安装 Arch。 有关 bcache 本身的介绍，请参阅 bcache 主页。 请务必阅读并参考 bcache 手册。 Bcache 从 3.10 开始就在主线内核中。 自 2013.08.01 起，arch 安装磁盘上的内核包含 bcache 模块。</p>
+<p>它是围绕 SSD 的性能特征设计的——它只分配擦除块大小的存储桶，并且它使用混合 btree/log 来跟踪缓存的范围（可以是从单个扇区到存储桶大小的任何地方）。它旨在不惜一切代价避免随机写入；它按顺序填充一个擦除块，然后在重用它之前发出丢弃。</p>
+<p>支持 writethrough 和 writeback 缓存。回写默认为关闭，但可以在运行时任意开启和关闭。 Bcache 竭尽全力保护您的数据——它可靠地处理不干净的关闭。 （它甚至没有完全关闭的概念；bcache 只是在写入稳定存储之前不会返回已完成的写入）。</p>
+<p>写回缓存可以使用大部分缓存来缓冲写入——将脏数据写入后备设备总是按顺序完成，从索引的开头扫描到结尾。</p>
+<p>由于随机 IO 是 SSD 擅长的，因此缓存大型顺序 IO 通常不会有太多好处。 bcache 检测到顺序 IO 并跳过它；它还保持每个任务 IO 大小的滚动平均值，只要平均值高于截止值，它就会跳过该任务的所有 IO——而不是在每次查找后缓存前 512k。因此，备份和大文件副本应该完全绕过缓存。</p>
+<p>如果闪存发生数据 IO 错误，它将尝试通过从磁盘读取或使缓存条目无效来恢复。对于不可恢复的错误（元数据或脏数据），自动禁用缓存；如果缓存中存在脏数据，它首先禁用写回缓存并等待所有脏数据被刷新。</p>
+<p>入门：您需要 bcache-tools 存储库中的 bcache util。 缓存设备和后备设备都必须在使用前进行格式化：</p>
+<pre><code>bcache make -B /dev/sdb
+bcache make -C /dev/sdc
+</code></pre><p>bcache-tools 现在提供 udev 规则，并且 bcache 设备立即为内核所知。 如果没有 udev，您可以像这样手动注册设备：</p>
+<pre><code>echo /dev/sdb &gt; /sys/fs/bcache/register
+echo /dev/sdc &gt; /sys/fs/bcache/register
+</code></pre><p>注册后备设备使 bcache 设备显示在 /dev 中； 您现在可以对其进行格式化并正常使用它。 但是第一次使用新的 bcache 设备时，它将以直通模式运行，直到您将其附加到缓存。 如果您考虑稍后使用 bcache，建议您将所有慢速设备设置为不带缓存的 bcache 后备设备，您可以选择稍后添加缓存设备。 请参阅下面的“附加”部分。</p>
+<pre><code>mkfs.ext4 /dev/bcache0
+mount /dev/bcache0 /mnt
+</code></pre><h1 id="bcache">bcache</h1>
+<p>bcache 实测对于小文件随机写场景下效果好，而且减少了小写的延迟。</p>
+<p>目前 bcache 这类方案主要的问题是过于复杂，难以实现和维护。</p>
+<ul>
+<li>Intro</li>
+</ul>
+<p>引入块层的缓存对于优化磁盘的读写性能来说效果显著。块级别的缓存有多种实
+现，可以按照是否依赖 device mapper 机制分为两类:</p>
+<p>不依赖 dm 的实现:</p>
+<ul>
+<li>bcache</li>
+<li>enchanceio</li>
+</ul>
+<p>依赖于 dm 的实现:</p>
+<ul>
+<li>flashcache (flashcache 的主推者是 facebook，成熟度最高)</li>
+<li>dm-cache</li>
+</ul>
+<p>重要的特性:</p>
+<ul>
+<li>支持 SSD 池化管理
+<ul>
+<li>支持 thin-provisioning,从 SSD 池中划分出纯 SSD 的卷单独使用</li>
+<li>不像其他方案 metadata 空间固定，索引更新很容易导致该区域写坏(wear out)</li>
+<li>单个 cache device 可以带多个 backing device</li>
+<li>backing device 可以在运行时 attach/detache</li>
+</ul>
+</li>
+<li>IO sensitivity (REQ_SYNC/REQ_META/REQ_FLUSH/REQ_FUA)</li>
+<li>Barriers/cache flushes are handled correctly.</li>
+<li>支持发现并 bypass 顺序读写</li>
+<li>SSD 友好(支持 COW,减少写放大，保持顺序性)</li>
+<li>支持在运行时修改 cache mode</li>
+</ul>
+<ul>
+<li>Usage</li>
+</ul>
+<p>** format device</p>
+<p>单个 cache set 中可以有若干个 cache device 和若干个 backing device。</p>
+<p>格式化出 backing device:</p>
+<p>#+BEGIN_EXAMPLE</p>
+<h1 id="make-bcache--b-devsdx1">make-bcache -B /dev/sdx1</h1>
+<p>#+END_EXAMPLE</p>
+<p>格式化出 cache device:</p>
+<p>#+BEGIN_EXAMPLE</p>
+<h1 id="make-bcache---block-4k---bucket-2m--c-devsdy2">make-bcache &ndash;block 4k &ndash;bucket 2M -C /dev/sdy2</h1>
+<p>#+END_EXAMPLE</p>
+<p>注意 block size 是指 backing device 的扇区大小,而 bucket size 则是
+cache device 也就是 SSD 的 erase block size。合理配置这两个值可以降低
+写放大问题。</p>
+<p>** attach device</p>
+<p>完成格式化之后，接下来进行关联，首先找到 cache device 的 cache set
+uuid:</p>
+<p>#+BEGIN_EXAMPLE</p>
+<h1 id="bcache-super-show-devsdy2--grep-csetuuid">bcache-super-show /dev/sdy2 | grep cset.uuid</h1>
+<p>#+END_EXAMPLE</p>
+<p>然后进行 attach:</p>
+<p>#+BEGIN_EXAMPLE</p>
+<h1 id="echo-csetuuid--sysblockbcache0bcacheattach">echo cset.uuid &gt; /sys/block/bcache0/bcache/attach</h1>
+<p>#+END_EXAMPLE</p>
+<p>然后设置 cache mode:</p>
+<p>#+BEGIN_EXAMPLE</p>
+<h1 id="echo-writeback--sysblockbcache0bcachecache_mode">echo writeback &gt; /sys/block/bcache0/bcache/cache_mode</h1>
+<p>#+END_EXAMPLE</p>
+<p>注意控制 bcache 设备有两个入口:</p>
+<ul>
+<li>/sys/block/bcache<!-- raw HTML omitted -->/bcache</li>
+<li>/sys/fs//bcache/<!-- raw HTML omitted -->/</li>
+</ul>
+<p>** cache status</p>
+<p>检查 cache 状态:</p>
+<p>#+BEGIN_EXAMPLE</p>
+<h1 id="cat-sysblockbcache0bcachestate">cat /sys/block/bcache0/bcache/state</h1>
+<p>#+END_EXAMPLE</p>
+<p>一种 4 种状态:</p>
+<ul>
+<li>no cache - 表示你没有将 cache device 和 backing device 关联起来</li>
+<li>clean - 没有 dirty data</li>
+<li>dirty - 表示启用了 writeback，并且有 dirty data</li>
+<li>inconsistent - 出问题了，backing device 和 cache device 不一致了</li>
+</ul>
+<p>** writeback control</p>
+<p>writeback_percent 如果为非零值，bcache 将会按照它指定的比例来对
+writeback 做流控，并使用 PD controller 来平滑的调整比例。</p>
+<p>下面的命令将会把所有的 dirty data 都刷到 backing device:</p>
+<p>#+BEGIN_EXAMPLE
+echo 0 &gt; /sys/block/bcache0/bcache/writeback_percent
+#+END_EXAMPLE</p>
+<p>writeback_delay 控制新写入 cache device 的数据多久才会被 writeback:</p>
+<p>#+BEGIN_EXAMPLE
+cat  /sys/block/bcache0/bcache/writeback_delay
+30
+#+END_EXAMPLE</p>
+<p>** sequential bypass</p>
+<p>大顺序写 HDD 性能也不错，进行 bypass:</p>
+<p>#+BEGIN_EXAMPLE
+cat  /sys/block/bcache0/bcache/sequential_cutoff
+4.0M
+#+END_EXAMPLE</p>
+<p>大于 4M 的顺序写就不需要缓存了。</p>
+<p>#+BEGIN_QUOTE
+I personally like to take that down to 1MB judging by the fact that
+files larger than 1MB do read pretty fast directly from the disk !
+#+END_QUOTE</p>
+<p>bypass 大顺序写对 SSD 来说也是有意义:</p>
+<p>#+BEGIN_EXAMPLE
+large write reduces internal GCs
+#+END_EXAMPLE</p>
+<p>** gc control</p>
+<ul>
+<li>元数据 GC - 遍历 btree，根据 bkey 信息标记出无效缓存和有效缓存
+(dirty/clean 的数据),以及元数据,进行清理</li>
+<li>缓存数据 GC(Move GC) - 根据元数据 GC 阶段遍历的标记，找到包含较多无
+效缓存数据的多个 bucket，将其中数据移动到新 bucket 去</li>
+</ul>
+<p>手动触发 GC:</p>
+<p>#+BEGIN_EXAMPLE
+echo 1 &gt; /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/internal/trigger_gc
+#+END_EXAMPLE</p>
+<p>** find cache/backing device of bcache device</p>
+<p>#+BEGIN_EXAMPLE
+root@ip-172-31-30-23:~# lsblk
+NAME      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+xvda      202:0    0    8G  0 disk &lt;- cache
+└─xvda1   202:1    0    8G  0 part /
+xvdb      202:16   0   20G  0 disk
+└─bcache0 251:0    0  500G  0 disk
+xvdd      202:48   0  500G  0 disk &lt;- backing
+└─bcache0 251:0    0  500G  0 disk
+#+END_EXAMPLE</p>
+<p>bcache 的 backing device:</p>
+<p>#+BEGIN_EXAMPLE
+root@ip-172-31-30-23:~# ls -l /sys/block/bcache0/bcache
+lrwxrwxrwx 1 root root 0 Nov 24 10:37 /sys/block/bcache0/bcache -&gt; ../../../vbd-51760/block/xvdd/bcache
+#+END_EXAMPLE</p>
+<p>bcache 的 cache device:</p>
+<p>#+BEGIN_EXAMPLE
+root@ip-172-31-30-23:~# ls ls -l /sys/block/bcache0/bcache/cache
+ls: cannot access &lsquo;ls&rsquo;: No such file or directory
+lrwxrwxrwx 1 root root 0 Nov 24 10:41 /sys/block/bcache0/bcache/cache -&gt; ../../../../../fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f
+#+END_EXAMPLE</p>
+<p>** cache set statistics</p>
+<p>/sys/fs/bcache/<!-- raw HTML omitted --> 下:</p>
+<ul>
+<li>average_key_size - btree 中 data per key 的平均大小</li>
+</ul>
+<p>#+BEGIN_EXAMPLE
+root@ip-172-31-30-23:~# cat /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/average_key_size
+4.4k
+#+END_EXAMPLE</p>
+<ul>
+<li>bdev&lt;0..n&gt; - 每个 attached backing device 的符号链接</li>
+</ul>
+<p>#+BEGIN_EXAMPLE
+root@ip-172-31-30-23:~# ls -l  /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/bdev0
+lrwxrwxrwx 1 root root 0 Nov 24 11:21 /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/bdev0 -&gt; ../../../devices/vbd-51760/block/xvdd/bcache
+#+END_EXAMPLE</p>
+<ul>
+<li>block_size - cache device 的 block 大小</li>
+</ul>
+<p>#+BEGIN_EXAMPLE
+root@ip-172-31-30-23:~# cat /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/block_size
+4.0k
+#+END_EXAMPLE</p>
+<ul>
+<li>btree_cache_size - btree 占用的内存大小</li>
+</ul>
+<p>#+BEGIN_EXAMPLE
+root@ip-172-31-30-23:~# cat /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/btree_cache_size
+108.5M
+#+END_EXAMPLE</p>
+<ul>
+<li>bucket_size</li>
+</ul>
+<p>#+BEGIN_EXAMPLE
+root@ip-172-31-30-23:~# cat /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/bucket_size
+2.0M
+#+END_EXAMPLE</p>
+<ul>
+<li>cache&lt;0..n&gt; - cache set 中 cache device 的符号链接</li>
+</ul>
+<p>#+BEGIN_EXAMPLE
+root@ip-172-31-30-23:~# ls -l  /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/cache0
+lrwxrwxrwx 1 root root 0 Nov 24 11:21 /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/cache0 -&gt; ../../../devices/vbd-51728/block/xvdb/bcache
+#+END_EXAMPLE</p>
+<ul>
+<li>cache_available_percent - cache device 中不包含 dirty data 的百分比</li>
+</ul>
+<p>#+BEGIN_EXAMPLE
+root@ip-172-31-30-23:~# cat /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/cache_available_percent
+28
+#+END_EXAMPLE</p>
+<p>** disable cache</p>
+<p>#+BEGIN_EXAMPLE
+root@ip-172-31-30-23:~# cat /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/io_error_halflife
+0
+root@ip-172-31-30-23:~# cat /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/io_error_limit
+8
+#+END_EXAMPLE</p>
+<p>** backing device config</p>
+<p>检查 cache mode:</p>
+<ul>
+<li>writethrough - cache/backing device 都写完才返回</li>
+<li>writeback</li>
+<li>writearound</li>
+<li>passthrough - cache device 挂掉，之后直写 backing device</li>
+</ul>
+<p>#+BEGIN_EXAMPLE</p>
+<h1 id="cat-sysblockbcache0bcachecache_mode">cat /sys/block/bcache0/bcache/cache_mode</h1>
+<p>[writethrough] writeback writearound none
+#+END_EXAMPLE</p>
+<p>backing device 在 cache device 上有多少脏数据:</p>
+<p>#+BEGIN_EXAMPLE
+root@ip-172-31-30-23:~# cat /sys/block/bcache0/bcache/dirty_data
+6.8G
+#+END_EXAMPLE</p>
+<p>readahead 大小:</p>
+<p>#+BEGIN_EXAMPLE
+cat  /sys/block/bcache0/bcache/readahead
+0.0k
+#+END_EXAMPLE</p>
+<p>** backing device statistics</p>
+<p>backing device 的使用统计路径如下:</p>
+<p>#+BEGIN_EXAMPLE
+/sys/devices/vbd-51760/block/xvdd/bcache/stats_five_minute/cache_miss_collisions
+/sys/devices/vbd-51760/block/xvdd/bcache/stats_total/cache_miss_collisions
+/sys/devices/vbd-51760/block/xvdd/bcache/stats_day/cache_miss_collisions
+/sys/devices/vbd-51760/block/xvdd/bcache/stats_hour/cache_miss_collisions
+#+END_EXAMPLE</p>
+<p>指标:</p>
+<ul>
+<li>bypassed - cache bypass 的 IO 总量，包括 write&amp;read</li>
+<li>cache_hits - bcache 看到的独立的 IO 命中，partial hit 也会被认为是 miss</li>
+<li>cache_misses</li>
+<li>cache_hit_ratio</li>
+<li>cache_bypass_hits</li>
+<li>cache_bypass_misses</li>
+<li>cache_miss_collisions - 记录发生正要将数据写入 cache(因为 cache miss)
+但数据却出现在了 cache 中的 race 出现的次数</li>
+<li>cache_readaheads - 预读发生的次数</li>
+</ul>
+<p>时间维度</p>
+<ul>
+<li>stats_five_minute - 前五分钟</li>
+<li>stats_hour - 前一小时</li>
+<li>state_day - 前一天</li>
+<li>stats_total</li>
+</ul>
+<p>来依次看样例输出:</p>
+<p>#+BEGIN_EXAMPLE
+oot@ip-172-31-30-23:~# cat /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/stats_total/cache_hit
+cache_hit_ratio  cache_hits
+root@ip-172-31-30-23:~# cat /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/stats_total/cache_hits
+23440
+root@ip-172-31-30-23:~# cat /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/stats_total/cache_hit_ratio
+99
+#+END_EXAMPLE</p>
+<p>#+BEGIN_EXAMPLE
+root@ip-172-31-30-23:~# cat /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/stats_total/cache_bypass_hits
+145427
+root@ip-172-31-30-23:~# cat /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/stats_total/cache_bypass_misses
+0
+#+END_EXAMPLE</p>
+<p>#+BEGIN_EXAMPLE
+root@ip-172-31-30-23:~# cat /sys/fs/bcache/34e3bd83-cdab-466d-84d6-780f7c0d538f/stats_total/cache_miss_collisions
+0
+#+END_EXAMPLE</p>
+<p>** cleanup</p>
+<p>停止 cache:</p>
+<p>#+BEGIN_EXAMPLE
+echo 1 &gt; /sys/block/bcache0/bcache/stop
+#+END_EXAMPLE</p>
+<p>释放 backing device:</p>
+<p>#+BEGIN_EXAMPLE
+echo 1 &gt; /sys/block/xvdf/bcache/set/stop
+#+END_EXAMPLE</p>
+<p>#+BEGIN_EXAMPLE
+cat /sys/block/bcache0/bcache/state
+#+END_EXAMPLE</p>
+<ul>
+<li>Implement</li>
+</ul>
+<p>bcache 将 cache device 按照 bucket_size 进行划分。bucket_size 通常
+512KB(和 SSD 擦除块大小一致)。除了 SB bucket 之外，所有的更新操作都可
+以通过 append 完成。</p>
+<p>bucket 的核心成员:</p>
+<ul>
+<li>=priority= 16 位，作为优先级编号，每次 hit 增加，决定了 bucket 要不要被刷出</li>
+<li>=generation= 8 位决定 bucket 是否合法</li>
+</ul>
+<p>bcache 的数据布局:</p>
+<ul>
+<li>Data Zone - COW allocator,在 bucket 中的连续 extent</li>
+<li>Metadata Zone - 对 extent 的 B+树索引(保存 HDD 上数据到 SSD 缓存数据的
+对应关系)</li>
+</ul>
+<p>** Allocator</p>
+<p>*** invalidate bucket</p>
+<p>bucket 内只进行追加分配，记录当前分配到哪个偏移,下次从当前记录位置之后
+分配。</p>
+<p>*** bucket allocator</p>
+<p>bucket 的分配原则:</p>
+<ul>
+<li>IO 连续性优先，即便 IO 来自不同的生产者</li>
+<li>相关性，将统一进程的数据放在相同的 bucket 内</li>
+</ul>
+<p>** Index(bucket 的管理)</p>
+<p>bucket 统一通过哟 btree 管理。</p>
+<p>*** bkey</p>
+<p>整个 B+树将 B+树节点映射到单个 bucket,而 bucket 中则保存着一组 bkey。
+bkey 表示 cache device 中的数据与 backing device 数据之间的映射:</p>
+<p>#+BEGIN_SRC C++
+struct bkey {
+uint64_t	high;
+uint64_t	low;
+uint64_t	ptr[];
+}
+#+END_SRC</p>
+<p>*** Lookup btree</p>
+<p>通过 HDD id + IO 请求的 LBA 来查找缓存数据。</p>
+<p>*** Metadata Memory Cache</p>
+<p>为每个 btree bucket 申请一块连续内存作为元数据缓存。</p>
+<p>*** Update btree</p>
+<p>利用 Journal/WAL 加速 B+tree 的修改, 写完 journal 以及内存中的 B+tree 节点缓存
+后写 IO 就可以返回了。</p>
+<p>** Writeback</p>
+<p>bcache 为每个 backing device 启动单独的 flush 线程，将 SSD 中 dirty 数
+据刷到 HDD 中。</p>
+<ul>
+<li>通过 HDD id 获取 dirty 的 bkey,然后按照 bkey 中的 HDD LBA 信息排序(这样
+排序后的 bkey 依次读取 SSD 中脏数据写入 HDD 实现顺序落盘)</li>
+<li>由 LBA 记录 dirty bkey，从 SSD 读刷入 HDD</li>
+</ul>
+<p>** Writeback PD/PI Controller</p>
+<p>流控:</p>
+<ul>
+<li>writeback PD controller(比例-微分控制器),水位越高，flush 速度越快</li>
+<li>让脏数据尽可能多的留在 cache 中</li>
+<li>更快速的改变 water level</li>
+</ul>
+<p>PD/PI Controller <a href="https://www.spinics.net/lists/linux-bcache/msg04954.html">https://www.spinics.net/lists/linux-bcache/msg04954.html</a></p>
+<p>PD Controller</p>
+<p>Proportional term
+Derivative term</p>
+<p>bcache uses a control system to attempt to keep the amount of dirty data
+in cache at a user-configured level, while not responding excessively to
+transients and variations in write rate.  Previously, the system was a
+PD controller; but the output from it was integrated, turning the
+Proportional term into an Integral term, and turning the Derivative term
+into a crude Proportional term.  Performance of the controller has been
+uneven in production, and it has tended to respond slowly, oscillate,
+and overshoot.</p>
+<p>PI controller</p>
+<p>This patch set replaces the current control system with an explicit PI
+controller and tuning that should be correct for most hardware.  By
+default, it attempts to write at a rate that would retire 1/40th of the
+current excess blocks per second.  An integral term in turn works to
+remove steady state errors.</p>
+<p>IMO, this yields benefits in simplicity (removing weighted average
+filtering, etc) and system performance.</p>
+<ul>
+<li>Release History</li>
+</ul>
+<ul>
+<li>至少要在 4.8 以上版本的内核才比较稳定</li>
+<li>4.10 支持对 bcache 设备分区 <a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=b8c0d911ac5285e6be8967713271a51bdc5a936a">https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=b8c0d911ac5285e6be8967713271a51bdc5a936a</a></li>
+</ul>
+<ul>
+<li>Issue</li>
+</ul>
+<ol>
+<li>功能
+<ol>
+<li>SSD 和 HDD 不支持热插拔</li>
+<li>HDD 卸载需要等脏数据全部刷完才可以</li>
+<li>HDD 损坏时，SSD 中脏数据无法清除</li>
+<li>不可靠的 write-back
+<ul>
+<li>问题
+<ul>
+<li>high error rate</li>
+<li>worn out</li>
+<li>FTL bugs</li>
+<li>destruction</li>
+</ul>
+</li>
+<li>解决方案 1 - SSD RAID
+<ul>
+<li>最小化 drity ratio (write-back -&gt; write-back(dirty threshold)-&gt; write through)</li>
+<li>SSD RAID as Cache(Failure Recovery via Parity)
+<ul>
+<li>high performance</li>
+<li>high reliability</li>
+<li>on-the-fly SSD replacement</li>
+<li>flexible capacity Management</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>解决方案 2 - Log-structured Approach
+<ul>
+<li>最小化 parity 和 metadata update</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+</li>
+<li>性能
+<ol>
+<li>当 cache 被写满时，需要将脏数据都刷完才能继续为写 IO 提供缓存</li>
+<li>GC 运行时导致性能波动</li>
+<li>bcache 内存消耗大，系统内存不足时元数据无法缓存，从 SSD 读取</li>
+</ol>
+</li>
+</ol>
+<p>需要注意:</p>
+<ul>
+<li>如何创建多个 cache set</li>
+<li>选择一个稳定的内核版本(CentOS7.1 不支持 bcache)</li>
+</ul>
+<ul>
+<li>References</li>
+</ul>
+<ul>
+<li><a href="https://wiki.archlinux.org/index.php/Bcache">https://wiki.archlinux.org/index.php/Bcache</a></li>
+<li><a href="http://www.sysnote.org/2014/05/29/bcache-use/">http://www.sysnote.org/2014/05/29/bcache-use/</a> (bcache 使用)</li>
+<li><a href="http://www.sysnote.org/2014/06/20/bcache-analysis/">http://www.sysnote.org/2014/06/20/bcache-analysis/</a> (bcache 实现)</li>
+<li><a href="https://people.redhat.com/mskinner/rhug/q1.2016/dm-cache.pdf">https://people.redhat.com/mskinner/rhug/q1.2016/dm-cache.pdf</a></li>
+<li>使用 bcache 为 Ceph OSD 加速的具体实践 <a href="http://www.szsandstone.com/html/news/2017-3-16/209.html">http://www.szsandstone.com/html/news/2017-3-16/209.html</a></li>
+<li>CAS <a href="https://www.intel.com/content/www/us/en/software/intel-cache-acceleration-software-performance.html">https://www.intel.com/content/www/us/en/software/intel-cache-acceleration-software-performance.html</a></li>
+<li><a href="https://raid6.com.au/posts/SSD_caching_problems/">https://raid6.com.au/posts/SSD_caching_problems/</a></li>
+<li>[[http://www.raid6.com.au/posts/SSD_caching/][SSD as caching device: bcache, flashcache, enchanceio, btier]]</li>
+<li>bcache-status <a href="https://gist.github.com/damoxc/6267899">https://gist.github.com/damoxc/6267899</a></li>
+<li>使用 bcache 减少小写延迟 <a href="https://dl.gi.de/bitstream/handle/20.500.12116/893/45.pdf?sequence=1">https://dl.gi.de/bitstream/handle/20.500.12116/893/45.pdf?sequence=1</a></li>
+<li>确保 cache device 的可靠 [[https://ysoh.files.wordpress.com/2009/05/dm-src-ibm.pdf][SSD RAID as Cache (SRC) with Log-structured Approach for Performance and Reliability]]</li>
+<li>简洁清晰的梳洗了 bcache <a href="https://datahunter.org/bcache">https://datahunter.org/bcache</a></li>
+<li>讲了 Windows 平台下可以用 Intel Smart Response <a href="http://www.tech-g.com/2017/08/10/bcache-how-to-setup/">http://www.tech-g.com/2017/08/10/bcache-how-to-setup/</a></li>
+<li>最后列举了 bcache 的问题 <a href="http://confluence.wartungsfenster.de/display/Adminspace/bcache+SSD+testing+and+tuning">http://confluence.wartungsfenster.de/display/Adminspace/bcache+SSD+testing+and+tuning</a></li>
+<li><a href="https://github.com/torvalds/linux/blob/master/Documentation/bcache.txt">https://github.com/torvalds/linux/blob/master/Documentation/bcache.txt</a></li>
+<li>bcachefs ANN <a href="https://lkml.org/lkml/2015/8/21/22">https://lkml.org/lkml/2015/8/21/22</a></li>
+</ul>
+<p>性能测试:</p>
+<ul>
+<li>bcache/enhanceio/dm-cache benchmark <a href="https://github.com/stec-inc/EnhanceIO/wiki/PERFORMANCE-COMPARISON-AMONG-dm-cache,-bcache-and-EnhanceIO">https://github.com/stec-inc/EnhanceIO/wiki/PERFORMANCE-COMPARISON-AMONG-dm-cache,-bcache-and-EnhanceIO</a></li>
+</ul>
+<ul>
+<li>Readling List</li>
+</ul>
+<ul>
+<li>
+<p>[[http://bcache.evilpiepirate.org/BcacheGuide/][The Programmer&rsquo;s Guide to bcache]]</p>
+</li>
+<li>
+<p><a href="https://bcache.evilpiepirate.org/">https://bcache.evilpiepirate.org/</a></p>
+</li>
+<li>
+<p><a href="https://evilpiepirate.org/git/linux-bcache.git">https://evilpiepirate.org/git/linux-bcache.git</a></p>
+</li>
+<li>
+<p><a href="https://bugs.gentoo.org/638206">https://bugs.gentoo.org/638206</a></p>
+</li>
+<li>
+<p><a href="https://patchwork.kernel.org/patch/10062263/">https://patchwork.kernel.org/patch/10062263/</a></p>
+</li>
+<li>
+<p>bcache with ceph <a href="https://github.com/blueboxgroup/ursula/blob/master/roles/ceph-osd/tasks/bcache.yml">https://github.com/blueboxgroup/ursula/blob/master/roles/ceph-osd/tasks/bcache.yml</a></p>
+</li>
+</ul>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/storage/cache/bcache/">https://logread.cn/post/storage/cache/bcache/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/posts/how-to-use-linux-aio/">How to Use Linux Aio</a></li>
+        
+        <li><a href="/post/GinWeb%E6%A1%86%E6%9E%B6/">GinWeb框架</a></li>
+        
+        <li><a href="/posts/fio%E6%96%87%E6%A1%A3-%E8%AF%91/">Fio文档(译)</a></li>
+        
+        <li><a href="/posts/K8S-%E5%88%A9%E7%94%A8ExecWebsocket%E6%8E%A5%E5%8F%A3%E5%AE%9E%E7%8E%B0Pod%E9%97%B4%E7%9A%84%E6%96%87%E4%BB%B6%E6%8B%B7%E8%B4%9D/">K8S 利用ExecWebsocket接口实现Pod间的文件拷贝</a></li>
+        
+        <li><a href="/posts/%E4%BB%80%E4%B9%88%E6%98%AFRDB%E5%92%8CROF%E4%B8%80%E6%96%87%E4%BA%86%E8%A7%A3Redis%E6%8C%81%E4%B9%85%E5%8C%96/">什么是RDB和ROF,一文了解Redis持久化</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/bcache'>bcache</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2022
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/compile/makefile/makefile/" title="Makefile">Makefile</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/storage/cache/bcache/" title="Bcache">Bcache</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/GinWeb%E6%A1%86%E6%9E%B6/" title="GinWeb框架">GinWeb框架</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/fio%E6%96%87%E6%A1%A3-%E8%AF%91/" title="Fio文档(译)">Fio文档(译)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/K8S-%E5%88%A9%E7%94%A8ExecWebsocket%E6%8E%A5%E5%8F%A3%E5%AE%9E%E7%8E%B0Pod%E9%97%B4%E7%9A%84%E6%96%87%E4%BB%B6%E6%8B%B7%E8%B4%9D/" title="K8S 利用ExecWebsocket接口实现Pod间的文件拷贝">K8S 利用ExecWebsocket接口实现Pod间的文件拷贝</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/%E4%BB%80%E4%B9%88%E6%98%AFRDB%E5%92%8CROF%E4%B8%80%E6%96%87%E4%BA%86%E8%A7%A3Redis%E6%8C%81%E4%B9%85%E5%8C%96/" title="什么是RDB和ROF,一文了解Redis持久化">什么是RDB和ROF,一文了解Redis持久化</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/SSD%E6%98%AF%E5%A6%82%E4%BD%95%E5%8F%91%E7%94%9F%E6%95%85%E9%9A%9C%E7%9A%84-NVMeSSD%E7%AE%A1%E7%90%86-%E9%94%99%E8%AF%AF%E6%8A%A5%E5%91%8A%E5%92%8C%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95%E5%8A%9F%E8%83%BD/" title="SSD是如何发生故障的 NVMe™SSD管理 错误报告和日志记录功能">SSD是如何发生故障的 NVMe™SSD管理 错误报告和日志记录功能</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/Golang%E7%9A%8423%E7%A7%8D%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B%E5%92%8C%E5%9B%BE%E8%A7%A3/" title="Golang的23种设计模式之代码示例和图解">Golang的23种设计模式之代码示例和图解</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/how-to-use-linux-aio/" title="How to Use Linux Aio">How to Use Linux Aio</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/stolonpostgresql/" title="Stolon PostgreSQL高可用">Stolon PostgreSQL高可用</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title" style="color:red">福利派送</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a href="https://www.aliyun.com/minisite/goods?userCode=jdg9oj97&amp;share_source=copy_link" title="【2019双12】ALL IN CLoud 低至1折" target="_blank" style="color:red">
+                
+                    <img src="https://img.alicdn.com/tfs/TB1_rYHo7P2gK0jSZPxXXacQpXa-690-388.jpg">
+                
+            </a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://www.logread.cn/" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

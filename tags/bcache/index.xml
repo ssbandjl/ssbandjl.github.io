@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>bcache on 晓兵</title>
+    <link>https://logread.cn/tags/bcache/</link>
+    <description>Recent content in bcache on 晓兵</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Mon, 18 Apr 2022 15:34:25 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/bcache/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Bcache</title>
+      <link>https://logread.cn/post/storage/cache/bcache/</link>
+      <pubDate>Mon, 18 Apr 2022 15:34:25 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/storage/cache/bcache/</guid>
+      <description>A block layer cache (bcache) What is bcache? Bcache is a Linux kernel block layer cache. It allows one or more fast disk drives such as flash-based solid state drives (SSDs) to act as a cache for one or more slower hard disk drives. Hard drives are cheap and big, SSDs are fast but small and expensive. Wouldn&amp;rsquo;t it be nice if you could transparently get the advantages of both? With Bcache, you can have your cake and eat it too. Bcache patches for the Linux kernel allow one to use SSDs to cache other block devices. It&amp;rsquo;s analogous to L2Arc for ZFS, but Bcache also does writeback caching (besides just write through caching), and it&amp;rsquo;s filesystem agnostic. It&amp;rsquo;s designed to be switched on with a minimum of effort, and to work well without configuration on any setup. By default</description>
+    </item>
+    
+  </channel>
+</rss>

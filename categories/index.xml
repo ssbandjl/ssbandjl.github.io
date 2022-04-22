@@ -6,7 +6,61 @@
     <description>Recent content in Categories on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 16 Apr 2022 13:14:40 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 22 Apr 2022 22:29:05 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Makefile</title>
+      <link>https://logread.cn/categories/Makefile/</link>
+      <pubDate>Fri, 22 Apr 2022 22:29:05 +0800</pubDate>
+      
+      <guid>https://logread.cn/categories/Makefile/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>编译</title>
+      <link>https://logread.cn/categories/%E7%BC%96%E8%AF%91/</link>
+      <pubDate>Fri, 22 Apr 2022 22:29:05 +0800</pubDate>
+      
+      <guid>https://logread.cn/categories/%E7%BC%96%E8%AF%91/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>链接</title>
+      <link>https://logread.cn/categories/%E9%93%BE%E6%8E%A5/</link>
+      <pubDate>Fri, 22 Apr 2022 22:29:05 +0800</pubDate>
+      
+      <guid>https://logread.cn/categories/%E9%93%BE%E6%8E%A5/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>bcache</title>
+      <link>https://logread.cn/categories/bcache/</link>
+      <pubDate>Mon, 18 Apr 2022 15:34:25 +0800</pubDate>
+      
+      <guid>https://logread.cn/categories/bcache/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>存储</title>
+      <link>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</link>
+      <pubDate>Mon, 18 Apr 2022 15:34:25 +0800</pubDate>
+      
+      <guid>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>缓存</title>
+      <link>https://logread.cn/categories/%E7%BC%93%E5%AD%98/</link>
+      <pubDate>Mon, 18 Apr 2022 15:34:25 +0800</pubDate>
+      
+      <guid>https://logread.cn/categories/%E7%BC%93%E5%AD%98/</guid>
+      <description></description>
+    </item>
+    
     <item>
       <title>golang</title>
       <link>https://logread.cn/categories/golang/</link>
@@ -31,15 +85,6 @@
       <pubDate>Sat, 16 Apr 2022 09:43:27 +0800</pubDate>
       
       <guid>https://logread.cn/categories/aio/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>存储</title>
-      <link>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</link>
-      <pubDate>Sat, 16 Apr 2022 09:43:27 +0800</pubDate>
-      
-      <guid>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</guid>
       <description></description>
     </item>
     
