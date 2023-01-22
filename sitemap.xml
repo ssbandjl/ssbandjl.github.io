@@ -3,6 +3,21 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://logread.cn/post/</loc>
+    <lastmod>2023-01-22T11:09:02+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/</loc>
+    <lastmod>2023-01-22T11:09:02+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/</loc>
+    <lastmod>2023-01-22T11:09:02+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://logread.cn/tags/build/</loc>
     <lastmod>2022-04-22T22:29:05+08:00</lastmod>
   </url>
@@ -28,17 +43,7 @@
   </url>
   
   <url>
-    <loc>https://logread.cn/post/</loc>
-    <lastmod>2022-04-22T22:29:05+08:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://logread.cn/tags/</loc>
-    <lastmod>2022-04-22T22:29:05+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/</loc>
     <lastmod>2022-04-22T22:29:05+08:00</lastmod>
   </url>
   

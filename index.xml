@@ -6,7 +6,16 @@
     <description>Recent content on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Fri, 22 Apr 2022 22:29:05 +0800</lastBuildDate><atom:link href="https://logread.cn/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 22 Jan 2023 11:09:02 +0800</lastBuildDate><atom:link href="https://logread.cn/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Spdk提交io到nvme设备</title>
+      <link>https://logread.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/</link>
+      <pubDate>Sun, 22 Jan 2023 11:09:02 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/</guid>
+      <description>Submitting I/O to an NVMe Device 提交I/O到NVME设备 The NVMe Specification 规范 The NVMe specification describes a hardware interface for interacting with storage devices. The specification includes network transport definitions for remote storage as well as a hardware register layout for local PCIe devices. What follows here is an overview of how an I/O is submitted to a local PCIe device through SPDK. NVMe 规范描述了用于与存储设备交互的硬件接口。 该规范包括远程存储的网络传输定义以及本地 PCIe 设备的硬件寄存器布局。 以下是通过SPDK 将I/O</description>
+    </item>
+    
     <item>
       <title>Makefile</title>
       <link>https://logread.cn/post/compile/makefile/makefile/</link>

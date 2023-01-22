@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>Spdk提交io到nvme设备 | 晓兵</title>
+    <meta property="og:title" content="Spdk提交io到nvme设备 - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2023-01-22T11:09:02&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2023-01-22T11:09:02&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储">
+    <meta name="description" content="Spdk提交io到nvme设备">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储/linux/c/c&#43;&#43;/golang</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#the-nvme-specification-规范">The NVMe Specification 规范</a></li>
+    <li><a href="#the-spdk-nvme-driver-io-path-spdk-nvme-驱动程序-io-路径">The SPDK NVMe Driver I/O Path SPDK NVMe 驱动程序 I/O 路径</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Spdk提交io到nvme设备</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年1月22日
+        </date>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="submitting-io-to-an-nvme-device-提交io到nvme设备">Submitting I/O to an NVMe Device 提交I/O到NVME设备</h1>
+<h2 id="the-nvme-specification-规范">The NVMe Specification 规范</h2>
+<p>The NVMe specification describes a hardware interface for interacting with storage devices. The specification includes network transport definitions for remote storage as well as a hardware register layout for local PCIe devices. What follows here is an overview of how an I/O is submitted to a local PCIe device through SPDK.</p>
+<p>NVMe 规范描述了用于与存储设备交互的硬件接口。 该规范包括远程存储的网络传输定义以及本地 PCIe 设备的硬件寄存器布局。 以下是通过SPDK 将I/O 提交到本地PCIe 设备的概述</p>
+<p>NVMe devices allow host software (in our case, the SPDK NVMe driver) to allocate queue pairs in host memory. The term &ldquo;host&rdquo; is used a lot, so to clarify that&rsquo;s the system that the NVMe SSD is plugged into. A queue pair consists of two queues - a submission queue and a completion queue. These queues are more accurately described as circular rings of fixed size entries. The submission queue is an array of 64 byte command structures, plus 2 integers (head and tail indices). The completion queue is similarly an array of 16 byte completion structures, plus 2 integers (head and tail indices). There are also two 32-bit registers involved that are called doorbells.</p>
+<p>NVMe 设备允许主机软件（在我们的例子中是 SPDK NVMe 驱动程序）在主机内存中分配队列对。 “主机”这个词用得很多，所以要澄清一下，这是 NVMe SSD 插入的系统。 一个队列对由两个队列组成——一个提交队列和一个完成队列。 这些队列更准确地描述为固定大小条目的圆环circular rings of fixed size entries。 提交队列是一个 64 字节命令结构数组，外加 2 个整数（头索引和尾索引）。 完成队列类似地是一个 16 字节完成结构的数组，加上 2 个整数（头和尾索引）。 还涉及到两个32位的寄存器，叫做门铃doorbells</p>
+<p>An I/O is submitted to an NVMe device by constructing a 64 byte command, placing it into the submission queue at the current location of the submission queue tail index, and then writing the new index of the submission queue tail to the submission queue tail doorbell register. It&rsquo;s actually valid to copy a whole set of commands into open slots in the ring and then write the doorbell just one time to submit the whole batch.</p>
+<p>一个I/O提交给NVMe设备，通过构造一个64字节的命令，在提交队列尾索引的当前位置放入提交队列，然后将提交队列尾的新索引写入提交队列尾 门铃登记。 将一整套命令复制到环中的空槽中，然后只写一次门铃以提交整批命令实际上是有效的</p>
+<p>There is a very detailed description of the command submission and completion process in the NVMe specification, which is conveniently available from the main page over at NVM Express.</p>
+<p>NVMe 规范中对命令提交和完成过程有非常详细的描述，可以从 NVM Express 的主页方便地获得。</p>
+<p>Most importantly, the command itself describes the operation and also, if necessary, a location in host memory containing a descriptor for host memory associated with the command. This host memory is the data to be written on a write command, or the location to place the data on a read command. Data is transferred to or from this location using a DMA engine on the NVMe device.</p>
+<p>最重要的是，命令本身描述了操作，如果需要，还描述了主机内存中的一个位置，其中包含与命令关联的主机内存的描述符。 该主机存储器是写入命令时要写入的数据，或者是读取命令时放置数据的位置。 使用 NVMe 设备上的 DMA 引擎将数据传输到该位置或从该位置传输数据。</p>
+<p>The completion queue works similarly, but the device is instead the one writing entries into the ring. Each entry contains a &ldquo;phase&rdquo; bit that toggles between 0 and 1 on each loop through the entire ring. When a queue pair is set up to generate interrupts, the interrupt contains the index of the completion queue head. However, SPDK doesn&rsquo;t enable interrupts and instead polls on the phase bit to detect completions. Interrupts are very heavy operations, so polling this phase bit is often far more efficient.</p>
+<p>完成队列的工作方式类似，但设备是将条目写入环中的设备。 每个条目都包含一个“相位”位，该位在整个环的每个循环中在 0 和 1 之间切换。 当建立一个队列对产生中断时，中断包含完成队列头的索引。 但是，SPDK 不启用中断，而是轮询相位位来检测完成。 中断是非常繁重的操作，因此轮询此相位bit位通常效率更高。</p>
+<h2 id="the-spdk-nvme-driver-io-path-spdk-nvme-驱动程序-io-路径">The SPDK NVMe Driver I/O Path SPDK NVMe 驱动程序 I/O 路径</h2>
+<p>Now that we know how the ring structures work, let&rsquo;s cover how the SPDK NVMe driver uses them. The user is going to construct a queue pair at some early time in the life cycle of the program, so that&rsquo;s not part of the &ldquo;hot&rdquo; path. Then, they&rsquo;ll call functions like spdk_nvme_ns_cmd_read() to perform an I/O operation. The user supplies a data buffer, the target LBA, and the length, as well as other information like which NVMe namespace the command is targeted at and which NVMe queue pair to use. Finally, the user provides a callback function and context pointer that will be called when a completion for the resulting command is discovered during a later call to spdk_nvme_qpair_process_completions().</p>
+<p>现在我们知道了环形结构是如何工作的，让我们来介绍一下 SPDK NVMe 驱动程序如何使用它们。 用户将在程序生命周期的早期构建一个队列对，因此这不是“热”路径的一部分。 然后，他们将调用像 spdk_nvme_ns_cmd_read() 这样的函数来执行 I/O 操作。 用户提供数据缓冲区、目标 LBA 和长度，以及其他信息，例如命令针对哪个 NVMe 命名空间以及要使用哪个 NVMe 队列对。 最后，用户提供一个回调函数和上下文指针，当在稍后调用 spdk_nvme_qpair_process_completions() 期间发现结果命令完成时将调用它们。</p>
+<p>The first stage in the driver is allocating a request object to track the operation. The operations are asynchronous, so it can&rsquo;t simply track the state of the request on the call stack. Allocating a new request object on the heap would be far too slow, so SPDK keeps a pre-allocated set of request objects inside of the NVMe queue pair object - <code>struct spdk_nvme_qpair</code>. The number of requests allocated to the queue pair is larger than the actual queue depth of the NVMe submission queue because SPDK supports a couple of key convenience features. The first is software queueing - SPDK will allow the user to submit more requests than the hardware queue can actually hold and SPDK will automatically queue in software. The second is splitting. SPDK will split a request for many reasons, some of which are outlined next. The number of request objects is configurable at queue pair creation time and if not specified, SPDK will pick a sensible number based on the hardware queue depth.</p>
+<p>驱动程序中的第一阶段是分配一个请求对象来跟踪操作。 这些操作是异步的，因此它不能简单地跟踪调用堆栈上的请求状态。 在堆上分配一个新的请求对象会太慢，因此 SPDK 在 NVMe 队列对对象中保留一组预先分配的请求对象 - struct spdk_nvme_qpair。 分配给队列对的请求数大于 NVMe 提交队列的实际队列深度，因为 SPDK 支持几个关键的便利功能。 第一个是软件排队software queueing——SPDK 将允许用户提交比硬件队列实际容纳的更多的请求，SPDK 将自动在软件中排队。 二是分裂splitting。 SPDK 会出于多种原因拆分请求，下面将概述其中的一些原因。 请求对象的数量在队列对创建时是可配置的，如果没有指定，SPDK 将根据硬件队列深度选择一个合理的数量</p>
+<p>The second stage is building the 64 byte NVMe command itself. The command is built into memory embedded into the request object - not directly into an NVMe submission queue slot. Once the command has been constructed, SPDK attempts to obtain an open slot in the NVMe submission queue. For each element in the submission queue an object called a tracker is allocated. The trackers are allocated in an array, so they can be quickly looked up by an index. The tracker itself contains a pointer to the request currently occupying that slot. When a particular tracker is obtained, the command&rsquo;s CID value is updated with the index of the tracker. The NVMe specification provides that CID value in the completion, so the request can be recovered by looking up the tracker via the CID value and then following the pointer.</p>
+<p>第二阶段是构建 64 字节 NVMe 命令本身。 该命令内置于嵌入到请求对象中的内存中，而不是直接嵌入到 NVMe 提交队列槽中。 命令构建完成后，SPDK 会尝试在 NVMe 提交队列中获取一个槽位slot。 为提交队列中的每个元素分配一个称为跟踪器tracker的对象。 跟踪器分配在一个数组中，因此可以通过索引快速查找它们。 跟踪器本身包含指向当前占用该插槽的请求的指针。 当获得特定的跟踪器时，命令的 CID 值将使用跟踪器的索引进行更新。 NVMe 规范在完成时提供了 CID 值，因此可以通过 CID 值查找跟踪器然后跟随指针来恢复请求。</p>
+<p>Once a tracker (slot) is obtained, the data buffer associated with it is processed to build a PRP list. That&rsquo;s essentially an NVMe scatter gather list, although it is a bit more restricted. The user provides SPDK with the virtual address of the buffer, so SPDK has to go do a page table look up to find the physical address (pa) or I/O virtual addresses (iova) backing that virtual memory. A virtually contiguous memory region may not be physically contiguous, so this may result in a PRP list with multiple elements. Sometimes this may result in a set of physical addresses that can&rsquo;t actually be expressed as a single PRP list, so SPDK will automatically split the user operation into two separate requests transparently. For more information on how memory is managed, see @ref memory.</p>
+<p>一旦获得跟踪器（槽），就会处理与其关联的数据缓冲区以构建 PRP 列表。 这本质上是一个 NVMe 分散收集sgl列表，尽管它受到更多限制。 用户向 SPDK 提供缓冲区的虚拟地址，因此 SPDK 必须查找页表以找到支持该虚拟内存的物理地址 (pa) 或 I/O 虚拟地址 (iova)。 实际上连续的内存区域可能在物理上不连续，因此这可能会导致 PRP 列表包含多个元素。 有时这可能会导致一组物理地址实际上不能表示为单个 PRP 列表，因此 SPDK 会自动将用户操作透明地拆分为两个单独的请求。 有关如何管理内存的更多信息，请参阅用户空间的直接内存访问 (DMA)。</p>
+<p>The reason the PRP list is not built until a tracker is obtained is because the PRP list description must be allocated in DMA-able memory and can be quite large. Since SPDK typically allocates a large number of requests, we didn&rsquo;t want to allocate enough space to pre-build the worst case scenario PRP list, especially given that the common case does not require a separate PRP list at all.</p>
+<p>在获得跟踪器之前不构建 PRP 列表的原因是因为 PRP 列表描述必须分配在 DMA-able 内存中并且可能非常大。 由于 SPDK 通常分配大量请求，我们不想分配足够的空间来预先构建最坏情况的 PRP 列表，特别是考虑到常见情况根本不需要单独的 PRP 列表。</p>
+<p>在NVMe over PCIe中，I/O命令支持SGL(Scatter Gather List 分散聚合表)和PRP(Physical Region Page 物理(内存)区域页), 而管理命令只支持PRP;而在NVMe over Fabrics中，无论是管理命令还是I/O命令都只支持SGL。NVMe over Fabrics既支持FC网络，又支持RDMA网络。众所周知，在RDMA编程中，SGL(Scatter/Gather List)是最基本的数据组织形式。 SGL是一个数组，该数组中的元素被称之为SGE(Scatter/Gather Element)，每一个SGE就是一个Data Segment(数据段)</p>
+<p>Each NVMe command has two PRP list elements embedded into it, so a separate PRP list isn&rsquo;t required if the request is 4KiB (or if it is 8KiB and aligned perfectly). Profiling shows that this section of the code is not a major contributor to the overall CPU use.</p>
+<p>每个 NVMe 命令都嵌入了两个 PRP 列表元素，因此如果请求是 4KiB（或者如果它是 8KiB 并且完美对齐），则不需要单独的 PRP 列表。 分析显示这部分代码并不是总体 CPU 使用的主要贡献者。</p>
+<p>With a tracker filled out, SPDK copies the 64 byte command into the actual NVMe submission queue slot and then rings the submission queue tail doorbell to tell the device to go process it. SPDK then returns back to the user, without waiting for a completion.</p>
+<p>填写跟踪器后，SPDK 将 64 字节命令复制到实际的 NVMe 提交队列槽中，然后按提交队列尾门铃告诉设备去处理它。 SPDK 然后返回给用户，不等待完成。</p>
+<p>The user can periodically call <code>spdk_nvme_qpair_process_completions()</code> to tell SPDK to examine the completion queue. Specifically, it reads the phase bit of the next expected completion slot and when it flips, looks at the CID value to find the tracker, which points at the request object. The request object contains a function pointer that the user provided initially, which is then called to complete the command.</p>
+<p>用户可以定期调用 spdk_nvme_qpair_process_completions() 告诉 SPDK 检查完成队列。 具体来说，它读取下一个预期完成槽的相位位，并在翻转时查看 CID 值以找到指向请求对象的跟踪器。 请求对象包含用户最初提供的函数指针，然后调用它来完成命令。</p>
+<p>The <code>spdk_nvme_qpair_process_completions()</code> function will keep advancing to the next completion slot until it runs out of completions, at which point it will write the completion queue head doorbell to let the device know that it can use the completion queue slots for new completions and return.</p>
+<p>spdk_nvme_qpair_process_completions() 函数将继续前进到下一个完成槽，直到所有完成，此时它将写入完成队列头门铃，让设备知道它可以使用完成队列槽进行新的完成并返回。</p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/">https://logread.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/compile/makefile/makefile/">Makefile</a></li>
+        
+        <li><a href="/post/storage/cache/bcache/">Bcache</a></li>
+        
+        <li><a href="/post/GinWeb%E6%A1%86%E6%9E%B6/">GinWeb框架</a></li>
+        
+        <li><a href="/posts/fio%E6%96%87%E6%A1%A3-%E8%AF%91/">Fio文档(译)</a></li>
+        
+        <li><a href="/posts/K8S-%E5%88%A9%E7%94%A8ExecWebsocket%E6%8E%A5%E5%8F%A3%E5%AE%9E%E7%8E%B0Pod%E9%97%B4%E7%9A%84%E6%96%87%E4%BB%B6%E6%8B%B7%E8%B4%9D/">K8S 利用ExecWebsocket接口实现Pod间的文件拷贝</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2023
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/" title="Spdk提交io到nvme设备">Spdk提交io到nvme设备</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/compile/makefile/makefile/" title="Makefile">Makefile</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/storage/cache/bcache/" title="Bcache">Bcache</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/GinWeb%E6%A1%86%E6%9E%B6/" title="GinWeb框架">GinWeb框架</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/fio%E6%96%87%E6%A1%A3-%E8%AF%91/" title="Fio文档(译)">Fio文档(译)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/K8S-%E5%88%A9%E7%94%A8ExecWebsocket%E6%8E%A5%E5%8F%A3%E5%AE%9E%E7%8E%B0Pod%E9%97%B4%E7%9A%84%E6%96%87%E4%BB%B6%E6%8B%B7%E8%B4%9D/" title="K8S 利用ExecWebsocket接口实现Pod间的文件拷贝">K8S 利用ExecWebsocket接口实现Pod间的文件拷贝</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/%E4%BB%80%E4%B9%88%E6%98%AFRDB%E5%92%8CROF%E4%B8%80%E6%96%87%E4%BA%86%E8%A7%A3Redis%E6%8C%81%E4%B9%85%E5%8C%96/" title="什么是RDB和ROF,一文了解Redis持久化">什么是RDB和ROF,一文了解Redis持久化</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/SSD%E6%98%AF%E5%A6%82%E4%BD%95%E5%8F%91%E7%94%9F%E6%95%85%E9%9A%9C%E7%9A%84-NVMeSSD%E7%AE%A1%E7%90%86-%E9%94%99%E8%AF%AF%E6%8A%A5%E5%91%8A%E5%92%8C%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95%E5%8A%9F%E8%83%BD/" title="SSD是如何发生故障的 NVMe™SSD管理 错误报告和日志记录功能">SSD是如何发生故障的 NVMe™SSD管理 错误报告和日志记录功能</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/Golang%E7%9A%8423%E7%A7%8D%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B%E5%92%8C%E5%9B%BE%E8%A7%A3/" title="Golang的23种设计模式之代码示例和图解">Golang的23种设计模式之代码示例和图解</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/how-to-use-linux-aio/" title="How to Use Linux Aio">How to Use Linux Aio</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title" style="color:red">福利派送</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a href="https://www.aliyun.com/minisite/goods?userCode=jdg9oj97&amp;share_source=copy_link" title="【2019双12】ALL IN CLoud 低至1折" target="_blank" style="color:red">
+                
+                    <img src="https://img.alicdn.com/tfs/TB1_rYHo7P2gK0jSZPxXXacQpXa-690-388.jpg">
+                
+            </a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://www.logread.cn/" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
