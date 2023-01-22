@@ -6,7 +6,25 @@
     <description>Recent content in Posts on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 22 Jan 2023 11:09:02 +0800</lastBuildDate><atom:link href="https://logread.cn/post/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 22 Jan 2023 11:17:53 +0800</lastBuildDate><atom:link href="https://logread.cn/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Spdk_blobstore编程指导</title>
+      <link>https://logread.cn/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</link>
+      <pubDate>Sun, 22 Jan 2023 11:17:53 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</guid>
+      <description>Blobstore 编程指导 In this document @ref blob_pg_audience @ref blob_pg_intro @ref blob_pg_theory @ref blob_pg_design @ref blob_pg_examples @ref blob_pg_config @ref blob_pg_component Target Audience The programmer&amp;rsquo;s guide is intended for developers authoring applications that utilize the SPDK Blobstore. It is intended to supplement the source code in providing an overall understanding of how to integrate Blobstore into an application as well as provide some high level insight into how Blobstore works behind the scenes. It is not intended to serve as a design document or an API reference and in some cases source code snippets and high level sequences will be discussed; for the latest source code reference refer to the repo. 程序员指南适用于编写使用 SPDK Blobstore 的应用程序的开发人员。它旨在</description>
+    </item>
+    
+    <item>
+      <title>Spdk_nvme_of_target编程指导</title>
+      <link>https://logread.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</link>
+      <pubDate>Sun, 22 Jan 2023 11:14:33 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</guid>
+      <description>NVme over Fabrics: 也称为 NVMe-oF 和 non-volatile memory express over fabric，是一种协议规范，旨在使用 NVMe 协议通过网络结构将主机连接到存储。 该协议旨在通过网络在主机和目标固态存储设备或系统之间实现数据传输——通过基于 NVMe 消息的命令完成。 数据传输可以通过以太网、光纤通道 (FC) 或 InfiniBand 等方法传输 Target Audience This programming guide is intended for developers authoring applications that use the SPDK NVMe-oF target library (lib/nvmf). It</description>
+    </item>
+    
     <item>
       <title>Spdk提交io到nvme设备</title>
       <link>https://logread.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/</link>

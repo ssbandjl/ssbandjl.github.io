@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>Spdk_nvme_of_target编程指导 | 晓兵</title>
+    <meta property="og:title" content="Spdk_nvme_of_target编程指导 - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2023-01-22T11:14:33&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2023-01-22T11:14:33&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储">
+    <meta name="description" content="Spdk_nvme_of_target编程指导">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储/linux/c/c&#43;&#43;/golang</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#target-audience">Target Audience</a></li>
+    <li><a href="#introduction">Introduction</a></li>
+    <li><a href="#primitives-基元">Primitives 基元</a></li>
+    <li><a href="#the-basics">The Basics</a></li>
+    <li><a href="#access-control">Access Control</a></li>
+    <li><a href="#discovery-subsystems">Discovery Subsystems</a></li>
+    <li><a href="#transports">Transports</a></li>
+    <li><a href="#choosing-a-threading-model">Choosing a Threading Model</a></li>
+    <li><a href="#scaling-across-cpu-cores">Scaling Across CPU Cores</a></li>
+    <li><a href="#zero-copy-support">Zero Copy Support</a></li>
+    <li><a href="#rdma">RDMA</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Spdk_nvme_of_target编程指导</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年1月22日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+            <span class="meta-category"><a href='/categories/spdk'>spdk</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <p>NVme over Fabrics: 也称为 NVMe-oF 和 non-volatile memory express over fabric，是一种协议规范，旨在使用 NVMe 协议通过网络结构将主机连接到存储。</p>
+<p>该协议旨在通过网络在主机和目标固态存储设备或系统之间实现数据传输——通过基于 NVMe 消息的命令完成。 数据传输可以通过以太网、光纤通道 (FC) 或 InfiniBand 等方法传输</p>
+<h2 id="target-audience">Target Audience</h2>
+<p>This programming guide is intended for developers authoring applications that use the SPDK NVMe-oF target library (<code>lib/nvmf</code>). It is intended to provide background context, architectural insight, and design recommendations. This guide will not cover how to use the SPDK NVMe-oF target application. For a guide on how to use the existing application as-is, see @ref nvmf.
+目标听众 本编程指南适用于编写使用 SPDK NVMe-oF 目标库 (lib/nvmf) 的应用程序的开发人员。它旨在提供背景上下文、体系结构见解和设计建议。本指南不会介绍如何使用 SPDK NVMe-oF 目标应用程序。有关如何按原样使用现有应用程序的指南，请参阅 NVMe over Fabrics Target。</p>
+<h2 id="introduction">Introduction</h2>
+<p>The SPDK NVMe-oF target library is located in <code>lib/nvmf</code>. The library implements all logic required to create an NVMe-oF target application. It is used in the implementation of the example NVMe-oF target application in <code>app/nvmf_tgt</code>, but is intended to be consumed independently.
+SPDK NVMe-oF 目标库位于 lib/nvmf 中。该库实现了创建 NVMe-oF 目标应用程序所需的所有逻辑。它用于 app/nvmf_tgt 中示例 NVMe-oF 目标应用程序的实现，但旨在独立使用。本指南假设读者熟悉 NVMe 和 NVMe over Fabrics。熟悉这些的最好方法是阅读它们的规范。</p>
+<p>This guide is written assuming that the reader is familiar with both NVMe and NVMe over Fabrics. The best way to become familiar with those is to read their specifications.</p>
+<h2 id="primitives-基元">Primitives 基元</h2>
+<p>The library exposes a number of primitives - basic objects that the user creates and interacts with. They are: 该库公开了许多原语——用户创建并与之交互的基本对象。他们是：</p>
+<p><code>struct spdk_nvmf_tgt</code>: An NVMe-oF target. This concept, surprisingly, does not appear in the NVMe-oF specification. SPDK defines this to mean the collection of subsystems with the associated namespaces, plus the set of transports and their associated network connections. This will be referred to throughout this guide as a target.
+NVMe-oF 目标。令人惊讶的是，这个概念并没有出现在 NVMe-oF 规范中。SPDK 将其定义为具有关联命名空间的子系统的集合，以及传输集及其关联的网络连接。在本指南中，这将被称为目标。</p>
+<p><code>struct spdk_nvmf_subsystem</code>: An NVMe-oF subsystem, as defined by the NVMe-oF specification. Subsystems contain namespaces and controllers and perform access control. This will be referred to throughout this guide as a subsystem.
+NVMe-oF 子系统，由 NVMe-oF 规范定义。子系统包含名称空间和控制器并执行访问控制。这将在本指南中称为子系统</p>
+<p><code>struct spdk_nvmf_ns</code>: An NVMe-oF namespace, as defined by the NVMe-oF specification. Namespaces are bdevs. See @ref bdev for an explanation of the SPDK bdev layer. This will be referred to throughout this guide as a namespace.
+NVMe-oF 命名空间，由 NVMe-oF 规范定义。命名空间是 bdev。有关 SPDK bdev 层的说明，请参阅块设备用户指南。这将在本指南中称为命名空间</p>
+<p><code>struct spdk_nvmf_qpair</code>: An NVMe-oF queue pair, as defined by the NVMe-oF specification. These map 1:1 to network connections. This will be referred to throughout this guide as a qpair.
+NVMe-oF 队列对，由 NVMe-oF 规范定义。这些映射 1:1 到网络连接。在本指南中，这将被称为 qpair。</p>
+<p><code>struct spdk_nvmf_transport</code>: An abstraction for a network fabric, as defined by the NVMe-oF specification. The specification is designed to allow for many different network fabrics, so the code mirrors that and implements a plugin system. Currently, only the RDMA transport is available. This will be referred to throughout this guide as a transport.
+网络结构的抽象，由 NVMe-oF 规范定义。该规范旨在允许许多不同的网络结构，因此代码反映了这一点并实现了一个插件系统。目前，只有 RDMA 传输可用。在本指南中，这将被称为传输</p>
+<p><code>struct spdk_nvmf_poll_group</code>: An abstraction for a collection of network connections that can be polled as a unit. This is an SPDK-defined concept that does not appear in the NVMe-oF specification. Often, network transports have facilities to check for incoming data on groups of connections more efficiently than checking each one individually (e.g. epoll), so poll groups provide a generic abstraction for that. This will be referred to throughout this guide as a poll group.
+可以作为一个单元轮询的网络连接集合的抽象。这是SPDK定义的概念，没有出现在NVMe-oF规范中。通常，网络传输具有比单独检查每个连接（例如 epoll）更有效地检查连接组上传入数据的工具，因此轮询组为此提供了通用抽象。在本指南中，这将被称为poll组</p>
+<p><code>struct spdk_nvmf_listener</code>: A network address at which the target will accept new connections. 目标将接受新连接的网络地址。</p>
+<p><code>struct spdk_nvmf_host</code>: An NVMe-oF NQN representing a host (initiator) system. This is used for access control. 代表主机（启动器）的 NVMe-oF NQN 系统。这用于访问控制</p>
+<h2 id="the-basics">The Basics</h2>
+<p>A user of the NVMe-oF target library begins by creating a target using spdk_nvmf_tgt_create(), setting up a set of addresses on which to accept connections by calling spdk_nvmf_tgt_listen_ext(), then creating a subsystem using spdk_nvmf_subsystem_create().
+NVMe-oF 目标库的用户首先使用 spdk_nvmf_tgt_create() 创建目标，通过调用 spdk_nvmf_tgt_listen_ext() 设置一组接受连接的地址，然后使用 spdk_nvmf_subsystem_create() 创建子系统。</p>
+<p>Subsystems begin in an inactive state and must be activated by calling spdk_nvmf_subsystem_start(). Subsystems may be modified at run time, but only when in the paused or inactive state. A running subsystem may be paused by calling spdk_nvmf_subsystem_pause() and resumed by calling spdk_nvmf_subsystem_resume().
+子系统以非活动状态开始，必须通过调用 spdk_nvmf_subsystem_start() 激活。子系统可以在运行时修改，但仅限于处于暂停或非活动状态时。正在运行的子系统可以通过调用 spdk_nvmf_subsystem_pause() 暂停并通过调用 spdk_nvmf_subsystem_resume() 恢复。</p>
+<p>Namespaces may be added to the subsystem by calling spdk_nvmf_subsystem_add_ns_ext() when the subsystem is inactive or paused. Namespaces are bdevs. See @ref bdev for more information about the SPDK bdev layer. A bdev may be obtained by calling spdk_bdev_get_by_name().
+当子系统处于非活动或暂停状态时，可以通过调用 spdk_nvmf_subsystem_add_ns_ext() 将命名空间添加到子系统。命名空间是 bdev。有关 SPDK bdev 层的更多信息，请参阅块设备用户指南。bdev 可以通过调用 spdk_bdev_get_by_name() 获得。</p>
+<p>Once a subsystem exists and the target is listening on an address, new connections will be automatically assigned to poll groups as they are detected.
+一旦子系统存在并且目标正在侦听地址，新连接将在检测到时自动分配给轮询组。</p>
+<p>All I/O to a subsystem is driven by a poll group, which polls for incoming network I/O. Poll groups may be created by calling spdk_nvmf_poll_group_create(). They automatically request to begin polling upon creation on the thread from which they were created. Most importantly, <em>a poll group may only be accessed from the thread on which it was created.</em>
+子系统的所有 I/O 都由轮询组驱动，轮询组轮询传入的网络 I/O。可以通过调用 spdk_nvmf_poll_group_create() 创建轮询组。它们会自动请求在创建它们的线程上创建时开始轮询。最重要的是，轮询组只能从创建它的线程访问。</p>
+<h2 id="access-control">Access Control</h2>
+<p>Access control is performed at the subsystem level by adding allowed listen addresses and hosts to a subsystem (see spdk_nvmf_subsystem_add_listener() and spdk_nvmf_subsystem_add_host()). By default, a subsystem will not accept connections from any host or over any established listen address. Listeners and hosts may only be added to inactive or paused subsystems.
+通过向子系统添加允许的侦听地址和主机来在子系统级别执行访问控制（请参阅 spdk_nvmf_subsystem_add_listener() 和 spdk_nvmf_subsystem_add_host()）。默认情况下，子系统不会接受来自任何主机或任何已建立的侦听地址的连接。侦听器和主机只能添加到非活动或暂停的子系统。</p>
+<h2 id="discovery-subsystems">Discovery Subsystems</h2>
+<p>A discovery subsystem, as defined by the NVMe-oF specification, is automatically created for each NVMe-oF target constructed. Connections to the discovery subsystem are handled in the same way as any other subsystem.
+为每个构建的 NVMe-oF 目标自动创建一个由 NVMe-oF 规范定义的发现子系统。与发现子系统的连接的处理方式与任何其他子系统的处理方式相同。</p>
+<h2 id="transports">Transports</h2>
+<p>The NVMe-oF specification defines multiple network transports (the &ldquo;Fabrics&rdquo; in NVMe over Fabrics) and has an extensible system for adding new fabrics in the future. The SPDK NVMe-oF target library implements a plugin system for network transports to mirror the specification. The API a new transport must implement is located in lib/nvmf/transport.h. As of this writing, only an RDMA transport has been implemented.</p>
+<p>The SPDK NVMe-oF target is designed to be able to process I/O from multiple fabrics simultaneously. NVMe-oF 规范定义了多种网络传输（NVMe over Fabrics 中的“Fabrics”），并拥有一个可扩展的系统，用于在未来添加新的结构。SPDK NVMe-oF 目标库实现了一个用于网络传输的插件系统以镜像规范。新传输必须实现的 API 位于 lib/nvmf/transport.h 中。在撰写本文时，仅实现了 RDMA 传输。</p>
+<p>SPDK NVMe-oF 目标旨在能够同时处理来自多个结构的 I/O。</p>
+<h2 id="choosing-a-threading-model">Choosing a Threading Model</h2>
+<p>The SPDK NVMe-oF target library does not strictly dictate threading model, but poll groups do all of their polling and I/O processing on the thread they are created on. Given that, it almost always makes sense to create one poll group per thread used in the application.
+SPDK NVMe-oF 目标库没有严格规定线程模型，但轮询组在创建它们的线程上执行所有轮询和 I/O 处理。鉴于此，为应用程序中使用的每个线程创建一个轮询组几乎总是有意义的。</p>
+<h2 id="scaling-across-cpu-cores">Scaling Across CPU Cores</h2>
+<p>Incoming I/O requests are picked up by the poll group polling their assigned qpair. For regular NVMe commands such as READ and WRITE, the I/O request is processed on the initial thread from start to the point where it is submitted to the backing storage device, without interruption. Completions are discovered by polling the backing storage device and also processed to completion on the polling thread. Regular NVMe commands (READ, WRITE, etc.) do not require any cross-thread coordination, and therefore take no locks.
+传入的 I/O 请求由轮询组轮询其分配的 qpair 来拾取。对于 READ 和 WRITE 等常规 NVMe 命令，I/O 请求从开始到提交到后备存储设备的整个过程都在初始线程上进行处理，没有中断。通过轮询后备存储设备发现完成，并在轮询线程上处理完成。常规 NVMe 命令（READ、WRITE 等）不需要任何跨线程协调，因此不需要锁。</p>
+<p>NVMe ADMIN commands, which are used for managing the NVMe device itself, may modify global state in the subsystem. For instance, an NVMe ADMIN command may perform namespace management, such as shrinking a namespace. For these commands, the subsystem will temporarily enter a paused state by sending a message to each thread in the system. All new incoming I/O on any thread targeting the subsystem will be queued during this time. Once the subsystem is fully paused, the state change will occur, and messages will be sent to each thread to release queued I/O and resume. Management commands are rare, so this style of coordination is preferable to forcing all commands to take locks in the I/O path.
+用于管理 NVMe 设备本身的 NVMe ADMIN 命令可能会修改子系统中的全局状态。例如，NVMe ADMIN 命令可以执行命名空间管理，例如缩小命名空间。对于这些命令，子系统将通过向系统中的每个线程发送消息来暂时进入暂停状态。在此期间，针对子系统的任何线程上的所有新传入 I/O 都将排队。一旦子系统完全暂停，状态将发生变化，消息将发送到每个线程以释放排队的 I/O 并恢复。管理命令很少见，因此这种协调方式优于强制所有命令在 I/O 路径中获取锁。</p>
+<h2 id="zero-copy-support">Zero Copy Support</h2>
+<p>For the RDMA transport, data is transferred from the RDMA NIC to host memory and then host memory to the SSD (or vice versa), without any intermediate copies. Data is never moved from one location in host memory to another. Other transports in the future may require data copies.
+对于 RDMA 传输，数据从 RDMA NIC 传输到主机内存，然后从主机内存传输到 SSD（反之亦然），没有任何中间副本。数据永远不会从主机内存中的一个位置移动到另一个位置。未来的其他传输可能需要数据副本。</p>
+<h2 id="rdma">RDMA</h2>
+<p>The SPDK NVMe-oF RDMA transport is implemented on top of the libibverbs and rdmacm libraries, which are packaged and available on most Linux distributions. It does not use a user-space RDMA driver stack through DPDK. SPDK NVMe-oF RDMA 传输是在 libibverbs 和 rdmacm 库之上实现的，这些库在大多数 Linux 发行版上都已打包并可用。它不通过 DPDK 使用用户空间 RDMA 驱动程序堆栈。</p>
+<p>In order to scale to large numbers of connections, the SPDK NVMe-oF RDMA transport allocates a single RDMA completion queue per poll group. All new qpairs assigned to the poll group are given their own RDMA send and receive queues, but share this common completion queue. This allows the poll group to poll a single queue for incoming messages instead of iterating through each one.
+为了扩展到大量连接，SPDK NVMe-oF RDMA 传输为每个轮询组分配一个 RDMA 完成队列。分配给轮询组的所有新 qpairs 都有自己的 RDMA 发送和接收队列，但共享这个公共完成队列。这允许轮询组轮询单个队列以获取传入消息，而不是遍历每个队列。</p>
+<p>Each RDMA request is handled by a state machine that walks the request through a number of states. This keeps the code organized and makes all of the corner cases much more obvious.
+每个 RDMA 请求都由一个状态机处理，该状态机使请求遍历多个状态。这使代码保持井井有条，并使所有极端情况更加明显。</p>
+<p>RDMA SEND, READ, and WRITE operations are ordered with respect to one another, but RDMA RECVs are not necessarily ordered with SEND acknowledgements. For instance, it is possible to detect an incoming RDMA RECV message containing a new NVMe-oF capsule prior to detecting the acknowledgement of a previous SEND containing an NVMe completion. This is problematic at full queue depth because there may not yet be a free request structure. To handle this, the RDMA request structure is broken into two parts - an rdma_recv and an rdma_request. New RDMA RECVs will always grab a free rdma_recv, but may need to wait in a queue for a SEND acknowledgement before they can acquire a full rdma_request object.
+RDMA SEND、READ 和 WRITE 操作是相对于彼此排序的，但 RDMA RECV 不一定与 SEND 确认一起排序。例如，在检测到包含 NVMe 完成的先前 SEND 的确认之前，可以检测到包含新 NVMe-oF 胶囊的传入 RDMA RECV 消息。这在完整的队列深度是有问题的，因为可能还没有空闲的请求结构。为处理此问题，RDMA 请求结构分为两部分 - rdma_recv 和 rdma_request。新的 RDMA RECV 将始终获取空闲的 rdma_recv，但可能需要在队列中等待 SEND 确认，然后才能获取完整的 rdma_request 对象。</p>
+<p>Further, RDMA NICs expose different queue depths for READ/WRITE operations than they do for SEND/RECV operations. The RDMA transport reports available queue depth based on SEND/RECV operation limits and will queue in software as necessary to accommodate (usually lower) limits on READ/WRITE operations.
+此外，RDMA NIC 为 READ/WRITE 操作公开的队列深度与为 SEND/RECV 操作公开的队列深度不同。RDMA 传输根据 SEND/RECV 操作限制报告可用队列深度，并将根据需要在软件中排队以适应（通常较低的）READ/WRITE 操作限制。</p>
+<p>参考:</p>
+<p><a href="https://github.com/ssbandjl/spdk/blob/xb/doc/nvmf_tgt_pg.md">https://github.com/ssbandjl/spdk/blob/xb/doc/nvmf_tgt_pg.md</a></p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/">https://logread.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/">Spdk提交io到nvme设备</a></li>
+        
+        <li><a href="/post/storage/cache/bcache/">Bcache</a></li>
+        
+        <li><a href="/posts/how-to-use-linux-aio/">How to Use Linux Aio</a></li>
+        
+        <li><a href="/post/compile/makefile/makefile/">Makefile</a></li>
+        
+        <li><a href="/post/GinWeb%E6%A1%86%E6%9E%B6/">GinWeb框架</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/spdk'>spdk</a></li>
+                
+                <li><a href='/tags/%E5%AD%98%E5%82%A8'>存储</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2023
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/" title="Spdk_blobstore编程指导">Spdk_blobstore编程指导</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/" title="Spdk_nvme_of_target编程指导">Spdk_nvme_of_target编程指导</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/" title="Spdk提交io到nvme设备">Spdk提交io到nvme设备</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/compile/makefile/makefile/" title="Makefile">Makefile</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/storage/cache/bcache/" title="Bcache">Bcache</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/GinWeb%E6%A1%86%E6%9E%B6/" title="GinWeb框架">GinWeb框架</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/fio%E6%96%87%E6%A1%A3-%E8%AF%91/" title="Fio文档(译)">Fio文档(译)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/K8S-%E5%88%A9%E7%94%A8ExecWebsocket%E6%8E%A5%E5%8F%A3%E5%AE%9E%E7%8E%B0Pod%E9%97%B4%E7%9A%84%E6%96%87%E4%BB%B6%E6%8B%B7%E8%B4%9D/" title="K8S 利用ExecWebsocket接口实现Pod间的文件拷贝">K8S 利用ExecWebsocket接口实现Pod间的文件拷贝</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/%E4%BB%80%E4%B9%88%E6%98%AFRDB%E5%92%8CROF%E4%B8%80%E6%96%87%E4%BA%86%E8%A7%A3Redis%E6%8C%81%E4%B9%85%E5%8C%96/" title="什么是RDB和ROF,一文了解Redis持久化">什么是RDB和ROF,一文了解Redis持久化</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/SSD%E6%98%AF%E5%A6%82%E4%BD%95%E5%8F%91%E7%94%9F%E6%95%85%E9%9A%9C%E7%9A%84-NVMeSSD%E7%AE%A1%E7%90%86-%E9%94%99%E8%AF%AF%E6%8A%A5%E5%91%8A%E5%92%8C%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95%E5%8A%9F%E8%83%BD/" title="SSD是如何发生故障的 NVMe™SSD管理 错误报告和日志记录功能">SSD是如何发生故障的 NVMe™SSD管理 错误报告和日志记录功能</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title" style="color:red">福利派送</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a href="https://www.aliyun.com/minisite/goods?userCode=jdg9oj97&amp;share_source=copy_link" title="【2019双12】ALL IN CLoud 低至1折" target="_blank" style="color:red">
+                
+                    <img src="https://img.alicdn.com/tfs/TB1_rYHo7P2gK0jSZPxXXacQpXa-690-388.jpg">
+                
+            </a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://www.logread.cn/" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
