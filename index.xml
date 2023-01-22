@@ -6,7 +6,16 @@
     <description>Recent content on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 22 Jan 2023 11:17:53 +0800</lastBuildDate><atom:link href="https://logread.cn/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 22 Jan 2023 11:20:30 +0800</lastBuildDate><atom:link href="https://logread.cn/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Cart_rdma_hpc开源rpc传输层</title>
+      <link>https://logread.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/</link>
+      <pubDate>Sun, 22 Jan 2023 11:20:30 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/</guid>
+      <description>简介 分布式异步对象存储 (DAOS) 是一种开源软件定义的对象存储，专为大规模分布式非易失性内存 (NVM) 而设计。DAOS 利用存储级内存 (SCM) 和 NVM express (NVMe) 等下一代 NVM 技术，同时呈现键值存储接口并提供事务性非阻塞 I/O、高级数据保护和自我修复等功能 商品硬件、端到端数据完整性、细粒度数据控制和弹性存储，以优化性能和</description>
+    </item>
+    
     <item>
       <title>Spdk_blobstore编程指导</title>
       <link>https://logread.cn/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</link>
