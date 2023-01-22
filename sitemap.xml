@@ -3,12 +3,67 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://logread.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/</loc>
-    <lastmod>2023-01-22T11:20:30+08:00</lastmod>
+    <loc>https://logread.cn/categories/</loc>
+    <lastmod>2023-01-22T13:39:51+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://logread.cn/categories/</loc>
+    <loc>https://logread.cn/post/dpdk/dpdk/</loc>
+    <lastmod>2023-01-22T13:39:51+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/dpdk/</loc>
+    <lastmod>2023-01-22T13:39:51+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/dpdk/</loc>
+    <lastmod>2023-01-22T13:39:51+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/linux/</loc>
+    <lastmod>2023-01-22T13:39:51+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/</loc>
+    <lastmod>2023-01-22T13:39:51+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/</loc>
+    <lastmod>2023-01-22T13:39:51+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/%E5%AD%98%E5%82%A8/</loc>
+    <lastmod>2023-01-22T13:39:51+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</loc>
+    <lastmod>2023-01-22T13:39:51+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/</loc>
+    <lastmod>2023-01-22T13:39:51+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/%E7%BD%91%E7%BB%9C/</loc>
+    <lastmod>2023-01-22T13:39:51+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/%E7%BD%91%E7%BB%9C/</loc>
+    <lastmod>2023-01-22T13:39:51+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/</loc>
     <lastmod>2023-01-22T11:20:30+08:00</lastmod>
   </url>
   
@@ -19,36 +74,6 @@
   
   <url>
     <loc>https://logread.cn/categories/daos/</loc>
-    <lastmod>2023-01-22T11:20:30+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/linux/</loc>
-    <lastmod>2023-01-22T11:20:30+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/post/</loc>
-    <lastmod>2023-01-22T11:20:30+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/</loc>
-    <lastmod>2023-01-22T11:20:30+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/%E5%AD%98%E5%82%A8/</loc>
-    <lastmod>2023-01-22T11:20:30+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</loc>
-    <lastmod>2023-01-22T11:20:30+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/</loc>
     <lastmod>2023-01-22T11:20:30+08:00</lastmod>
   </url>
   

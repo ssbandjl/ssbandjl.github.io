@@ -6,7 +6,16 @@
     <description>Recent content in 存储 on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 22 Jan 2023 11:20:30 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 22 Jan 2023 13:39:51 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Dpdk</title>
+      <link>https://logread.cn/post/dpdk/dpdk/</link>
+      <pubDate>Sun, 22 Jan 2023 13:39:51 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/dpdk/dpdk/</guid>
+      <description>Data Plane Development Kit (DPDK) Data Plane Development Kit (DPDK) greatly boosts packet processing performance and throughput, allowing more time for data plane applications. DPDK can improve packet processing performance by up to ten times. DPDK software running on current generation Intel® Xeon® Processor E5-2658 v4, achieves 233 Gbps (347 Mpps) of L3 forwarding at 64-byte packet sizes.1 As a result, telecom and network equipment manufacturers (TEMs and NEMs) can lower development costs, use fewer tools and support teams, and get to market faster. 数据平面开发套件 (DPDK) 极大地提升了数据包处理性能和吞吐量，为数据平面应用留出更多时间。 DPDK 最多可将数</description>
+    </item>
+    
     <item>
       <title>Cart_rdma_hpc开源rpc传输层</title>
       <link>https://logread.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/</link>
