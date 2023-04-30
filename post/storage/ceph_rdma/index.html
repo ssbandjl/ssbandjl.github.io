@@ -237,7 +237,8 @@
         <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
     </p>
 <h1 id="利用-rdma-技术加速-ceph-存储解决方案">利用 RDMA 技术加速 Ceph 存储解决方案</h1>
-<p>原创 晓兵XB <a href="">云原生云</a> <em>2023-04-29 20:37</em> <em>发表于四川</em></p>
+<p>原创 晓兵XB <a href="">云原生云</a> <em>2023-04-29 20:37</em> <em>发表于四川</em>
+<a href="https://mp.weixin.qq.com/s?__biz=MzUyOTAzNTI3NA==&amp;mid=2247487678&amp;idx=1&amp;sn=058dbb0e321f4809d54f8f41f0c04a79&amp;chksm=fa6669dbcd11e0cd29727a75cd02fdb3fb7ad2327c56145724441197b4641fdccd0ee5725a16&amp;token=226329094&amp;lang=zh_CN#rd">https://mp.weixin.qq.com/s?__biz=MzUyOTAzNTI3NA==&amp;mid=2247487678&amp;idx=1&amp;sn=058dbb0e321f4809d54f8f41f0c04a79&amp;chksm=fa6669dbcd11e0cd29727a75cd02fdb3fb7ad2327c56145724441197b4641fdccd0ee5725a16&amp;token=226329094&amp;lang=zh_CN#rd</a></p>
 <p>在本文中，我们首先回顾了 Ceph* 4K I/O 工作负载中遇到的性能挑战，并对单个 Ceph OSD 对象存储守护进程 (OSD) 进程的 CPU 分布进行了简要分析。然后，我们讨论了现有 TCP/IP 堆栈中的低效问题，并介绍了英特尔® 以太网连接 X722 支持的 iWARP RDMA 协议，随后描述了 iWARP RDMA 集成到 Ceph 中的设计和实现。最后，我们提供了使用 iWARP RDMA 对 Ceph 的性能评估，与 TCP/IP 堆栈相比，它展示了高达 17% 的性能提升6。</p>
 <h2 id="背景">背景</h2>
 <p>红帽 Ceph* 是当今最流行的分布式存储系统之一，可在单一平台1中提供可扩展且可靠的对象、块和文件存储服务。它在云和大数据环境中得到广泛采用，在过去几年中，Ceph RADOS 块设备 (RDB) 已成为占主导地位的 OpenStack* Cinder 驱动程序。同时，随着Intel ® 3D XPoint ™ memory 2和远程直接内存访问（RDMA）网卡（NIC）等新硬件技术的出现，企业应用开发者对高性能、超低延迟的存储解决方案产生了新的期待用于云上的在线事务处理 (OLTP) 工作负载。</p>
