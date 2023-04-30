@@ -6,9 +6,18 @@
     <description>Recent content on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 30 Apr 2023 11:16:16 +0800</lastBuildDate><atom:link href="https://logread.cn/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 30 Apr 2023 11:21:44 +0800</lastBuildDate><atom:link href="https://logread.cn/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Spdk_pm</title>
+      <title>利用 RDMA 技术加速 Ceph 存储解决方案</title>
+      <link>https://logread.cn/post/storage/ceph_rdma/</link>
+      <pubDate>Sun, 30 Apr 2023 11:21:44 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/storage/ceph_rdma/</guid>
+      <description>利用 RDMA 技术加速 Ceph 存储解决方案 原创 晓兵XB 云原生云 2023-04-29 20:37 发表于四川 在本文中，我们首先回顾了 Ceph* 4K I/O 工作负载中遇到的性能挑战，并对单个 Ceph OSD 对象存储守护进程 (OSD) 进程的 CPU 分布进行了简要分析。然后，我们讨论了现有 TCP/IP 堆栈中的低效问题，并介绍了英特尔® 以太网连接 X722 支持的 iWARP RDMA 协议，随后描述了 iWARP RDMA 集成到</description>
+    </item>
+    
+    <item>
+      <title>在存储性能开发套件 (SPDK) 中启用持久内存(PM)</title>
       <link>https://logread.cn/post/storage/spdk_pm/</link>
       <pubDate>Sun, 30 Apr 2023 11:16:16 +0800</pubDate>
       

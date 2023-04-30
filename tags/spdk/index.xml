@@ -6,7 +6,16 @@
     <description>Recent content in spdk on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 22 Jan 2023 11:17:53 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/spdk/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 30 Apr 2023 11:16:16 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/spdk/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>在存储性能开发套件 (SPDK) 中启用持久内存(PM)</title>
+      <link>https://logread.cn/post/storage/spdk_pm/</link>
+      <pubDate>Sun, 30 Apr 2023 11:16:16 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/storage/spdk_pm/</guid>
+      <description>在存储性能开发套件 (SPDK) 中启用持久内存(PM) 原创 晓兵XB 云原生云 2023-04-30 10:21 发表于四川 背景 Optane 是一种内存系统，旨在通过桥接存储和 RAM 来提高硬盘驱动器 (HDD) 和速度较慢的 SATA SSD 的性能。 2022年7月, 英特尔首席执行官 Pat Gelsinger 将关闭 Optane 的决定归因于更广泛的行业转向 Compute Express Link (CXL) 架构 英特尔第二季度财报电话会议中的公告之</description>
+    </item>
+    
     <item>
       <title>Spdk_blobstore编程指导</title>
       <link>https://logread.cn/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</link>

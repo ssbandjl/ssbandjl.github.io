@@ -3,23 +3,73 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://logread.cn/categories/</loc>
+    <lastmod>2023-04-30T11:21:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/ceph/</loc>
+    <lastmod>2023-04-30T11:21:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/linux/</loc>
+    <lastmod>2023-04-30T11:21:44+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://logread.cn/post/</loc>
+    <lastmod>2023-04-30T11:21:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/rdma/</loc>
+    <lastmod>2023-04-30T11:21:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/stor/</loc>
+    <lastmod>2023-04-30T11:21:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/stor/</loc>
+    <lastmod>2023-04-30T11:21:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/</loc>
+    <lastmod>2023-04-30T11:21:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/storage/ceph_rdma/</loc>
+    <lastmod>2023-04-30T11:21:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/</loc>
+    <lastmod>2023-04-30T11:21:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/optane/</loc>
+    <lastmod>2023-04-30T11:16:16+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/pm/</loc>
+    <lastmod>2023-04-30T11:16:16+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/spdk/</loc>
     <lastmod>2023-04-30T11:16:16+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/post/storage/spdk_pm/</loc>
     <lastmod>2023-04-30T11:16:16+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/</loc>
-    <lastmod>2023-04-30T11:16:16+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/</loc>
-    <lastmod>2023-01-22T13:39:51+08:00</lastmod>
   </url>
   
   <url>
@@ -34,16 +84,6 @@
   
   <url>
     <loc>https://logread.cn/categories/dpdk/</loc>
-    <lastmod>2023-01-22T13:39:51+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/linux/</loc>
-    <lastmod>2023-01-22T13:39:51+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/</loc>
     <lastmod>2023-01-22T13:39:51+08:00</lastmod>
   </url>
   
@@ -80,11 +120,6 @@
   <url>
     <loc>https://logread.cn/categories/daos/</loc>
     <lastmod>2023-01-22T11:20:30+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/spdk/</loc>
-    <lastmod>2023-01-22T11:17:53+08:00</lastmod>
   </url>
   
   <url>

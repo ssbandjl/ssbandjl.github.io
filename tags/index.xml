@@ -6,22 +6,76 @@
     <description>Recent content in Tags on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 22 Jan 2023 13:39:51 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 30 Apr 2023 11:21:44 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>dpdk</title>
-      <link>https://logread.cn/tags/dpdk/</link>
-      <pubDate>Sun, 22 Jan 2023 13:39:51 +0800</pubDate>
+      <title>ceph</title>
+      <link>https://logread.cn/tags/ceph/</link>
+      <pubDate>Sun, 30 Apr 2023 11:21:44 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/dpdk/</guid>
+      <guid>https://logread.cn/tags/ceph/</guid>
       <description></description>
     </item>
     
     <item>
       <title>linux</title>
       <link>https://logread.cn/tags/linux/</link>
-      <pubDate>Sun, 22 Jan 2023 13:39:51 +0800</pubDate>
+      <pubDate>Sun, 30 Apr 2023 11:21:44 +0800</pubDate>
       
       <guid>https://logread.cn/tags/linux/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>rdma</title>
+      <link>https://logread.cn/tags/rdma/</link>
+      <pubDate>Sun, 30 Apr 2023 11:21:44 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/rdma/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>stor</title>
+      <link>https://logread.cn/tags/stor/</link>
+      <pubDate>Sun, 30 Apr 2023 11:21:44 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/stor/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>optane</title>
+      <link>https://logread.cn/tags/optane/</link>
+      <pubDate>Sun, 30 Apr 2023 11:16:16 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/optane/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>pm</title>
+      <link>https://logread.cn/tags/pm/</link>
+      <pubDate>Sun, 30 Apr 2023 11:16:16 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/pm/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>spdk</title>
+      <link>https://logread.cn/tags/spdk/</link>
+      <pubDate>Sun, 30 Apr 2023 11:16:16 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/spdk/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>dpdk</title>
+      <link>https://logread.cn/tags/dpdk/</link>
+      <pubDate>Sun, 22 Jan 2023 13:39:51 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/dpdk/</guid>
       <description></description>
     </item>
     
@@ -49,15 +103,6 @@
       <pubDate>Sun, 22 Jan 2023 11:20:30 +0800</pubDate>
       
       <guid>https://logread.cn/tags/daos/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>spdk</title>
-      <link>https://logread.cn/tags/spdk/</link>
-      <pubDate>Sun, 22 Jan 2023 11:17:53 +0800</pubDate>
-      
-      <guid>https://logread.cn/tags/spdk/</guid>
       <description></description>
     </item>
     
