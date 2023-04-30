@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>Spdk_pm | 晓兵</title>
+    <meta property="og:title" content="Spdk_pm - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2023-04-30T11:16:16&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2023-04-30T11:16:16&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储">
+    <meta name="description" content="Spdk_pm">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/storage/spdk_pm/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#heading"></a></li>
+    <li><a href="#背景">背景</a></li>
+    <li><a href="#介绍">介绍</a></li>
+    <li><a href="#类型">类型</a>
+      <ul>
+        <li><a href="#nvdimm-n">NVDIMM-N</a></li>
+        <li><a href="#nvdimm-f">NVDIMM-F</a></li>
+        <li><a href="#nvdimm-p">NVDIMM-P</a></li>
+      </ul>
+    </li>
+    <li><a href="#硬件支持">硬件支持</a>
+      <ul>
+        <li><a href="#原子写">原子写</a></li>
+        <li><a href="#高效缓存刷新">高效缓存刷新</a></li>
+        <li><a href="#提交到持久层">提交到持久层</a></li>
+        <li><a href="#非临时存储优化">非临时存储优化</a></li>
+      </ul>
+    </li>
+    <li><a href="#软件支持">软件支持</a>
+      <ul>
+        <li><a href="#mmap-和-dax">Mmap 和 DAX</a></li>
+        <li><a href="#nvm-编程模型">NVM 编程模型</a></li>
+        <li><a href="#持久内存开发套件-pmdk">持久内存开发套件 (PMDK)</a></li>
+      </ul>
+    </li>
+    <li><a href="#spdk实战bdevperf测试">SPDK实战——Bdevperf测试</a>
+      <ul>
+        <li><a href="#步骤-1-创建-pmem-bdev">步骤 1. 创建 PMEM bdev</a></li>
+        <li><a href="#步骤-2-更新配置文件">步骤 2. 更新配置文件</a></li>
+        <li><a href="#步骤-3-bdevperf-测试">步骤 3. bdevperf 测试</a></li>
+      </ul>
+    </li>
+    <li><a href="#结论">结论</a></li>
+    <li><a href="#参考">参考</a></li>
+    <li><a href="#关于作者">关于作者</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Spdk_pm</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年4月30日
+        </date>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="在存储性能开发套件-spdk-中启用持久内存pm">在存储性能开发套件 (SPDK) 中启用持久内存(PM)</h1>
+<p>原创 晓兵XB <a href="">云原生云</a> <em>2023-04-30 10:21</em> <em>发表于四川</em></p>
+<p>
+        <img class="mx-auto" alt="图片" src="https://mmbiz.qpic.cn/mmbiz_png/bqWYvcSm6Fflg8icDvszejavHObnpwx2SsHjTRn5UO3UwiaTfpw8ntIh79TkmLZzM7ljeko7LHs7vJdTJmZjzhHg/640?wx_fmt=png&amp;wxfrom=5&amp;wx_lazy=1&amp;wx_co=1" />   
+    </p>
+<h2 id="heading"></h2>
+<h2 id="背景">背景</h2>
+<p>Optane 是一种内存系统，旨在通过桥接存储和 RAM 来提高硬盘驱动器 (HDD) 和速度较慢的 SATA SSD 的性能。</p>
+<p>2022年7月, 英特尔首席执行官 Pat Gelsinger 将关闭 Optane 的决定归因于更广泛的行业转向 Compute Express Link (CXL) 架构</p>
+<p>英特尔第二季度财报电话会议中的公告之一是确认该公司将关闭其 Optane 内存部门</p>
+<p>虽然傲腾停产, 但是其技术思想仍然值得学习, 作为代替 Optane 持久内存，英特尔的官方策略是转向 CXL 内存技术 (CXL.mem)，该技术允许通过支持 CXL 的 PCIe 总线将易失性和非易失性内存连接到 CPU。这将实现与 Optane（非易失性内存、大容量）相同的许多目标，而无需开发完全独立的内存技术。Sapphire Rapids 又将是英特尔首款支持 CXL 的 CPU，整体技术拥有更广泛的行业支持</p>
+<h2 id="介绍">介绍</h2>
+<p>随着新存储技术的发展以及随之而来的对更高性能的期望，业界已经开始寻找向内存通道迁移的可能性。</p>
+<p>提供更高性能期望的存储技术的新方向是非易失性双列直插式内存模块 (NVDIMM)。</p>
+<p>NVDIMM 是非易失性内存，允许随机访问。非易失性意味着即使断电也能保存数据，因此在意外断电、系统崩溃和正常关机期间我们不会遇到数据丢失的情况。同时，NVDIMM 采用兼容标准 DIMM 插槽的双列直插式内存模块 (DIMM) 封装，通过标准双倍数据速率 (DDR) 总线进行通信。考虑到它是非易失性的并且与传统的动态随机存取存储器（DRAM）接口兼容，它也被称为持久存储器（PMEM）。</p>
+<h2 id="类型">类型</h2>
+<p>根据标准化机构JEDEC提供的定义，目前NVDIMM分为三种，分别介绍如下。</p>
+<h3 id="nvdimm-n">NVDIMM-N</h3>
+<p>NVDIMM-N 在一个模块中包含闪存和传统 DRAM，计算机可以直接访问，并支持字节和块寻址。在意外断电后，NVDIMM-N 备用电源可以提供足够的电力将数据从 DRAM 复制到闪存，当电力恢复时，数据可以重新加载到 DRAM 中。</p>
+<p>![图片](data:image/svg+xml,%3C%3Fxml version=&lsquo;1.0&rsquo; encoding=&lsquo;UTF-8&rsquo;%3F%3E%3Csvg width=&lsquo;1px&rsquo; height=&lsquo;1px&rsquo; viewBox=&lsquo;0 0 1 1&rsquo; version=&lsquo;1.1&rsquo; xmlns=&lsquo;<a href="http://www.w3.org/2000/svg'">http://www.w3.org/2000/svg'</a> xmlns:xlink=&lsquo;<a href="http://www.w3.org/1999/xlink'%3E%3Ctitle%3E%3C/title%3E%3Cg">http://www.w3.org/1999/xlink'%3E%3Ctitle%3E%3C/title%3E%3Cg</a> stroke=&lsquo;none&rsquo; stroke-width=&lsquo;1&rsquo; fill=&lsquo;none&rsquo; fill-rule=&lsquo;evenodd&rsquo; fill-opacity=&lsquo;0&rsquo;%3E%3Cg transform=&lsquo;translate(-249.000000, -126.000000)&rsquo; fill='%23FFFFFF&rsquo;%3E%3Crect x=&lsquo;249&rsquo; y=&lsquo;126&rsquo; width=&lsquo;1&rsquo; height=&lsquo;1&rsquo;%3E%3C/rect%3E%3C/g%3E%3C/g%3E%3C/svg%3E)
+图 1. NVDIMM-N。</p>
+<p>事实上，NVDIMM-N 主要像传统 DRAM 一样工作，这就是为什么它的延迟也发生在 10 -8秒的水平。至于容量，受尺寸限制，NVDIMM-N 与传统 DRAM 相比改进有限。</p>
+<p>一个缺点是 NVDIMM-N 闪存不可寻址，另一个缺点是使用两种介质类型会大大增加其成本。然而，NVDIMM-N 以其持久内存的新概念给业界留下了深刻印象。目前市场上有很多基于NVDIMM-N的产品。</p>
+<h3 id="nvdimm-f">NVDIMM-F</h3>
+<p>NVDIMM-F是闪存，使用DRAM的DDR3或DDR4总线，而我们知道，以NAND闪存为介质的固态硬盘（SSD）一般使用Serial Advanced Technology Attachment（SATA）、Serial Attached SCSI（SAS） ), 或 PCIe* 总线。使用DDR总线可以提高最大带宽，一定程度上降低协议带来的延迟和成本，但它只支持块寻址。</p>
+<p>NVDIMM-F 的工作原理与 SSD 基本相同，这就是为什么它的延迟在 10 -5秒的水平。它的容量可以轻松扩展到太字节 (TB)。</p>
+<h3 id="nvdimm-p">NVDIMM-P</h3>
+<p>与该类型相关的标准目前正在制定中。有望与DDR5标准一起出台。根据发布计划，DDR5将提供两倍于DDR4的带宽，并提升通道效率。对于 NVDIMM-P，这些预期的改进，结合其用于服务器和客户端平台的用户友好界面，可在应用程序中实现高性能和改进的电源管理。</p>
+<p>NVDIMM-P 结合了 DRAM 和闪存的特性，既支持块寻址，也支持传统的类 DRAM 字节寻址，具有与 NAND 闪存一样可能的 TB 容量。此外，它可以将延迟保持在10 -7秒以内。</p>
+<p>通过直接连接到内存总线的数据介质，CPU 可以直接访问数据，没有驱动器或 PCIe 延迟。同时，不需要块访问，CPU 可以只访问它需要的数据，因为内存访问是通过 64 字节的高速缓存行进行的。</p>
+<p>Intel 公司于 2019 年 4 月发布了Intel® Optane™ DC 持久内存。它可以看作是 NVDIMM-P 实现的一个实例。</p>
+<p>
+        <img class="mx-auto" alt="图片" src="https://mmbiz.qpic.cn/mmbiz_png/bqWYvcSm6Fflg8icDvszejavHObnpwx2SSPS13q8FJs3tlsyYhWppPaMPs7fPuQKM3ia159nfECDsl9gKXJZfib0Q/640?wx_fmt=png&amp;wxfrom=5&amp;wx_lazy=1&amp;wx_co=1" />   
+    
+图 2.英特尔® 傲腾™ DC 持久内存。</p>
+<h2 id="硬件支持">硬件支持</h2>
+<p>应用程序可以像访问传统 DRAM 一样直接访问 NVDIMM-P，这也省去了传统块设备和内存之间进行页面交换的需要。但是，向持久内存写入数据和向普通DRAM写入数据共享计算机资源，包括处理器缓冲区、L1/L2缓存等。</p>
+<p>需要注意的是，为了使数据持久化，需要将数据写入到持久化存储设备或具有掉电保护的缓冲区中。软件要想充分利用持久内存的特性，指令集架构至少需要支持以下特性。</p>
+<h3 id="原子写">原子写</h3>
+<p>原子性意味着对持久内存的任何大小的写入都应该是原子的，因为这可以防止由于系统崩溃或意外断电而导致的错误数据或重复写入。IA-32 (IA32) 和 IA-64 (IA64) 处理器可以保证数据访问（对齐或未对齐）的原子写入，以缓存高达 64 位的数据；因此，软件可以安全地更新持久内存中的数据。这也提高了性能，因为它避免了用于确保写入原子性的写时复制或预写日志记录的使用。</p>
+<h3 id="高效缓存刷新">高效缓存刷新</h3>
+<p>出于性能原因，持久内存中的数据在被访问之前必须放入处理器缓存中。优化的缓存刷新指令可以减少刷新 (CLFLUSH) 对性能的影响。</p>
+<p><strong>CLFLUSHOPT</strong>提供更高效的缓存刷新指令。</p>
+<p>缓存行回写 ( <strong>CLWB</strong> ) 指令将缓存行上更改的数据写回内存（类似于<strong>CLFLUSHOPT</strong>），无需将此缓存行变为无效（MESI 协议），而是进入未更改的独占状态. <strong>CLWB</strong>实际上是在试图减少由于刷新某些缓存行而在下次访问中不可避免的缓存未命中。</p>
+<h3 id="提交到持久层">提交到持久层</h3>
+<p>在现代计算机的体系结构中，缓存刷新完成后，修改后的数据将写回内存子系统的写缓冲区。但是，在这种情况下，数据是不持久的。为确保数据写入持久内存，软件需要刷新内存子系统中的易失性写入缓冲区或其他缓存。用于持久写入的提交指令<strong>PCOMMIT</strong>可以将内存子系统的写入队列中的数据提交到持久内存。</p>
+<p>（注意：支持 Intel® Optane™ DC 持久内存的平台还需要支持异步 DRAM 刷新 (ADR)。此功能通过自动刷新内存控制器中的写入挂起队列 (WPQ) 来保证电源故障或关机期间的数据持久性, 消除了对<strong>PCOMMIT</strong>的需要。有关更多信息，请参阅弃用 PCOMMIT 指令）</p>
+<h3 id="非临时存储优化">非临时存储优化</h3>
+<p>当软件需要将大量数据从普通内存复制到持久内存（或持久内存之间）时，弱序、非临时存储操作（例如，MOVNTI）指令是可用的选项。因为非临时存储指令可以隐式地使要写回的缓存行无效，所以软件不需要显式刷新缓存行（参见英特尔® 64 和 IA-32 架构软件开发人员手册第 1 卷第 10.4.6.2节).</p>
+<p>以上介绍了NVDIMM的几种实现方式，以及硬件优化和支持，以充分发挥NVDIMM-P的性能。以下部分是关于软件支持，包括编程模型、编程库、存储性能开发工具包（SPDK）支持等。</p>
+<h2 id="软件支持">软件支持</h2>
+<p>本节介绍支持软件可以提供以完全启用 NVDIMM 功能。有些人可能想知道为什么 NVDIMM 并不像名称所暗示的那样方便；对于持久内存来说，距离重启电脑一切如常关机的理想使用场景还差得很远。事实上，这在不久的将来仍然很难实现，因为例如在 DRAM 之上，高速缓存和寄存器仍然是易失性的。持久内存本身并不能使所有内容持久化。还有一个问题：内存泄漏。如果发生内存泄漏，重启会清除易失性内存，但是持久性内存泄漏呢？这是一个艰难的局面。PMEM 在某些方面类似于内存，在其他方面类似于存储；但是，一般来说，我们不会将 PMEM 视为能够替代内存或存储的东西。</p>
+<p>自 17.10 版本以来，SPDK 已包含对 PMEM 的支持。<strong>PMEM在SPDK的bdev</strong>层暴露为块设备，通过块设备接口与上层通信，如图3所示。</p>
+<p>![图片](data:image/svg+xml,%3C%3Fxml version=&lsquo;1.0&rsquo; encoding=&lsquo;UTF-8&rsquo;%3F%3E%3Csvg width=&lsquo;1px&rsquo; height=&lsquo;1px&rsquo; viewBox=&lsquo;0 0 1 1&rsquo; version=&lsquo;1.1&rsquo; xmlns=&lsquo;<a href="http://www.w3.org/2000/svg'">http://www.w3.org/2000/svg'</a> xmlns:xlink=&lsquo;<a href="http://www.w3.org/1999/xlink'%3E%3Ctitle%3E%3C/title%3E%3Cg">http://www.w3.org/1999/xlink'%3E%3Ctitle%3E%3C/title%3E%3Cg</a> stroke=&lsquo;none&rsquo; stroke-width=&lsquo;1&rsquo; fill=&lsquo;none&rsquo; fill-rule=&lsquo;evenodd&rsquo; fill-opacity=&lsquo;0&rsquo;%3E%3Cg transform=&lsquo;translate(-249.000000, -126.000000)&rsquo; fill='%23FFFFFF&rsquo;%3E%3Crect x=&lsquo;249&rsquo; y=&lsquo;126&rsquo; width=&lsquo;1&rsquo; height=&lsquo;1&rsquo;%3E%3C/rect%3E%3C/g%3E%3C/g%3E%3C/svg%3E)
+图 3.SPDK 中的 PMEM 支持。</p>
+<p>从图中我们可以看出<strong>libpmemblk</strong>把块操作变成了字节操作，但是它是如何实现的呢？<strong>在深入研究libpmemblk</strong>和底层持久内存开发工具包 (PMDK)之前，让我们先了解一下基础知识。</p>
+<h3 id="mmap-和-dax">Mmap 和 DAX</h3>
+<p>让我们先来看看传统的I/O；即缓冲 I/O。大多数操作系统默认使用缓存 I/O，这允许 I/O 数据缓存在操作系统页面缓存中，这意味着数据首先被复制到操作系统内核空间缓冲区，然后从那里复制到指定的用户地址空间。</p>
+<pre><code>// A Programmer’s view (not just C programmers!)
+fd = open(”/my/file”, O_RDWR);
+…
+count = read(fd, buf, bufsize);
+…
+count = write(fd, buf, bufsize);
+…
+close(fd);
+// “Buffer-Based”
+</code></pre><p>在 Linux* 中，这种文件访问技术是通过读/写系统调用实现的，如图 4 所示。接下来，我们对比一下，看看内存映射 I/O mmap() 是如何工作**的**。</p>
+<pre><code>// A Programmer’s view (mapped files)
+fd = open(”/my/file”, O_RDWR);
+…
+base = mmap(NULL, filesize, PROT_READ|PROT_WRITE,
+  MAP_SHARED, fd, 0);
+close(fd);
+…
+base[100] = ’X’; 
+strcpy(base, ”hello there”);
+*structp = *base_structp;
+…
+// “Load/Store”
+</code></pre><p><strong>我们可以通过mmap</strong>获取对应文件的指针，然后像我们在内存中操作一样赋值或者执行 memcpy/strcpy。我们称这个过程为加载/存储操作，它通常需要调用<strong>msync</strong>和<strong>fsync</strong>来持久化数据。</p>
+<p><strong>mmap</strong>所做的可以看作是直接将文件复制到用户空间，因为它建立了文件和用户空间之间的映射，所以节省了一份数据。但是，<strong>mmap</strong>仍然依赖于页面缓存。</p>
+<p>
+        <img class="mx-auto" alt="图片" src="https://mmbiz.qpic.cn/mmbiz_png/bqWYvcSm6Fflg8icDvszejavHObnpwx2SdddWPyOM5SAflG70WD4PdUqUH3pcrzMF2EOuKwzUSFubkR4QrX0d0A/640?wx_fmt=png&amp;wxfrom=5&amp;wx_lazy=1&amp;wx_co=1" />   
+    
+图 4. 加载/存储仍然需要页面缓存。</p>
+<p>现在，DAX 是什么？DAX，意思是直接访问，是一个基于 mmap 的特性。但它与mmap的不同之处在于它完全独立于页面缓存并且直接访问存储设备。这使其非常适合 NVDIMM。应用程序对 mmap 的文件操作直接同步到 NVDIMM。DAX 现在在 XFS、EXT4 和 Windows* NTFS 上受支持，但它的使用需要对应用程序或文件系统进行一些修改。</p>
+<p>![图片](data:image/svg+xml,%3C%3Fxml version=&lsquo;1.0&rsquo; encoding=&lsquo;UTF-8&rsquo;%3F%3E%3Csvg width=&lsquo;1px&rsquo; height=&lsquo;1px&rsquo; viewBox=&lsquo;0 0 1 1&rsquo; version=&lsquo;1.1&rsquo; xmlns=&lsquo;<a href="http://www.w3.org/2000/svg'">http://www.w3.org/2000/svg'</a> xmlns:xlink=&lsquo;<a href="http://www.w3.org/1999/xlink'%3E%3Ctitle%3E%3C/title%3E%3Cg">http://www.w3.org/1999/xlink'%3E%3Ctitle%3E%3C/title%3E%3Cg</a> stroke=&lsquo;none&rsquo; stroke-width=&lsquo;1&rsquo; fill=&lsquo;none&rsquo; fill-rule=&lsquo;evenodd&rsquo; fill-opacity=&lsquo;0&rsquo;%3E%3Cg transform=&lsquo;translate(-249.000000, -126.000000)&rsquo; fill='%23FFFFFF&rsquo;%3E%3Crect x=&lsquo;249&rsquo; y=&lsquo;126&rsquo; width=&lsquo;1&rsquo; height=&lsquo;1&rsquo;%3E%3C/rect%3E%3C/g%3E%3C/g%3E%3C/svg%3E)
+图 5.DAX。</p>
+<h3 id="nvm-编程模型">NVM 编程模型</h3>
+<p>非易失性内存 (NVM) 编程模型大致定义了三种使用持久内存的方式。</p>
+<p>![图片](data:image/svg+xml,%3C%3Fxml version=&lsquo;1.0&rsquo; encoding=&lsquo;UTF-8&rsquo;%3F%3E%3Csvg width=&lsquo;1px&rsquo; height=&lsquo;1px&rsquo; viewBox=&lsquo;0 0 1 1&rsquo; version=&lsquo;1.1&rsquo; xmlns=&lsquo;<a href="http://www.w3.org/2000/svg'">http://www.w3.org/2000/svg'</a> xmlns:xlink=&lsquo;<a href="http://www.w3.org/1999/xlink'%3E%3Ctitle%3E%3C/title%3E%3Cg">http://www.w3.org/1999/xlink'%3E%3Ctitle%3E%3C/title%3E%3Cg</a> stroke=&lsquo;none&rsquo; stroke-width=&lsquo;1&rsquo; fill=&lsquo;none&rsquo; fill-rule=&lsquo;evenodd&rsquo; fill-opacity=&lsquo;0&rsquo;%3E%3Cg transform=&lsquo;translate(-249.000000, -126.000000)&rsquo; fill='%23FFFFFF&rsquo;%3E%3Crect x=&lsquo;249&rsquo; y=&lsquo;126&rsquo; width=&lsquo;1&rsquo; height=&lsquo;1&rsquo;%3E%3C/rect%3E%3C/g%3E%3C/g%3E%3C/svg%3E)
+图 6. NVM 编程模型。</p>
+<ul>
+<li>
+<p>管理，如图6左侧所示，主要通过驱动提供的API对NVDIMM进行管理，如容量检查、健康状态、固件版本、固件升级、模式配置等。</p>
+</li>
+<li>
+<p>图 6 的中间部分显示了作为存储块设备的用法。使用支持 NVDIMM 驱动程序的文件系统和内核。应用程序无需做任何修改，通过标准的文件接口访问NVDIMM。</p>
+</li>
+<li>
+<p>第三种使用方式是基于文件系统的DAX特性；它通过加载/存储进行操作，并在不需要页面缓存的情况下同步保存数据。此外，不涉及系统调用或中断。这些功能是 NVM 编程模型的核心，最大限度地发挥了 NVIDMM 的潜在功能。但缺点是应用程序可能需要进行一些更改。</p>
+</li>
+</ul>
+<h3 id="持久内存开发套件-pmdk">持久内存开发套件 (PMDK)</h3>
+<p><strong>libpmemblk</strong>实现驻留在持久内存中的相同大小的块数组。其中的每个块都保持原子事务性，以防突然断电、程序崩溃等。它基于<strong>libpmem</strong>库。</p>
+<p><strong>libpmem</strong>是 PMDK 提供的低级库，用于刷新和持久化 NVDIMM 中的数据。它可以跟踪 PMEM 上的每个存储操作并确保数据持久化。</p>
+<p>此外，PMDK 还提供了其他编程库，如<strong>libpmemobj</strong>、<strong>libpmemlog</strong>、<strong>libvmmalloc</strong>等。请访问pmem.io了解更多信息。</p>
+<h2 id="spdk实战bdevperf测试">SPDK实战——Bdevperf测试</h2>
+<p><strong>bdevperf</strong>是SPDK中提供的性能评估工具。<strong>用户可以在 SPDK bdev</strong>层启用各种块设备并运行<strong>bdevperf</strong>测试。</p>
+<h3 id="步骤-1-创建-pmem-bdev">步骤 1. 创建 PMEM bdev</h3>
+<p>克隆或下载 repo 并进入 SPDK 目录。</p>
+<pre><code>   ./configure --with-pmdk 
+   make
+</code></pre><p>PMDK 已包含在一些新发布的 Linux 版本中。如果配置中碰巧有错误，请访问GitHub* 站点以安装 PMDK 库。</p>
+<p>首先，我们需要运行一个 SPDK 目标。SPDK为不同的用途提供了几个target，例如ISCSI target、NVMF target、vhost target等。这里我们运行一个简单的target <strong>spdk_tgt</strong>，仅用于接收和解析RPC命令：</p>
+<pre><code>./app/spdk_tgt/spdk_tgt
+</code></pre><p>接下来，我们可以通过<strong>SPDK RPC</strong>命令创建一个<strong>pmem_pool</strong>：</p>
+<pre><code>rpc.py create_pmem_pool /path/to/pmem_pool  (MB) &gt; &lt;BlockSize&gt; 
+</code></pre><p>如果我们这里没有真正的NVDIMM来测试，我们可以只选择一个随机路径<strong>pmem_pool</strong>（用于模拟）；例如：</p>
+<pre><code>rpc.py create_pmem_pool /mnt/pmem  128  4096
+</code></pre><p>如果您的系统中有英特尔® 傲腾™ DC 持久内存，您可以参考《快速入门指南：在 Linux* 上配置英特尔® 傲腾™ DC 持久内存》进行配置。**配置完成后，将挂载目录作为pmem_pool**的路径即可。</p>
+<p>我们还可以使用<strong>pmem_pool_info</strong>获取创建<strong>pmem_pool</strong>所需的信息：</p>
+<pre><code>rpc.py pmem_pool_info /path/to/pmem_pool
+</code></pre><p>或者，我们可以删除刚刚创建的<strong>pmem_pool</strong>：</p>
+<pre><code>rpc.py delete_pmem_pool /path/to/pmem_pool
+</code></pre><p><strong>然后，我们在我们创建的pmem_pool</strong>上设置一个<strong>bdev</strong>块设备：</p>
+<pre><code>rpc.py construct_pmem_bdev /path/to/pmem_pool -n pmem_bdev_name
+</code></pre><h3 id="步骤-2-更新配置文件">步骤 2. 更新配置文件</h3>
+<p>将路径更改为<strong>spdk/test/bdev/bdev.conf.in</strong>，并且只保留部分 PMEM 配置。</p>
+<pre><code>[Pmem] 
+Blk &lt;pmemblk pool file name&gt; &lt;bdev name&gt;
+</code></pre><p>例如：</p>
+<pre><code>[Pmem] 
+Blk  /mnt/pmem-pool  pmem-bdev
+</code></pre><h3 id="步骤-3-bdevperf-测试">步骤 3. bdevperf 测试</h3>
+<pre><code>./bdevperf -c ../bdev.conf.in -q &lt;iodepth&gt; -t &lt;time&gt; -w &lt;io pattern type: write|read|randwrite|randread&gt;-o &lt;io size in bytes&gt;
+</code></pre><p>示例命令：</p>
+<pre><code>./bdevperf -c ../bdev.conf.in -q 128 -t 100 -w write -o 4096 
+./bdevperf -c ../bdev.conf.in -q 128 -t 100 -w write -o 4096 
+</code></pre><h2 id="结论">结论</h2>
+<p>在本文中，我们描述了将 NVDIMM 作为存储的硬件和软件之间的差异。Intel公司于2019年4月发布了Intel® Optane™ DC Persistent Memory，使NVDIMM成为业界关注的焦点。</p>
+<h2 id="参考">参考</h2>
+<p>英特尔® 架构指令集扩展编程参考</p>
+<p>pmem.io</p>
+<p>spdk.io</p>
+<p>联合电子管工程委员会 (JETEC ) 技术重点领域主存储器：DDR4 和 DDR5 SDRAM</p>
+<p>Intel® Optane™ DC Persistent Memory 的操作模式</p>
+<p>英特尔® 傲腾™ 内存：两种令人困惑的模式第 4 部分：模式比较 - SSD 专家</p>
+<h2 id="关于作者">关于作者</h2>
+<p>Chunyang Hui，英特尔软件工程师，主要从事存储软件的SPDK开发和性能优化。</p>
+<p>2019 年 7 月 25 日</p>
+<p>原文: <a href="https://www.intel.com/content/www/us/en/developer/articles/technical/enabling-persistent-memory-in-the-storage-performance-development-kit-spdk.html">https://www.intel.com/content/www/us/en/developer/articles/technical/enabling-persistent-memory-in-the-storage-performance-development-kit-spdk.html</a></p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/storage/spdk_pm/">https://logread.cn/post/storage/spdk_pm/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/dpdk/dpdk/">Dpdk</a></li>
+        
+        <li><a href="/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/">Cart_rdma_hpc开源rpc传输层</a></li>
+        
+        <li><a href="/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/">Spdk_blobstore编程指导</a></li>
+        
+        <li><a href="/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/">Spdk_nvme_of_target编程指导</a></li>
+        
+        <li><a href="/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/">Spdk提交io到nvme设备</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2023
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/storage/spdk_pm/" title="Spdk_pm">Spdk_pm</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/dpdk/dpdk/" title="Dpdk">Dpdk</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/" title="Cart_rdma_hpc开源rpc传输层">Cart_rdma_hpc开源rpc传输层</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/" title="Spdk_blobstore编程指导">Spdk_blobstore编程指导</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/" title="Spdk_nvme_of_target编程指导">Spdk_nvme_of_target编程指导</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/" title="Spdk提交io到nvme设备">Spdk提交io到nvme设备</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/compile/makefile/makefile/" title="Makefile">Makefile</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/storage/cache/bcache/" title="Bcache">Bcache</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/GinWeb%E6%A1%86%E6%9E%B6/" title="GinWeb框架">GinWeb框架</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/posts/fio%E6%96%87%E6%A1%A3-%E8%AF%91/" title="Fio文档(译)">Fio文档(译)</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title" style="color:red">福利派送</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a href="https://www.aliyun.com/minisite/goods?userCode=jdg9oj97&amp;share_source=copy_link" title="【2019双12】ALL IN CLoud 低至1折" target="_blank" style="color:red">
+                
+                    <img src="https://img.alicdn.com/tfs/TB1_rYHo7P2gK0jSZPxXXacQpXa-690-388.jpg">
+                
+            </a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (7)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://github.com/ssbandjl/golang-design-pattern" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
