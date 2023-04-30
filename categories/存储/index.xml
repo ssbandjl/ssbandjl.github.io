@@ -6,7 +6,16 @@
     <description>Recent content in 存储 on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 22 Jan 2023 13:39:51 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 30 Apr 2023 11:38:53 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Ceph_rdma_2</title>
+      <link>https://logread.cn/post/storage/ceph_rdma_2/</link>
+      <pubDate>Sun, 30 Apr 2023 11:38:53 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/storage/ceph_rdma_2/</guid>
+      <description>云原生云 title</description>
+    </item>
+    
     <item>
       <title>Dpdk</title>
       <link>https://logread.cn/post/dpdk/dpdk/</link>
