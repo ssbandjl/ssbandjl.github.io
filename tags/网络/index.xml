@@ -13,7 +13,7 @@
       <pubDate>Sun, 22 Jan 2023 13:39:51 +0800</pubDate>
       
       <guid>https://logread.cn/post/dpdk/dpdk/</guid>
-      <description>Data Plane Development Kit (DPDK) Data Plane Development Kit (DPDK) greatly boosts packet processing performance and throughput, allowing more time for data plane applications. DPDK can improve packet processing performance by up to ten times. DPDK software running on current generation Intel® Xeon® Processor E5-2658 v4, achieves 233 Gbps (347 Mpps) of L3 forwarding at 64-byte packet sizes.1 As a result, telecom and network equipment manufacturers (TEMs and NEMs) can lower development costs, use fewer tools and support teams, and get to market faster. 数据平面开发套件 (DPDK) 极大地提升了数据包处理性能和吞吐量，为数据平面应用留出更多时间。 DPDK 最多可将数</description>
+      <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 Data Plane Development Kit (DPDK) Data Plane Development Kit (DPDK) greatly boosts packet processing performance and throughput, allowing more time for data plane applications. DPDK can improve packet processing performance by up to ten times. DPDK software running on current generation Intel® Xeon® Processor E5-2658 v4, achieves 233 Gbps (347 Mpps) of L3 forwarding at 64-byte packet sizes.1 As a result, telecom and network equipment manufacturers (TEMs and NEMs) can lower development costs, use fewer tools and support teams, and get to market faster. 数据平面开发套件 (DPDK) 极大地提升了数据包处理性能和吞吐量，为数据平面应用</description>
     </item>
     
   </channel>

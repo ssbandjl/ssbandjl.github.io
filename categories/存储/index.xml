@@ -6,23 +6,14 @@
     <description>Recent content in 存储 on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 30 Apr 2023 11:38:53 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Ceph_rdma_2</title>
-      <link>https://logread.cn/post/storage/ceph_rdma_2/</link>
-      <pubDate>Sun, 30 Apr 2023 11:38:53 +0800</pubDate>
-      
-      <guid>https://logread.cn/post/storage/ceph_rdma_2/</guid>
-      <description>云原生云 title</description>
-    </item>
-    
+    <lastBuildDate>Sun, 22 Jan 2023 13:39:51 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Dpdk</title>
       <link>https://logread.cn/post/dpdk/dpdk/</link>
       <pubDate>Sun, 22 Jan 2023 13:39:51 +0800</pubDate>
       
       <guid>https://logread.cn/post/dpdk/dpdk/</guid>
-      <description>Data Plane Development Kit (DPDK) Data Plane Development Kit (DPDK) greatly boosts packet processing performance and throughput, allowing more time for data plane applications. DPDK can improve packet processing performance by up to ten times. DPDK software running on current generation Intel® Xeon® Processor E5-2658 v4, achieves 233 Gbps (347 Mpps) of L3 forwarding at 64-byte packet sizes.1 As a result, telecom and network equipment manufacturers (TEMs and NEMs) can lower development costs, use fewer tools and support teams, and get to market faster. 数据平面开发套件 (DPDK) 极大地提升了数据包处理性能和吞吐量，为数据平面应用留出更多时间。 DPDK 最多可将数</description>
+      <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 Data Plane Development Kit (DPDK) Data Plane Development Kit (DPDK) greatly boosts packet processing performance and throughput, allowing more time for data plane applications. DPDK can improve packet processing performance by up to ten times. DPDK software running on current generation Intel® Xeon® Processor E5-2658 v4, achieves 233 Gbps (347 Mpps) of L3 forwarding at 64-byte packet sizes.1 As a result, telecom and network equipment manufacturers (TEMs and NEMs) can lower development costs, use fewer tools and support teams, and get to market faster. 数据平面开发套件 (DPDK) 极大地提升了数据包处理性能和吞吐量，为数据平面应用</description>
     </item>
     
     <item>
@@ -31,7 +22,7 @@
       <pubDate>Sun, 22 Jan 2023 11:20:30 +0800</pubDate>
       
       <guid>https://logread.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/</guid>
-      <description>简介 分布式异步对象存储 (DAOS) 是一种开源软件定义的对象存储，专为大规模分布式非易失性内存 (NVM) 而设计。DAOS 利用存储级内存 (SCM) 和 NVM express (NVMe) 等下一代 NVM 技术，同时呈现键值存储接口并提供事务性非阻塞 I/O、高级数据保护和自我修复等功能 商品硬件、端到端数据完整性、细粒度数据控制和弹性存储，以优化性能和</description>
+      <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 简介 分布式异步对象存储 (DAOS) 是一种开源软件定义的对象存储，专为大规模分布式非易失性内存 (NVM) 而设计。DAOS 利用存储级内存 (SCM) 和 NVM express (NVMe) 等下一代 NVM 技术，同时呈现键值存储接口并提供事务性非阻塞 I/O、高级数据保护和自我修复等功能 商品硬件、端到端数据完整性、细粒度数据控</description>
     </item>
     
     <item>
@@ -40,7 +31,7 @@
       <pubDate>Sun, 22 Jan 2023 11:17:53 +0800</pubDate>
       
       <guid>https://logread.cn/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</guid>
-      <description>Blobstore 编程指导 In this document @ref blob_pg_audience @ref blob_pg_intro @ref blob_pg_theory @ref blob_pg_design @ref blob_pg_examples @ref blob_pg_config @ref blob_pg_component Target Audience The programmer&amp;rsquo;s guide is intended for developers authoring applications that utilize the SPDK Blobstore. It is intended to supplement the source code in providing an overall understanding of how to integrate Blobstore into an application as well as provide some high level insight into how Blobstore works behind the scenes. It is not intended to serve as a design document or an API reference and in some cases source code snippets and high level sequences will be discussed; for the latest source code reference refer to the repo. 程序员指南适用于编写使用 SPDK Blobstore 的应用程序的开发人员。它旨在</description>
+      <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 Blobstore 编程指导 In this document @ref blob_pg_audience @ref blob_pg_intro @ref blob_pg_theory @ref blob_pg_design @ref blob_pg_examples @ref blob_pg_config @ref blob_pg_component Target Audience The programmer&amp;rsquo;s guide is intended for developers authoring applications that utilize the SPDK Blobstore. It is intended to supplement the source code in providing an overall understanding of how to integrate Blobstore into an application as well as provide some high level insight into how Blobstore works behind the scenes. It is not intended to serve as a design document or an API reference and in some cases source code snippets and high level sequences will be discussed; for the latest source code reference refer to the repo. 程序员指南适用于编写使用 SPDK Blobstore 的</description>
     </item>
     
     <item>
@@ -49,7 +40,7 @@
       <pubDate>Sun, 22 Jan 2023 11:14:33 +0800</pubDate>
       
       <guid>https://logread.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</guid>
-      <description>NVme over Fabrics: 也称为 NVMe-oF 和 non-volatile memory express over fabric，是一种协议规范，旨在使用 NVMe 协议通过网络结构将主机连接到存储。 该协议旨在通过网络在主机和目标固态存储设备或系统之间实现数据传输——通过基于 NVMe 消息的命令完成。 数据传输可以通过以太网、光纤通道 (FC) 或 InfiniBand 等方法传输 Target Audience This programming guide is intended for developers authoring applications that use the SPDK NVMe-oF target library (lib/nvmf). It</description>
+      <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 NVme over Fabrics: 也称为 NVMe-oF 和 non-volatile memory express over fabric，是一种协议规范，旨在使用 NVMe 协议通过网络结构将主机连接到存储。 该协议旨在通过网络在主机和目标固态存储设备或系统之间实现数据传输——通过基于 NVMe 消息的命令完成。 数据传输可以通过以太网、光纤通道 (FC) 或 InfiniBand 等方法传输 Target Audience This programming guide is intended</description>
     </item>
     
     <item>
@@ -58,7 +49,7 @@
       <pubDate>Sun, 22 Jan 2023 11:09:02 +0800</pubDate>
       
       <guid>https://logread.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/</guid>
-      <description>Submitting I/O to an NVMe Device 提交I/O到NVME设备 The NVMe Specification 规范 The NVMe specification describes a hardware interface for interacting with storage devices. The specification includes network transport definitions for remote storage as well as a hardware register layout for local PCIe devices. What follows here is an overview of how an I/O is submitted to a local PCIe device through SPDK. NVMe 规范描述了用于与存储设备交互的硬件接口。 该规范包括远程存储的网络传输定义以及本地 PCIe 设备的硬件寄存器布局。 以下是通过SPDK 将I/O</description>
+      <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 Submitting I/O to an NVMe Device 提交I/O到NVME设备 The NVMe Specification 规范 The NVMe specification describes a hardware interface for interacting with storage devices. The specification includes network transport definitions for remote storage as well as a hardware register layout for local PCIe devices. What follows here is an overview of how an I/O is submitted to a local PCIe device through SPDK. NVMe 规范描述了用于与存储设备交互的硬件接口。 该规范包括远程存储的网络传输定义以及本地 PCIe 设备的硬件寄存器布局。</description>
     </item>
     
     <item>
@@ -67,7 +58,7 @@
       <pubDate>Mon, 18 Apr 2022 15:34:25 +0800</pubDate>
       
       <guid>https://logread.cn/post/storage/cache/bcache/</guid>
-      <description>A block layer cache (bcache) What is bcache? Bcache is a Linux kernel block layer cache. It allows one or more fast disk drives such as flash-based solid state drives (SSDs) to act as a cache for one or more slower hard disk drives. Hard drives are cheap and big, SSDs are fast but small and expensive. Wouldn&amp;rsquo;t it be nice if you could transparently get the advantages of both? With Bcache, you can have your cake and eat it too. Bcache patches for the Linux kernel allow one to use SSDs to cache other block devices. It&amp;rsquo;s analogous to L2Arc for ZFS, but Bcache also does writeback caching (besides just write through caching), and it&amp;rsquo;s filesystem agnostic. It&amp;rsquo;s designed to be switched on with a minimum of effort, and to work well without configuration on any setup. By default</description>
+      <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 A block layer cache (bcache) What is bcache? Bcache is a Linux kernel block layer cache. It allows one or more fast disk drives such as flash-based solid state drives (SSDs) to act as a cache for one or more slower hard disk drives. Hard drives are cheap and big, SSDs are fast but small and expensive. Wouldn&amp;rsquo;t it be nice if you could transparently get the advantages of both? With Bcache, you can have your cake and eat it too. Bcache patches for the Linux kernel allow one to use SSDs to cache other block devices. It&amp;rsquo;s analogous to L2Arc for ZFS, but Bcache also does writeback caching (besides just write through caching), and it&amp;rsquo;s filesystem agnostic. It&amp;rsquo;s designed to be switched on with a minimum</description>
     </item>
     
     <item>

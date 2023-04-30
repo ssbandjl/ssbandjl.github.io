@@ -139,6 +139,14 @@
     <div class="post-toc-content">
         <nav id="TableOfContents">
   <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
     <li><a href="#背景">背景</a></li>
     <li><a href="#动机">动机</a>
       <ul>
@@ -222,7 +230,13 @@
         
         
         <div class="post-content">
-            <h1 id="利用-rdma-技术加速-ceph-存储解决方案">利用 RDMA 技术加速 Ceph 存储解决方案</h1>
+            <h1 id="author-晓兵">Author 晓兵</h1>
+<h4 id="weixin-ssbandjl">weixin: ssbandjl</h4>
+<h4 id="公众号-云原生云">公众号: 云原生云</h4>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+<h1 id="利用-rdma-技术加速-ceph-存储解决方案">利用 RDMA 技术加速 Ceph 存储解决方案</h1>
 <p>原创 晓兵XB <a href="">云原生云</a> <em>2023-04-29 20:37</em> <em>发表于四川</em></p>
 <p>在本文中，我们首先回顾了 Ceph* 4K I/O 工作负载中遇到的性能挑战，并对单个 Ceph OSD 对象存储守护进程 (OSD) 进程的 CPU 分布进行了简要分析。然后，我们讨论了现有 TCP/IP 堆栈中的低效问题，并介绍了英特尔® 以太网连接 X722 支持的 iWARP RDMA 协议，随后描述了 iWARP RDMA 集成到 Ceph 中的设计和实现。最后，我们提供了使用 iWARP RDMA 对 Ceph 的性能评估，与 TCP/IP 堆栈相比，它展示了高达 17% 的性能提升6。</p>
 <h2 id="背景">背景</h2>
@@ -522,10 +536,6 @@
 <ul class="widget-list">
     
     <li>
-        <a href="https://logread.cn/post/storage/ceph_rdma_2/" title="Ceph_rdma_2">Ceph_rdma_2</a>
-    </li>
-    
-    <li>
         <a href="https://logread.cn/post/storage/ceph_rdma/" title="利用 RDMA 技术加速 Ceph 存储解决方案">利用 RDMA 技术加速 Ceph 存储解决方案</a>
     </li>
     
@@ -559,6 +569,10 @@
     
     <li>
         <a href="https://logread.cn/post/storage/cache/bcache/" title="Bcache">Bcache</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/GinWeb%E6%A1%86%E6%9E%B6/" title="GinWeb框架">GinWeb框架</a>
     </li>
     
 </ul>
@@ -599,9 +613,9 @@
     
     <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
     
-    <li><a href="https://logread.cn/categories/stor/">stor (3)</a></li>
+    <li><a href="https://logread.cn/categories/stor/">stor (2)</a></li>
     
-    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (8)</a></li>
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (7)</a></li>
     
     <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
     

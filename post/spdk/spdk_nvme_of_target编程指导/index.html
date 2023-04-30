@@ -139,6 +139,11 @@
     <div class="post-toc-content">
         <nav id="TableOfContents">
   <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
     <li><a href="#target-audience">Target Audience</a></li>
     <li><a href="#introduction">Introduction</a></li>
     <li><a href="#primitives-基元">Primitives 基元</a></li>
@@ -206,7 +211,13 @@
         
         
         <div class="post-content">
-            <p>NVme over Fabrics: 也称为 NVMe-oF 和 non-volatile memory express over fabric，是一种协议规范，旨在使用 NVMe 协议通过网络结构将主机连接到存储。</p>
+            <h1 id="author-晓兵">Author 晓兵</h1>
+<h4 id="weixin-ssbandjl">weixin: ssbandjl</h4>
+<h4 id="公众号-云原生云">公众号: 云原生云</h4>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+<p>NVme over Fabrics: 也称为 NVMe-oF 和 non-volatile memory express over fabric，是一种协议规范，旨在使用 NVMe 协议通过网络结构将主机连接到存储。</p>
 <p>该协议旨在通过网络在主机和目标固态存储设备或系统之间实现数据传输——通过基于 NVMe 消息的命令完成。 数据传输可以通过以太网、光纤通道 (FC) 或 InfiniBand 等方法传输</p>
 <h2 id="target-audience">Target Audience</h2>
 <p>This programming guide is intended for developers authoring applications that use the SPDK NVMe-oF target library (<code>lib/nvmf</code>). It is intended to provide background context, architectural insight, and design recommendations. This guide will not cover how to use the SPDK NVMe-oF target application. For a guide on how to use the existing application as-is, see @ref nvmf.
@@ -442,10 +453,6 @@ RDMA SEND、READ 和 WRITE 操作是相对于彼此排序的，但 RDMA RECV 不
 <ul class="widget-list">
     
     <li>
-        <a href="https://logread.cn/post/storage/ceph_rdma_2/" title="Ceph_rdma_2">Ceph_rdma_2</a>
-    </li>
-    
-    <li>
         <a href="https://logread.cn/post/storage/ceph_rdma/" title="利用 RDMA 技术加速 Ceph 存储解决方案">利用 RDMA 技术加速 Ceph 存储解决方案</a>
     </li>
     
@@ -479,6 +486,10 @@ RDMA SEND、READ 和 WRITE 操作是相对于彼此排序的，但 RDMA RECV 不
     
     <li>
         <a href="https://logread.cn/post/storage/cache/bcache/" title="Bcache">Bcache</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/GinWeb%E6%A1%86%E6%9E%B6/" title="GinWeb框架">GinWeb框架</a>
     </li>
     
 </ul>
@@ -519,9 +530,9 @@ RDMA SEND、READ 和 WRITE 操作是相对于彼此排序的，但 RDMA RECV 不
     
     <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
     
-    <li><a href="https://logread.cn/categories/stor/">stor (3)</a></li>
+    <li><a href="https://logread.cn/categories/stor/">stor (2)</a></li>
     
-    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (8)</a></li>
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (7)</a></li>
     
     <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
     

@@ -13,7 +13,7 @@
       <pubDate>Sun, 30 Apr 2023 11:21:44 +0800</pubDate>
       
       <guid>https://logread.cn/post/storage/ceph_rdma/</guid>
-      <description>利用 RDMA 技术加速 Ceph 存储解决方案 原创 晓兵XB 云原生云 2023-04-29 20:37 发表于四川 在本文中，我们首先回顾了 Ceph* 4K I/O 工作负载中遇到的性能挑战，并对单个 Ceph OSD 对象存储守护进程 (OSD) 进程的 CPU 分布进行了简要分析。然后，我们讨论了现有 TCP/IP 堆栈中的低效问题，并介绍了英特尔® 以太网连接 X722 支持的 iWARP RDMA 协议，随后描述了 iWARP RDMA 集成到</description>
+      <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 利用 RDMA 技术加速 Ceph 存储解决方案 原创 晓兵XB 云原生云 2023-04-29 20:37 发表于四川 在本文中，我们首先回顾了 Ceph* 4K I/O 工作负载中遇到的性能挑战，并对单个 Ceph OSD 对象存储守护进程 (OSD) 进程的 CPU 分布进行了简要分析。然后，我们讨论了现有 TCP/IP 堆栈中的低效问题，并介绍了英特尔® 以太网连接 X722 支持的 iWARP RDMA</description>
     </item>
     
   </channel>
