@@ -17,6 +17,24 @@
     </item>
     
     <item>
+      <title>ofa</title>
+      <link>https://logread.cn/tags/ofa/</link>
+      <pubDate>Mon, 01 May 2023 18:01:44 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/ofa/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>rdma</title>
+      <link>https://logread.cn/tags/rdma/</link>
+      <pubDate>Mon, 01 May 2023 18:01:44 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/rdma/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>stor</title>
       <link>https://logread.cn/tags/stor/</link>
       <pubDate>Mon, 01 May 2023 18:01:44 +0800</pubDate>
@@ -31,15 +49,6 @@
       <pubDate>Sun, 30 Apr 2023 11:21:44 +0800</pubDate>
       
       <guid>https://logread.cn/tags/ceph/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>rdma</title>
-      <link>https://logread.cn/tags/rdma/</link>
-      <pubDate>Sun, 30 Apr 2023 11:21:44 +0800</pubDate>
-      
-      <guid>https://logread.cn/tags/rdma/</guid>
       <description></description>
     </item>
     

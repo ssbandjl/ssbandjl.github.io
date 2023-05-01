@@ -13,12 +13,32 @@
   </url>
   
   <url>
+    <loc>https://logread.cn/tags/ofa/</loc>
+    <lastmod>2023-05-01T18:01:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/ofa/</loc>
+    <lastmod>2023-05-01T18:01:44+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://logread.cn/post/ofa/ofa_librabric/</loc>
     <lastmod>2023-05-01T18:01:44+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/post/</loc>
+    <lastmod>2023-05-01T18:01:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/rdma/</loc>
+    <lastmod>2023-05-01T18:01:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/rdma/</loc>
     <lastmod>2023-05-01T18:01:44+08:00</lastmod>
   </url>
   
@@ -49,11 +69,6 @@
   
   <url>
     <loc>https://logread.cn/tags/ceph/</loc>
-    <lastmod>2023-04-30T11:21:44+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/rdma/</loc>
     <lastmod>2023-04-30T11:21:44+08:00</lastmod>
   </url>
   
