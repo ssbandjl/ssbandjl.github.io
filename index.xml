@@ -6,7 +6,16 @@
     <description>Recent content on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 30 Apr 2023 11:21:44 +0800</lastBuildDate><atom:link href="https://logread.cn/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 01 May 2023 18:01:44 +0800</lastBuildDate><atom:link href="https://logread.cn/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Ofa_librabric</title>
+      <link>https://logread.cn/post/ofa/ofa_librabric/</link>
+      <pubDate>Mon, 01 May 2023 18:01:44 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/ofa/ofa_librabric/</guid>
+      <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织 成员企业 OFA概览 OpenFabrics Alliance (OFA) 是一个基于开源的组织，负责开发、测试、许可、支持和分发 RDMA/Advanced Networks 软件以及 RDMA/Advanced Networks 软件的 OpenFabrics Enterprise Distribution。该联盟的使命</description>
+    </item>
+    
     <item>
       <title>利用 RDMA 技术加速 Ceph 存储解决方案</title>
       <link>https://logread.cn/post/storage/ceph_rdma/</link>
