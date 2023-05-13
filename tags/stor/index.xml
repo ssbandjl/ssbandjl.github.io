@@ -6,7 +6,34 @@
     <description>Recent content in stor on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Mon, 01 May 2023 18:01:44 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/stor/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 13 May 2023 10:06:46 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/stor/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Mercury为高性能计算启用远程过程调用(RPC)</title>
+      <link>https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/</link>
+      <pubDate>Sat, 13 May 2023 10:06:46 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/</guid>
+      <description>Mercury为高性能计算启用远程过程调用(RPC) 摘要 ​ 远程过程调用（RPC）是分布式服务广泛使用的一种技术。 这种技术现在越来越多地用于高性能计算 (HPC) 的上下文中，它允许将例程的执行委托给远程节点，这些节点可以留出并专用于特定任务。 然而，现有的 RPC 框架采用基于套接字的网络接口（通常在</description>
+    </item>
+    
+    <item>
+      <title>MSGR2 协议（MSGR2.0 和 MSGR2.1）</title>
+      <link>https://logread.cn/post/stor/ceph/ceph_msg/</link>
+      <pubDate>Wed, 10 May 2023 14:01:46 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/stor/ceph/ceph_msg/</guid>
+      <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 ceph文档 MSGR2 协议（MSGR2.0 和 MSGR2.1） 这是由 SimpleMessenger 实现的遗留 Ceph 在线协议的修订版。它解决了性能和安全问题。 目标 相对于原始协议，此协议修订版有几个目标： 灵活的握手。原始协议没有足够灵活的协议协商来允许不需要的功能。 加密。我们将通过网络整合加密。 表</description>
+    </item>
+    
+    <item>
+      <title>Linux_google_trace_dapper</title>
+      <link>https://logread.cn/post/linux/trace/linux_google_trace_dapper/</link>
+      <pubDate>Tue, 09 May 2023 20:42:51 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/linux/trace/linux_google_trace_dapper/</guid>
+      <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 title 另一个设计目标是跟踪数据在生成后可快速用于分析：最好是在一分钟内。 尽管对数小时前的数据运行的跟踪分析系统仍然非常有价值，但可用的最新信息可以更快地对生产异常做出反应。 真正的应用程序级透明性，可能是我们最具挑战性的设计目标，是通过将 Dapper 的核心跟踪工具限制在</description>
+    </item>
+    
     <item>
       <title>OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织</title>
       <link>https://logread.cn/post/ofa/ofa_librabric/</link>

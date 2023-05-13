@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>hpc on 晓兵</title>
+    <link>https://logread.cn/categories/hpc/</link>
+    <description>Recent content in hpc on 晓兵</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Sat, 13 May 2023 10:06:46 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/hpc/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Mercury为高性能计算启用远程过程调用(RPC)</title>
+      <link>https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/</link>
+      <pubDate>Sat, 13 May 2023 10:06:46 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/</guid>
+      <description>Mercury为高性能计算启用远程过程调用(RPC) 摘要 ​ 远程过程调用（RPC）是分布式服务广泛使用的一种技术。 这种技术现在越来越多地用于高性能计算 (HPC) 的上下文中，它允许将例程的执行委托给远程节点，这些节点可以留出并专用于特定任务。 然而，现有的 RPC 框架采用基于套接字的网络接口（通常在</description>
+    </item>
+    
+  </channel>
+</rss>
