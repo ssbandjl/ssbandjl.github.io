@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>学习 on 晓兵</title>
+    <link>https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/</link>
+    <description>Recent content in 学习 on 晓兵</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Sat, 17 Jun 2023 22:47:44 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>常用学习网站汇总(随时更新)</title>
+      <link>https://logread.cn/post/study/summary/</link>
+      <pubDate>Sat, 17 Jun 2023 22:47:44 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/study/summary/</guid>
+      <description>性能 P99 CONF 大会(P99分位数, 极致)是面向工程师和由工程师举办的跨行业虚拟活动，以低延迟、高性能设计为中心, 突出低延迟、高性能分布式计算所需的工程挑战和创造性解决方案 https://www.p99conf.io/on-demand/ HPC高性能计算 Mochi 项目是阿贡国家实验室、洛斯阿拉莫斯国家实验室、卡内基梅隆大学和 HDF 集团之间的合作。 该项目的目标是探</description>
+    </item>
+    
+  </channel>
+</rss>

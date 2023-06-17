@@ -6,22 +6,67 @@
     <description>Recent content in Tags on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 13 May 2023 10:06:46 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 17 Jun 2023 22:47:44 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>linux</title>
+      <link>https://logread.cn/tags/linux/</link>
+      <pubDate>Sat, 17 Jun 2023 22:47:44 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/linux/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>stor</title>
+      <link>https://logread.cn/tags/stor/</link>
+      <pubDate>Sat, 17 Jun 2023 22:47:44 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/stor/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>学习</title>
+      <link>https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/</link>
+      <pubDate>Sat, 17 Jun 2023 22:47:44 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>daos</title>
+      <link>https://logread.cn/tags/daos/</link>
+      <pubDate>Thu, 01 Jun 2023 23:20:35 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/daos/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>bdev</title>
+      <link>https://logread.cn/tags/bdev/</link>
+      <pubDate>Sat, 20 May 2023 11:17:30 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/bdev/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>spdk</title>
+      <link>https://logread.cn/tags/spdk/</link>
+      <pubDate>Sat, 20 May 2023 11:17:30 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/spdk/</guid>
+      <description></description>
+    </item>
+    
     <item>
       <title>hpc</title>
       <link>https://logread.cn/tags/hpc/</link>
       <pubDate>Sat, 13 May 2023 10:06:46 +0800</pubDate>
       
       <guid>https://logread.cn/tags/hpc/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>linux</title>
-      <link>https://logread.cn/tags/linux/</link>
-      <pubDate>Sat, 13 May 2023 10:06:46 +0800</pubDate>
-      
-      <guid>https://logread.cn/tags/linux/</guid>
       <description></description>
     </item>
     
@@ -40,15 +85,6 @@
       <pubDate>Sat, 13 May 2023 10:06:46 +0800</pubDate>
       
       <guid>https://logread.cn/tags/rpc/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>stor</title>
-      <link>https://logread.cn/tags/stor/</link>
-      <pubDate>Sat, 13 May 2023 10:06:46 +0800</pubDate>
-      
-      <guid>https://logread.cn/tags/stor/</guid>
       <description></description>
     </item>
     
@@ -98,15 +134,6 @@
     </item>
     
     <item>
-      <title>spdk</title>
-      <link>https://logread.cn/tags/spdk/</link>
-      <pubDate>Sun, 30 Apr 2023 11:16:16 +0800</pubDate>
-      
-      <guid>https://logread.cn/tags/spdk/</guid>
-      <description></description>
-    </item>
-    
-    <item>
       <title>dpdk</title>
       <link>https://logread.cn/tags/dpdk/</link>
       <pubDate>Sun, 22 Jan 2023 13:39:51 +0800</pubDate>
@@ -130,15 +157,6 @@
       <pubDate>Sun, 22 Jan 2023 13:39:51 +0800</pubDate>
       
       <guid>https://logread.cn/tags/%E7%BD%91%E7%BB%9C/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>daos</title>
-      <link>https://logread.cn/tags/daos/</link>
-      <pubDate>Sun, 22 Jan 2023 11:20:30 +0800</pubDate>
-      
-      <guid>https://logread.cn/tags/daos/</guid>
       <description></description>
     </item>
     

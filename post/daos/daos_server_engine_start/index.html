@@ -1,0 +1,1683 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>DAOS引擎启动流程-源码分析 | 晓兵</title>
+    <meta property="og:title" content="DAOS引擎启动流程-源码分析 - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2023-06-01T23:20:35&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2023-06-01T23:20:35&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储, ceph, 分布式块存储, 云计算">
+    <meta name="description" content="DAOS引擎启动流程-源码分析">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/daos/daos_server_engine_start/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#author-晓兵">Author 晓兵</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">DAOS引擎启动流程-源码分析</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年6月1日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+            <span class="meta-category"><a href='/categories/daos'>daos</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <p>
+        <img class="mx-auto" alt="DOAS文件系统架构" src="./daos_fs_arch.png" />   
+    </p>
+<p>执行:daos_server start, server通过golang调用engine的c</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">102
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">103
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">104
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">105
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">106
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">107
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">108
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">109
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">110
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">111
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">112
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">113
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">114
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">115
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">116
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">117
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">118
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">119
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">120
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">121
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">122
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">123
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">124
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">125
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">126
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">127
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">128
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">129
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">130
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">131
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">132
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">133
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">134
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">135
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">136
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">137
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">138
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">139
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">140
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">141
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">142
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">143
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">144
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">145
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">146
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">147
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">148
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">149
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">150
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">151
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">152
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">153
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">154
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">155
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">156
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">157
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">158
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">159
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">160
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">161
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">162
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">163
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">164
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">165
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">166
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">167
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">168
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">169
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">170
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">171
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">172
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">173
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">174
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">175
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">176
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">177
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">178
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">179
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">180
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">181
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">182
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">183
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">184
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">185
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">186
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">187
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">188
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">189
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">190
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">191
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">192
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">193
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">194
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">195
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">196
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">197
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">198
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">199
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">200
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">201
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">202
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">203
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">204
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">205
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">206
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">207
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">208
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">209
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">210
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">211
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">212
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">213
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">214
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">215
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">216
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">217
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">218
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">219
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">220
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">221
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">222
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">223
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">224
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">225
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">226
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">227
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">228
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">229
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">230
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">231
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">232
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">233
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">234
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">235
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">236
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">237
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">238
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">239
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">240
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">241
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">242
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">243
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">244
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">245
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">246
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">247
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">248
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">249
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">250
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">251
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">252
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">253
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">254
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">255
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">256
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">257
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">258
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">259
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">260
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">261
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">262
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">263
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">264
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">265
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">266
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">267
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">268
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">269
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">270
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">271
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">272
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">273
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">274
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">275
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">276
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">277
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">278
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">279
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">280
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">281
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">282
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">283
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">284
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">285
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">286
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">287
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">288
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">289
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">290
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">291
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">292
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">293
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">294
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">295
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">296
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">297
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">298
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">299
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">300
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">301
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">302
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">303
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">304
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">305
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">306
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">307
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">308
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">309
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">310
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">311
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">312
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">313
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">314
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">315
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">316
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">317
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">318
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">319
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">320
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">321
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">322
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">323
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">324
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">325
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">326
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">327
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">328
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">329
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">330
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">331
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">332
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">333
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">334
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">335
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">336
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">337
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">338
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">339
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">340
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">341
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">342
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">343
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">344
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">345
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">346
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">347
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">348
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">349
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">350
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">351
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">352
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">353
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">354
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">355
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">356
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">357
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">358
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">359
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">360
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">361
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">362
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">363
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">364
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">365
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">366
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">367
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">368
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">369
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">370
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">371
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">372
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">373
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">374
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">375
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">376
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">377
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">378
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">379
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">380
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">381
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">382
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">383
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">384
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">385
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">386
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">387
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">388
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">389
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">390
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">391
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">392
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">393
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">394
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">395
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">396
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">397
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">398
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">399
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">400
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">401
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">402
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">403
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">404
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">405
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">406
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">407
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">408
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">409
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">410
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">411
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">412
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">413
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">414
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">415
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">416
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">417
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">418
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">419
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">420
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">421
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">422
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">423
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">424
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">425
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">426
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">427
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">428
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">429
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">430
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">431
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">432
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">433
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">434
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">435
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">436
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">437
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">438
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">439
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">440
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">441
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">442
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">443
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">444
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">445
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">446
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">447
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">448
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">449
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">450
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">451
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">452
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">453
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">454
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">455
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">456
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">457
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">458
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">459
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">460
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">461
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">462
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">463
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">464
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">465
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">466
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">467
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">468
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">469
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">470
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">471
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">472
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">473
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">474
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">475
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">476
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">477
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">478
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">479
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">480
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">481
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">482
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">483
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">484
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">485
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">486
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">487
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">488
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">489
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">490
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">491
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">492
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">493
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">494
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">495
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">496
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">497
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">498
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">499
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">500
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">501
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">502
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">503
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">504
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">505
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">506
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">507
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">508
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">509
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">510
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">511
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">512
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">513
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">514
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">515
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">516
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">517
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">518
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">519
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">520
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">521
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">522
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">523
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">524
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">525
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">526
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">527
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">528
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">529
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">530
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">531
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">532
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">533
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">534
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">535
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">536
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">537
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">538
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">539
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">540
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">541
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">542
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">543
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">544
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">545
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">546
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">547
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">548
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">549
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">550
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">551
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">552
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">553
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">daos_engine
+
+daos_server start
+opts.name <span style="color:#000;font-weight:bold">=</span> <span style="color:#d14">&#34;daos_engine&#34;</span>
+engine/init.c
+main<span style="color:#000;font-weight:bold">(</span>int argc, char **argv<span style="color:#000;font-weight:bold">)</span>
+engine启动
+parse 解析命令行参数: /usr/bin/ubip_engine -t <span style="color:#099">24</span> -x <span style="color:#099">2</span> -g ubip_server -d /var/run/ubip_server -T <span style="color:#099">2</span> -n /mnt/ubip0/ubip_nveme.conf -p <span style="color:#099">0</span> -I <span style="color:#099">0</span> -r <span style="color:#099">24567</span> -H <span style="color:#099">2</span> -s /mnt/ubip0
+-p 绑定到哪个numa节点<span style="color:#000;font-weight:bold">(</span>pinned_numa_node<span style="color:#000;font-weight:bold">)</span>
+-t <span style="color:#099">24</span> targets数量
+-x xshelpernr 2个辅助线程
+
+docker
+<span style="color:#d14">&#34;/opt/daos/bin/daos_engine&#34;</span>,  <span style="color:#d14">&#34;-t&#34;</span>,  <span style="color:#d14">&#34;1&#34;</span>,  <span style="color:#d14">&#34;-x&#34;</span>,  <span style="color:#d14">&#34;0&#34;</span>,  <span style="color:#d14">&#34;-g&#34;</span>,  <span style="color:#d14">&#34;daos_server&#34;</span>,  <span style="color:#d14">&#34;-d&#34;</span>,  <span style="color:#d14">&#34;/var/run/daos_server&#34;</span>,  <span style="color:#d14">&#34;-T&#34;</span>,  <span style="color:#d14">&#34;2&#34;</span>,  <span style="color:#d14">&#34;-n&#34;</span>,  <span style="color:#d14">&#34;/mnt/daos/daos_nvme.conf&#34;</span>,  <span style="color:#d14">&#34;-I&#34;</span>,  <span style="color:#d14">&#34;0&#34;</span>,  <span style="color:#d14">&#34;-r&#34;</span>,  <span style="color:#d14">&#34;8192&#34;</span>,  <span style="color:#d14">&#34;-H&#34;</span>,  <span style="color:#d14">&#34;2&#34;</span>,  <span style="color:#d14">&#34;-s&#34;</span>,  <span style="color:#d14">&#34;/mnt/daos&#34;</span>
+
+禁用透明大页
+daos_register_sighand<span style="color:#000;font-weight:bold">(</span>SIGILL, print_backtrace<span style="color:#000;font-weight:bold">)</span>; 注册自己的信号和打印堆栈
+server_init
+  hlc_recovery_begin
+  gethostname
+  daos_debug_set_id_cb<span style="color:#000;font-weight:bold">(</span>server_id_cb<span style="color:#000;font-weight:bold">)</span>
+  daos_debug_init 日志级别 d_debug_data dlog_fac d_log_open D_LOG_STDERR_IN_LOG 合并错误消息 如何接管fabric日志？ <span style="color:#000;font-weight:bold">if</span> （merge）客户端动态开日志
+  freopen setlinebuf fileno
+  d_tm_init 遥测指标初始化
+  dss_engine_metrics_init
+  d_tm_record_timestamp
+  drpc_init 初始化drpc客户端
+  register_dbtree_classes 注册数据库树, b树
+    dbtree_class_register
+  dss_topo_init 初始服务器拓扑, numa, cpu core, bitmap位图等
+  abt_init argobots初始化, 机器人,
+    atoi<span style="color:#000;font-weight:bold">(</span>env<span style="color:#000;font-weight:bold">)</span> 环境变量转整型
+    set_abt_max_num_xstreams<span style="color:#000;font-weight:bold">(</span>max<span style="color:#000;font-weight:bold">(</span>nrequested, nrequired<span style="color:#000;font-weight:bold">))</span> 两者中的较大值, 设置环境变量 ABT_MAX_NUM_XSTREAMS, 输入整型, 转为字符串char*
+      D_ASPRINTF<span style="color:#000;font-weight:bold">(</span>value, <span style="color:#d14">&#34;%d&#34;</span>, n<span style="color:#000;font-weight:bold">)</span>;
+    ABT_init<span style="color:#000;font-weight:bold">(</span>argc, argv<span style="color:#000;font-weight:bold">)</span>
+  dss_module_init 服务端模块初始化
+    drpc_hdlr_init 注册表 static drpc_handler_t *registry_table 静态 drpc_handler_t *注册表, 函数指针
+  dss_ctx_nr_get 获取cart上下文总数
+  crt_init_opt 初始化网络层
+  <span style="color:#000;font-weight:bold">if</span> <span style="color:#000;font-weight:bold">(</span>dss_mod_facs &amp; DSS_FAC_LOAD_CLI<span style="color:#000;font-weight:bold">)</span> 如果需要加载客户端软件栈,默认不执行
+    daos_init 
+  daos_hhash_init 初始化hash表
+    daos_hhash_init_feats<span style="color:#000;font-weight:bold">(</span>D_HASH_FT_GLOCK | D_HASH_FT_LRU<span style="color:#000;font-weight:bold">)</span>
+      d_hhash_create<span style="color:#000;font-weight:bold">(</span>feats | D_HASH_FT_NO_KEYINIT_LOCK, D_HHASH_BITS, &amp;daos_ht.dht_hhash<span style="color:#000;font-weight:bold">)</span> 创建全局hash表 daos_ht
+  pl_init 初始化放置模块, 创建放置映射hash表
+  d_hhash_set_ptrtype 服务端使用指针类型的控制器
+  ds_iv_init
+    D_INIT_LIST_HEAD<span style="color:#000;font-weight:bold">(</span>&amp;ds_iv_ns_list<span style="color:#000;font-weight:bold">)</span> 初始化iv,ns链表头
+    D_INIT_LIST_HEAD<span style="color:#000;font-weight:bold">(</span>&amp;ds_iv_class_list<span style="color:#000;font-weight:bold">)</span>
+    <span style="color:#008080">ds_iv_ns_tree_topo</span> <span style="color:#000;font-weight:bold">=</span> crt_tree_topo<span style="color:#000;font-weight:bold">(</span>CRT_TREE_KNOMIAL, 4<span style="color:#000;font-weight:bold">)</span> 初始化树拓扑,位运算,移位,或
+  modules_load 加载模块信息: vos, rdb, rsvc, security, mgmt, dtx, pool, cont, obj, rebuild
+    dss_module_load
+      lmod-&gt;lm_dss_mod <span style="color:#000;font-weight:bold">=</span> smod 设置加载模块为动态打开的模块
+      d_list_add_tail<span style="color:#000;font-weight:bold">(</span>&amp;lmod-&gt;lm_lk, &amp;loaded_mod_list<span style="color:#000;font-weight:bold">)</span> 动态打开 dlopen,并加入链表
+  mem_leak_check_start<span style="color:#000;font-weight:bold">()</span>;
+  hlc_recovery_end 结束 HLC 恢复
+  dss_set_start_epoch
+  dss_module_init_all
+    dss_register_key
+    d_list_for_each_entry_safe<span style="color:#000;font-weight:bold">(</span>lmod, tmp, &amp;loaded_mod_list 遍历之前加载的模块链表
+      dss_module_init_one<span style="color:#000;font-weight:bold">(</span>lmod, &amp;fac<span style="color:#000;font-weight:bold">)</span>
+        <span style="color:#008080">rc</span> <span style="color:#000;font-weight:bold">=</span> smod-&gt;sm_init<span style="color:#000;font-weight:bold">()</span> // vos_mod_init, 
+  dss_srv_init 初始化服务<span style="color:#000;font-weight:bold">(</span>服务初始化<span style="color:#000;font-weight:bold">)</span>
+    dss_tls_init<span style="color:#000;font-weight:bold">(</span>DAOS_SERVER_TAG, 0, -1<span style="color:#000;font-weight:bold">)</span>
+    vos_db_init<span style="color:#000;font-weight:bold">(</span>dss_storage_path<span style="color:#000;font-weight:bold">)</span>  sys_db.c <span style="color:#008080">dss_storage_path</span><span style="color:#000;font-weight:bold">=</span>/mnt/daos
+    bio_nvme_init 全局nvme初始化
+      d_getenv_bool
+      open<span style="color:#000;font-weight:bold">(</span>nvme_conf, O_RDONLY, 0600<span style="color:#000;font-weight:bold">)</span> 打开nvme配置文件
+      smd_init<span style="color:#000;font-weight:bold">(</span>db<span style="color:#000;font-weight:bold">)</span> 服务元数据管理<span style="color:#000;font-weight:bold">(</span>每个服务<span style="color:#000;font-weight:bold">)</span> Per-Server Metadata Management <span style="color:#000;font-weight:bold">(</span>SMD<span style="color:#000;font-weight:bold">)</span>,smd使用sysdb作为kv存储元数据
+      spdk_bs_opts_init 将 spdk_bs_opts 结构初始化为默认的 blobstore 选项值。
+      bio_spdk_env_init 环境初始化
+        spdk_env_opts_init<span style="color:#000;font-weight:bold">(</span>&amp;opts<span style="color:#000;font-weight:bold">)</span> 初始化选项 lib/env_dpdk/init.c
+        bio_add_allowed_alloc
+          read_config
+            spdk_json_parse
+          spdk_json_find_array
+          check_vmd_status
+          add_bdevs_to_opts
+        spdk_env_init 初始化或重新初始化环境库。 对于初始化，必须在使用此库中的任何其他函数之前调用它。 对于重新初始化，参数 <span style="color:#d14">`</span>opts<span style="color:#d14">`</span> 必须设置为 NULL，并且必须在同一进程中通过 spdk_env_fini<span style="color:#000;font-weight:bold">()</span> 完成环境库后调用
+          pci_env_reinit
+          build_eal_cmdline
+            push_arg
+          rte_eal_init<span style="color:#000;font-weight:bold">(</span>g_eal_cmdline_argcount, dpdk_args<span style="color:#000;font-weight:bold">)</span>  初始化环境抽象层 <span style="color:#000;font-weight:bold">(</span>EAL<span style="color:#000;font-weight:bold">)</span>。 此函数将仅在 MAIN lcore 上执行，并尽快在应用程序的 main<span style="color:#000;font-weight:bold">()</span> 函数中执行。 它将 WORKER lcores 置于 WAIT 状态。
+          spdk_env_dpdk_post_init
+        spdk_unaffinitize_thread 移除当前线程cpu亲和性
+        spdk_thread_lib_init 初始化线程库。 必须在分配任何线程之前调用一次。
+    bio_register_bulk_ops<span style="color:#000;font-weight:bold">(</span>crt_bulk_create, crt_bulk_free<span style="color:#000;font-weight:bold">)</span>
+    dss_xstreams_init
+    bio_nvme_ctl  操纵全局 NVMe 配置/状态
+    drpc_listener_init 启动drpc监听
+      generate_socket_path 生成socket路径 <span style="color:#008080">drpc_listener_socket_path</span><span style="color:#000;font-weight:bold">=</span>/var/run/daos_server/daos_engine_pid_sock
+        drpc_listener_start_ult
+  server_init_state_init
+  drpc_notify_ready
+  server_init_state_wait
+  dss_module_setup_all 初始化服务端所有模块
+  crt_register_event_cb<span style="color:#000;font-weight:bold">(</span>dss_crt_event_cb, NULL<span style="color:#000;font-weight:bold">)</span>
+  crt_register_hlc_error_cb<span style="color:#000;font-weight:bold">(</span>dss_crt_hlc_error_cb, NULL<span style="color:#000;font-weight:bold">)</span>
+  dss_xstreams_open_barrier
+  d_tm_record_timestamp
+  d_tm_set_counter<span style="color:#000;font-weight:bold">(</span>metrics-&gt;rank_id, dss_self_rank<span style="color:#000;font-weight:bold">())</span>
+
+
+
+vos_db_init
+  vos_db.db_pub.sd_fetch	  <span style="color:#000;font-weight:bold">=</span> db_fetch
+  ...
+  db_open_create
+    mkdir<span style="color:#000;font-weight:bold">(</span>vdb-&gt;db_path, 0777<span style="color:#000;font-weight:bold">)</span>
+    vos_pool_create
+    vos_pool_open
+    vos_cont_create
+    db_upsert
+
+
+dss_xstreams_init
+  dss_start_xs_id 0,1..., 计算偏移, 如: <span style="color:#008080">xs_id</span> <span style="color:#000;font-weight:bold">=</span> dss_sys_xs_nr + dss_tgt_nr + i;
+    hwloc_bitmap_first 计算位图中的第一个索引（最低有效位）
+    dss_start_one_xstream<span style="color:#000;font-weight:bold">(</span>obj-&gt;cpuset, xs_id<span style="color:#000;font-weight:bold">)</span> 用计算的cpu集启动, 内部绑核
+      dss_xstream_alloc<span style="color:#000;font-weight:bold">(</span>cpus<span style="color:#000;font-weight:bold">)</span>
+        dx-&gt;dx_cpuset <span style="color:#000;font-weight:bold">=</span> hwloc_bitmap_dup<span style="color:#000;font-weight:bold">(</span>cpus<span style="color:#000;font-weight:bold">)</span>
+      dss_sched_init
+        ABT_sched_def		sched_def
+        .init	<span style="color:#000;font-weight:bold">=</span> sched_init,
+        .run	<span style="color:#000;font-weight:bold">=</span> sched_run,
+        sched_info_init<span style="color:#000;font-weight:bold">(</span>dx<span style="color:#000;font-weight:bold">)</span>
+          info-&gt;si_cur_ts <span style="color:#000;font-weight:bold">=</span> daos_getmtime_coarse<span style="color:#000;font-weight:bold">()</span> 毫秒
+          d_hash_table_create si_pool_hash 创建hash表 <span style="color:#008080">大小为2的4次方</span><span style="color:#000;font-weight:bold">=</span><span style="color:#099">16</span>
+          prealloc_requests<span style="color:#000;font-weight:bold">(</span>info, SCHED_PREALLOC_INIT_CNT<span style="color:#000;font-weight:bold">)</span> 预分配请求 <span style="color:#099">8192</span>
+            D_ALLOC_PTR<span style="color:#000;font-weight:bold">(</span>req<span style="color:#000;font-weight:bold">)</span>
+            D_INIT_LIST_HEAD<span style="color:#000;font-weight:bold">(</span>&amp;req-&gt;sr_link<span style="color:#000;font-weight:bold">)</span>
+            d_list_add_tail<span style="color:#000;font-weight:bold">(</span>&amp;req-&gt;sr_link, &amp;info-&gt;si_idle_list<span style="color:#000;font-weight:bold">)</span> 插入链表 
+        sched_create_pools<span style="color:#000;font-weight:bold">(</span>dx<span style="color:#000;font-weight:bold">)</span>; 创建3个池 从预定义类型创建新池。 ABT_pool_create_basic<span style="color:#000;font-weight:bold">()</span> 创建一个新池，由池类型 kind、访问类型 access 和自动标志 automatic 给出，并通过 newpool 返回其句柄。 kind 指定 newpool 的实现。 有关预定义池的详细信息，请参阅#ABT_pool_kind。 access 提示创建的池的使用。 Argobots 可以为具有更受限制的访问类型的池选择优化的实现（#ABT_POOL_ACCESS_PRIV 是最严格的访问类型）。 有关详细信息，请参阅#ABT_pool_access。 如果 automatic 为 ABT_FALSE，则 newpool 不会自动释放，因此 newpool 在使用后必须由 ABT_pool_free<span style="color:#000;font-weight:bold">()</span> 释放，除非 newpool 与主执行流的主调度程序相关联。
+          ABT_pool_create_basic<span style="color:#000;font-weight:bold">(</span>ABT_POOL_FIFO, ABT_POOL_ACCESS_MPSC 创建的池可能只被一个执行流弹出
+          ABT_sched_config_create
+          ABT_sched_create 
+          使用调度程序定义创建新的调度程序。ABT_sched_create<span style="color:#000;font-weight:bold">()</span> 创建一个新的调度器，由定义 def 和调度器配置 config 定义，并通过 newsched 返回它的句柄。def 必须定义所有非可选函数。 有关详细信息，请参阅 ABT_sched_def。newsched 与 pools 数组关联，它有 num_pools 个 ABT_pool 句柄。 如果池的第 i 个元素是 ABT_POOL_NULL，则新创建具有默认池配置的默认 FIFO 池并用作第 i 个池。
+      ABT_xstream_create_with_rank 创建具有特定等级的新执行流。 ABT_xstream_create_with_rank<span style="color:#000;font-weight:bold">()</span> 使用调度程序 sched 创建一个新的执行流，并通过 newxstream 返回其句柄。 如果 sched 为 ABT_SCHED_NULL，则使用具有基本 FIFO 队列和默认调度程序配置的默认调度程序。
+      ABT_thread_attr_create
+      ABT_thread_attr_set_stacksize 在 ULT 属性中设置堆栈大小。 ABT_thread_attr_set_stacksize<span style="color:#000;font-weight:bold">()</span> 设置 ULT 属性 attr 中的堆栈大小 stacksize（以字节为单位）。 如果堆栈内存已由 ABT_thread_attr_set_stack<span style="color:#000;font-weight:bold">()</span> 设置，此例程将更新堆栈大小，同时将堆栈内存保留在 attr 中。
+      ABT_thread_create dss_srv_handler
+
+
+dss_srv_handler 服务控制器，设置cpu亲和性，初始化TLS，crt， nvme，gc, nvme, 启动网络poll
+  dss_xstream_set_affinity 设置亲和性
+  hwloc_set_cpubind 绑核
+  hwloc_set_membind 将当前进程或线程的默认内存绑定策略设置为更喜欢由 <span style="color:#0086b3">set</span> 指定的 NUMA 节点。 这是最便携的形式，因为它允许 hwloc 使用基于进程的操作系统功能或基于线程的操作系统功能，具体取决于可用的功能。 如果指定了 ::HWLOC_MEMBIND_BYNODESET，则集合被视为节点集。 否则它是一个cpuset。
+  dss_tls_init 初始化本地存储, 为特定线程分配 dss_thread_local_storage 并将指针存储在特定于线程的值中，该值可以随时使用 dss_tls_get<span style="color:#000;font-weight:bold">()</span> 获取。
+    dss_thread_local_storage_init obj_tls_init
+      dtls-&gt;dtls_values<span style="color:#000;font-weight:bold">[</span>i<span style="color:#000;font-weight:bold">]</span> <span style="color:#000;font-weight:bold">=</span> dmk-&gt;dmk_init<span style="color:#000;font-weight:bold">(</span>xs_id, tgt_id<span style="color:#000;font-weight:bold">)</span> 
+      dmk-&gt;dmk_init<span style="color:#000;font-weight:bold">(</span>xs_id, tgt_id<span style="color:#000;font-weight:bold">)</span> -&gt; dss_srv_tls_init | vos_tls_init 
+    pthread_setspecific<span style="color:#000;font-weight:bold">(</span>dss_tls_key, dtls<span style="color:#000;font-weight:bold">)</span>
+  dss_get_module_info
+    dss_module_key_get
+  crt_context_create
+  crt_context_register_rpc_task dss_rpc_hdlr dss_iv_resp_hdlr 注册两个公共回调
+  crt_context_idx
+  tse_sched_init 使用可选的完成回调和指向用户数据的指针初始化调度程序。 调用者负责完成或取消调度程序。
+  bio_xsctxt_alloc 初始化spdk环境和nvme上下文 
+  dss_nvme_poll_ult
+  <span style="color:#000;font-weight:bold">for</span> <span style="color:#000;font-weight:bold">(</span>;;<span style="color:#000;font-weight:bold">)</span>
+    crt_progress
+
+vos_tls_init 初始化vos本地线程存储
+  D_INIT_LIST_HEAD<span style="color:#000;font-weight:bold">(</span>&amp;tls-&gt;vtl_gc_pools<span style="color:#000;font-weight:bold">)</span>
+  vos_obj_cache_create<span style="color:#000;font-weight:bold">(</span>LRU_CACHE_BITS 创建lru
+  d_uhash_create vtl_pool_hhash vtl_cont_hhash
+  umem_init_txd<span style="color:#000;font-weight:bold">(</span>&amp;tls-&gt;vtl_txd<span style="color:#000;font-weight:bold">)</span> 为避免为每个事务分配阶段数据，umem 用户应准备每个 xstream 阶段数据并通过 umem_init_txd<span style="color:#000;font-weight:bold">()</span> 对其进行初始化，此每个 xstream 阶段数据将用于同一 xstream 中的所有事务
+    txd-&gt;txd_magic <span style="color:#000;font-weight:bold">=</span> UMEM_TX_DATA_MAGIC
+  vos_ts_table_alloc
+    vos_ts_copy VOS_TS_TYPE_CONT 不执行此逻辑
+      daos_dti_copy
+        *des <span style="color:#000;font-weight:bold">=</span> *src 赋值
+        memset<span style="color:#000;font-weight:bold">(</span>des, 0, sizeof<span style="color:#000;font-weight:bold">(</span>*des<span style="color:#000;font-weight:bold">))</span> 置0
+    lrua_array_alloc
+  d_tm_add_metric
+
+dss_nvme_poll_ult
+  dss_get_module_info
+  dss_current_xstream
+  bio_nvme_poll poll nvme完成事件
+    spdk_thread_poll
+    is_bbs_owner
+    bio_bs_monitor
+    is_init_xstream
+    scan_bio_bdevs
+    bio_led_event_monitor
+  ABT_thread_yield
+
+
+vos线程模型
+bio_nvme_poll
+
+
+nvme配置文件
+/mnt/ubip1/ubip_nvme.conf
+
+subsystem: bdev
+trtype: PCIe
+method: bdev_nvme_attach_controller
+
+
+核心数
+主线程XS
+首选线程数
+
+dss_topo_init 初始化拓扑
+  <span style="color:#008080">numa_obj</span> <span style="color:#000;font-weight:bold">=</span> hwloc_get_obj_by_depth
+  <span style="color:#008080">dss_tgt_nr</span> <span style="color:#000;font-weight:bold">=</span> dss_tgt_nr_get numa，核， 分配算法  超额认购 oversubscribe 计算每个引擎多少个target
+
+
+core 核。 一个计算单元（可以由多个 PU Processing Unit，也就是逻辑处理器共享）
+处理器单元的缩写（不是进程！）。 hwloc 识别的最小物理执行单元。 例如，一个核心上可能有多个 PU（例如，硬件线程）。
+当多台机器形成整体单一系统映像 <span style="color:#000;font-weight:bold">(</span>SSI<span style="color:#000;font-weight:bold">)</span> 时，可以使用附加系统类型，例如 Kerrighed。
+最后，请注意，一个对象可以由其在拓扑图中的数字“深度”表示。
+水平类型的宽度: 
+
+深度
+查看硬件信息 hwloc-info 
+depth 0:	<span style="color:#099">1</span> Machine <span style="color:#000;font-weight:bold">(</span><span style="color:#0086b3">type</span> <span style="color:#998;font-style:italic">#1)</span>
+depth 1:	<span style="color:#099">2</span> NUMANode <span style="color:#000;font-weight:bold">(</span><span style="color:#0086b3">type</span> <span style="color:#998;font-style:italic">#2)</span>
+depth 2:	<span style="color:#099">2</span> Package <span style="color:#000;font-weight:bold">(</span><span style="color:#0086b3">type</span> <span style="color:#998;font-style:italic">#3) </span>
+depth 3:	<span style="color:#099">2</span> L3Cache <span style="color:#000;font-weight:bold">(</span><span style="color:#0086b3">type</span> <span style="color:#998;font-style:italic">#4)</span>
+depth 4:	<span style="color:#099">56</span> L2Cache <span style="color:#000;font-weight:bold">(</span><span style="color:#0086b3">type</span> <span style="color:#998;font-style:italic">#4)</span>
+depth 5:	<span style="color:#099">56</span> L1dCache <span style="color:#000;font-weight:bold">(</span><span style="color:#0086b3">type</span> <span style="color:#998;font-style:italic">#4)</span>
+depth 6:	<span style="color:#099">56</span> L1iCache <span style="color:#000;font-weight:bold">(</span><span style="color:#0086b3">type</span> <span style="color:#998;font-style:italic">#4)</span>
+depth 7:	<span style="color:#099">56</span> Core <span style="color:#000;font-weight:bold">(</span><span style="color:#0086b3">type</span> <span style="color:#998;font-style:italic">#5)</span>
+depth 8:	<span style="color:#099">56</span> PU <span style="color:#000;font-weight:bold">(</span><span style="color:#0086b3">type</span> <span style="color:#998;font-style:italic">#6)</span>
+Special depth -3:	<span style="color:#099">9</span> Bridge <span style="color:#000;font-weight:bold">(</span><span style="color:#0086b3">type</span> <span style="color:#998;font-style:italic">#9)</span>
+Special depth -4:	<span style="color:#099">7</span> PCI Device <span style="color:#000;font-weight:bold">(</span><span style="color:#0086b3">type</span> <span style="color:#998;font-style:italic">#10)</span>
+Special depth -5:	<span style="color:#099">10</span> OS Device <span style="color:#000;font-weight:bold">(</span><span style="color:#0086b3">type</span> <span style="color:#998;font-style:italic">#11)</span>
+
+
+
+学习路线:
+  初始化  *
+  格式化
+  创建池
+  创建容器
+  挂载
+  IO路径
+  故障后的重建,rebuild
+
+
+register_dbtree_classes
+  dbtree_class_register<span style="color:#000;font-weight:bold">(</span>DBTREE_CLASS_KV dbtree_kv_ops
+    <span style="color:#000;font-weight:bold">if</span> <span style="color:#000;font-weight:bold">(</span>!<span style="color:#000;font-weight:bold">(</span>tree_feats &amp; <span style="color:#000;font-weight:bold">(</span>BTR_FEAT_UINT_KEY | BTR_FEAT_DIRECT_KEY<span style="color:#000;font-weight:bold">)))</span> 利用位运算判断, 如果没有设置唯一键或直接键
+    btr_class_registered<span style="color:#000;font-weight:bold">[</span>tree_class<span style="color:#000;font-weight:bold">]</span>.tc_ops <span style="color:#000;font-weight:bold">=</span> ops 注册操作<span style="color:#000;font-weight:bold">(</span>利用数组index索引树的类型<span style="color:#000;font-weight:bold">)</span>
+    btr_class_registered<span style="color:#000;font-weight:bold">[</span>tree_class<span style="color:#000;font-weight:bold">]</span>.tc_feats <span style="color:#000;font-weight:bold">=</span> tree_feats 注册树类型特征位
+
+
+dss_module_init_one
+  <span style="color:#008080">rc</span> <span style="color:#000;font-weight:bold">=</span> smod-&gt;sm_init<span style="color:#000;font-weight:bold">()</span> 初始化单个模块 -&gt; vos_mod_init
+  dss_register_key<span style="color:#000;font-weight:bold">(</span>smod-&gt;sm_key<span style="color:#000;font-weight:bold">)</span>
+  daos_rpc_register<span style="color:#000;font-weight:bold">(</span>smod-&gt;sm_proto_fmt<span style="color:#000;font-weight:bold">[</span>i<span style="color:#000;font-weight:bold">]</span>, smod-&gt;sm_cli_count<span style="color:#000;font-weight:bold">[</span>i<span style="color:#000;font-weight:bold">]</span>... 注册RPC CRT_PROTO_OPC
+  drpc_hdlr_register_all<span style="color:#000;font-weight:bold">(</span>smod-&gt;sm_drpc_handlers<span style="color:#000;font-weight:bold">)</span> 注册所有控制器
+    drpc_hdlr_register
+      registry_table<span style="color:#000;font-weight:bold">[</span>module_id<span style="color:#000;font-weight:bold">]</span> <span style="color:#000;font-weight:bold">=</span> handler 注册drpc控制器, 模块id也就是对应的drpc枚举中的索引号
+
+
+模块列表, 模块初始化, vos,rdb,rsvc,security,mgmt,dtx,pool,cont,obj,rebuild
+关键字: .sm_name 模块名
+enum daos_module_id 模块ID
+vos_srv -&gt; vos_srv_module
+vos_mod_init vos初始化
+  vos_pool_settings_init vos池初始化设置
+    pmemobj_ctl_set<span style="color:#000;font-weight:bold">(</span>NULL, <span style="color:#d14">&#34;heap.arenas_assignment_type&#34;</span>, &amp;atype<span style="color:#000;font-weight:bold">)</span> 线程使用1个全局的arena POBJ_ARENAS_ASSIGNMENT_GLOBAL 全局模式
+  vos_cont_tab_register 注册容器 VOS_BTR_CONT_TABLE class: <span style="color:#099">14</span>
+  vos_dtx_table_register
+    dbtree_class_register<span style="color:#000;font-weight:bold">(</span>VOS_BTR_DTX_ACT_TABLE 注册DTX活动表
+    dbtree_class_register<span style="color:#000;font-weight:bold">(</span>VOS_BTR_DTX_CMT_TABLE 注册提交表
+  vos_obj_tab_register
+    dbtree_class_register<span style="color:#000;font-weight:bold">(</span>VOS_BTR_OBJ_TABLE 注册对象索引表<span style="color:#000;font-weight:bold">(</span>OI<span style="color:#000;font-weight:bold">)</span> 
+  obj_tree_register
+    dbtree_class_register<span style="color:#000;font-weight:bold">(</span>ta-&gt;ta_class, ta-&gt;ta_feats 注册db树 vos_btr_attrs: VOS_BTR_DKEY, VOS_BTR_AKEY, VOS_BTR_SINGV, vos_dkey, vos_akey, singv
+  vos_ilog_init 初始化全局化身日志
+    ilog_init
+  d_getenv_int DAOS_VOS_AGG_THRESH <span style="color:#008080">触发vos聚合的块数</span><span style="color:#000;font-weight:bold">=</span>256块, 总大小256*4K<span style="color:#000;font-weight:bold">=</span>1MB
+
+
+rdb初始化
+rdb_module_init
+  rdb_hash_init
+    d_hash_table_create_inplace rdb_hash 加锁创建rdb_hash表
+
+
+rsvc初始化
+rsvc_module_init
+  d_hash_table_create_inplace rsvc_hash
+
+安全模块security默认加载
+init
+  <span style="color:#008080">ds_sec_server_socket_path</span> <span style="color:#000;font-weight:bold">=</span> /var/run/daos_server/daos_server.sock
+
+mgmt 管理模块初始化
+ds_mgmt_init
+  ds_mgmt_system_module_init
+    crt_group_lookup
+    d_iov_set
+    ds_rsvc_class_register<span style="color:#000;font-weight:bold">(</span>DS_RSVC_CLASS_MGMT, &amp;mgmt_svc_rsvc_class<span style="color:#000;font-weight:bold">)</span>
+      rsvc_classes<span style="color:#000;font-weight:bold">[</span>id<span style="color:#000;font-weight:bold">]</span> <span style="color:#000;font-weight:bold">=</span> class 将类添加到rsvc类的数组中
+
+
+dtx 初始化
+dtx_init
+  设置阈值
+  dbtree_class_register<span style="color:#000;font-weight:bold">(</span>DBTREE_CLASS_DTX_CF
+  dbtree_class_register<span style="color:#000;font-weight:bold">(</span>DBTREE_CLASS_DTX_COS
+
+
+池初始化
+pool
+init<span style="color:#000;font-weight:bold">(</span>void<span style="color:#000;font-weight:bold">)</span> .sm_init	<span style="color:#000;font-weight:bold">=</span> init
+  ds_pool_cache_init 缓存初始化
+    daos_lru_cache_create 创建lru缓存,内存中
+      d_hash_table_create_inplace D_HASH_FT_LRU dlc_htable 创建lru_hash表
+      D_INIT_LIST_HEAD 初始化链表头 驱逐LRU缓存条目时避免全扫描
+  ds_pool_hdl_hash_init
+    d_hash_table_create pool_hdl_hash 创建池控制器哈希表
+  ds_pool_iv_init 添加服务器 iv 树以在服务器之间共享值。 通过iv tree共享pool map，只先做同步更新
+    ds_iv_class_register IV_POOL_MAP 通过iv传播属性
+  ds_pool_prop_default_init DAOS-7254 聚合：将 EC 聚合与 VOS 聚合分开 <span style="color:#000;font-weight:bold">(</span><span style="color:#998;font-style:italic">#5667), 将 EC agg 和 VOS aggregate 分离成两个 ULT，避免 iv fetch，dsc_pool/container open 每次回调，同时保证 EC aggregation 可以在删除快照时触发。添加 DAOS_EC_AGG 环境以禁用 EC 聚合以进行测试</span>
+    <span style="color:#008080">entry</span> <span style="color:#000;font-weight:bold">=</span> daos_prop_entry_get<span style="color:#000;font-weight:bold">(</span>&amp;pool_prop_default, DAOS_PROP_PO_ACL<span style="color:#000;font-weight:bold">)</span>
+    &amp;prop-&gt;dpp_entries<span style="color:#000;font-weight:bold">[</span>i<span style="color:#000;font-weight:bold">]</span>
+    entry-&gt;dpe_val_ptr <span style="color:#000;font-weight:bold">=</span> ds_sec_alloc_default_daos_pool_acl<span style="color:#000;font-weight:bold">()</span>
+      alloc_default_daos_acl_with_perms
+        alloc_ace_with_access
+          daos_ace_create
+        daos_acl_create
+          flatten_aces 扁平化
+  ds_pool_rsvc_class_register DS_RSVC_CLASS_POOL 注册副本服务
+  bio_register_ract_ops 设置nvme操作表, 故障回调, 重新加入的回调, io错误的回调
+
+
+cont 初始化容器服务
+init<span style="color:#000;font-weight:bold">(</span>void<span style="color:#000;font-weight:bold">)</span>
+  ds_oid_iv_init
+    ds_iv_class_register 注册iv类
+  ds_cont_iv_init
+    ds_iv_class_register 注册各种类
+  ds_cont_prop_default_init
+
+obj 对象初始化
+obj_mod_init<span style="color:#000;font-weight:bold">(</span>void<span style="color:#000;font-weight:bold">)</span>
+  obj_utils_init
+  obj_class_init
+    D_ALLOC_ARRAY<span style="color:#000;font-weight:bold">(</span>oc_ident_array, OC_NR<span style="color:#000;font-weight:bold">)</span>
+  obj_ec_codec_init
+
+
+rebuild 重建初始化
+init<span style="color:#000;font-weight:bold">(</span>void<span style="color:#000;font-weight:bold">)</span>
+  D_INIT_LIST_HEAD rg_tgt_tracker_list 所有tagert
+  rg_global_tracker_list 主
+  ABT_mutex_create<span style="color:#000;font-weight:bold">(</span>&amp;rebuild_gst.rg_lock<span style="color:#000;font-weight:bold">)</span> 重建全局锁
+  rebuild_iv_init
+    ds_iv_class_register
+
+启动drpc监听用户级线程
+drpc_listener_start_ult
+  setup_listener_ctx<span style="color:#000;font-weight:bold">(</span>&amp;ctx<span style="color:#000;font-weight:bold">)</span>
+    unlink<span style="color:#000;font-weight:bold">(</span>sockpath<span style="color:#000;font-weight:bold">)</span>
+    <span style="color:#008080">listener</span> <span style="color:#000;font-weight:bold">=</span> drpc_listen<span style="color:#000;font-weight:bold">(</span>sockpath, drpc_hdlr_process_msg<span style="color:#000;font-weight:bold">)</span>  unix domain socket 域套接字, 创建了一个新系统 XS <span style="color:#000;font-weight:bold">(</span>1<span style="color:#000;font-weight:bold">)</span>，绑定到与 XS <span style="color:#099">0</span> 相同的 CPU 核心。dRPC 侦听器循环专门在这个 XS 上运行。 当 dRPC 消息到达时，drpc_progress 在 XS <span style="color:#099">0</span> 上启动一个新的 ULT 来处理消息。 它必须在 XS <span style="color:#099">0</span> 上才能与只能在 XS <span style="color:#099">0</span> 上运行的服务进行交互。为 dRPC 上下文结构添加了引用计数。 drpc_close 现在要么减少引用计数，要么如果这是最后一个引用，则关闭/释放套接字。 删除了现在不再使用的 drpc_recv
+    drpc_hdlr_process_msg drpc处理消息的控制器
+      unixcomm_listen<span style="color:#000;font-weight:bold">(</span>sockaddr, O_NONBLOCK, &amp;comm<span style="color:#000;font-weight:bold">)</span>
+        new_unixcomm_socket<span style="color:#000;font-weight:bold">(</span>flags, &amp;comm<span style="color:#000;font-weight:bold">)</span>
+          comm-&gt;fd <span style="color:#000;font-weight:bold">=</span> socket<span style="color:#000;font-weight:bold">(</span>AF_UNIX, SOCK_SEQPACKET, 0<span style="color:#000;font-weight:bold">)</span> 创建socket , SOCK_SEQPACKET为固定最大长度的数据报提供有序的、可靠的、基于双向连接的数据传输路径； 消费者需要在每次输入系统调用时读取整个数据包, 协议参数, 该协议指定要与套接字一起使用的特定协议。 通常只存在一个协议来支持给定协议族中的特定套接字类型，在这种情况下 protocol 可以指定为 0。但是，可能存在许多协议，在这种情况下必须在此指定一个特定的协议 方式。要使用的协议号特定于要进行通信的“通信域”； 请参阅协议 <span style="color:#000;font-weight:bold">(</span>5<span style="color:#000;font-weight:bold">)</span>。 有关如何将协议名称字符串映射到协议编号的信息，请参阅 getprotoent<span style="color:#000;font-weight:bold">(</span>3<span style="color:#000;font-weight:bold">)</span>
+          fcntl<span style="color:#000;font-weight:bold">(</span>comm-&gt;fd, F_SETFL, flags<span style="color:#000;font-weight:bold">)</span>
+        fill_socket_address<span style="color:#000;font-weight:bold">(</span>sockaddr, &amp;address<span style="color:#000;font-weight:bold">)</span>
+        bind<span style="color:#000;font-weight:bold">(</span>comm-&gt;fd 在 SOCK_STREAM 套接字可以接收连接之前，通常需要使用 bind<span style="color:#000;font-weight:bold">()</span> 分配本地地址（请参阅 accept<span style="color:#000;font-weight:bold">(</span>2<span style="color:#000;font-weight:bold">)</span>）
+        listen<span style="color:#000;font-weight:bold">(</span>comm-&gt;fd, SOMAXCONN<span style="color:#000;font-weight:bold">)</span> listen<span style="color:#000;font-weight:bold">()</span> 将 sockfd 引用的套接字标记为被动套接字，即，作为将用于使用 accept<span style="color:#000;font-weight:bold">(</span>2<span style="color:#000;font-weight:bold">)</span> 接受传入连接请求的套接字。
+sockfd 参数是一个文件描述符，它引用 SOCK_STREAM 或 SOCK_SEQPACKET 类型的套接字。
+backlog 参数定义了 sockfd 的挂起连接队列可能增长到的最大长度。 如果连接请求在队列已满时到达，则客户端可能会收到带有 ECONNREFUSED 指示的错误，或者，如果底层协议支持重传，则可能会忽略该请求，以便稍后重新尝试连接成功
+      init_drpc_ctx<span style="color:#000;font-weight:bold">(</span>ctx, comm, handler<span style="color:#000;font-weight:bold">)</span>
+        ctx-&gt;handler <span style="color:#000;font-weight:bold">=</span> handler <span style="color:#008080">赋值</span> <span style="color:#000;font-weight:bold">=</span> drpc_hdlr_process_msg
+    *new_ctx <span style="color:#000;font-weight:bold">=</span> drpc_progress_context_create<span style="color:#000;font-weight:bold">(</span>listener<span style="color:#000;font-weight:bold">)</span>
+  dss_ult_create<span style="color:#000;font-weight:bold">(</span>drpc_listener_run
+    ult_create_internal<span style="color:#000;font-weight:bold">(</span>func
+      <span style="color:#008080">stream_id</span> <span style="color:#000;font-weight:bold">=</span> sched_ult2xs<span style="color:#000;font-weight:bold">(</span>xs_type, tgt_idx<span style="color:#000;font-weight:bold">)</span> 获取执行流id, 根据映射关系
+      <span style="color:#008080">dx</span> <span style="color:#000;font-weight:bold">=</span> dss_get_xstream<span style="color:#000;font-weight:bold">(</span>stream_id<span style="color:#000;font-weight:bold">)</span> 通过数组角标
+      ABT_thread_attr_set_stacksize<span style="color:#000;font-weight:bold">(</span>attr, stack_size<span style="color:#000;font-weight:bold">)</span>
+      sched_create_thread<span style="color:#000;font-weight:bold">(</span>dx, func, arg, attr, ult, flags<span style="color:#000;font-weight:bold">)</span>
+        sched_xstream_stopping?
+         daos_abt_thread_create<span style="color:#000;font-weight:bold">(</span>cur_dx-&gt;dx_sp, dss_free_stack_cb, abt_pool, func, arg, t_attr, thread<span style="color:#000;font-weight:bold">)</span>  max_map_count文件包含限制一个进程可以拥有的VMA<span style="color:#000;font-weight:bold">(</span>虚拟内存区域<span style="color:#000;font-weight:bold">)</span>的数量: sysctl vm.max_map_count 默认 64K
+         ABT_thread_create -&gt; drpc_listener_run
+          set_listener_running<span style="color:#000;font-weight:bold">(</span><span style="color:#0086b3">true</span><span style="color:#000;font-weight:bold">)</span>
+          <span style="color:#000;font-weight:bold">while</span> <span style="color:#000;font-weight:bold">(</span>is_listener_running<span style="color:#000;font-weight:bold">())</span> 
+          <span style="color:#008080">rc</span> <span style="color:#000;font-weight:bold">=</span> drpc_progress<span style="color:#000;font-weight:bold">(</span>ctx, 1000<span style="color:#000;font-weight:bold">)</span>
+            drpc_progress_context_to_unixcomms<span style="color:#000;font-weight:bold">(</span>ctx, &amp;comms<span style="color:#000;font-weight:bold">)</span>
+              <span style="color:#008080">num_comms</span> <span style="color:#000;font-weight:bold">=</span> get_open_drpc_session_count<span style="color:#000;font-weight:bold">(</span>ctx<span style="color:#000;font-weight:bold">)</span>
+            unixcomm_poll<span style="color:#000;font-weight:bold">(</span>comms, num_comms, timeout_ms<span style="color:#000;font-weight:bold">)</span>
+              fds<span style="color:#000;font-weight:bold">[</span>i<span style="color:#000;font-weight:bold">]</span>.events <span style="color:#000;font-weight:bold">=</span> POLLIN | POLLPRI
+              <span style="color:#008080">poll_rc</span> <span style="color:#000;font-weight:bold">=</span> poll<span style="color:#000;font-weight:bold">(</span>fds, num_comms, timeout_ms<span style="color:#000;font-weight:bold">)</span> 轮训
+              comms<span style="color:#000;font-weight:bold">[</span>i<span style="color:#000;font-weight:bold">]</span>.activity <span style="color:#000;font-weight:bold">=</span> poll_events_to_unixcomm_activity 获取激活原因
+            process_activity<span style="color:#000;font-weight:bold">(</span>ctx, comms, num_comms<span style="color:#000;font-weight:bold">)</span> 处理激活的事件
+              process_all_session_activities<span style="color:#000;font-weight:bold">(</span>ctx, comms, num_comms<span style="color:#000;font-weight:bold">)</span>
+                process_session_activity
+                  handle_incoming_call
+                    drpc_recv_call
+                      get_incoming_call
+                        unixcomm_recv
+                        drpc__call__unpack
+                    drpc_response_create
+                    create_call_ctx
+                    dss_ult_create<span style="color:#000;font-weight:bold">(</span>drpc_handler_ult
+              process_listener_activity<span style="color:#000;font-weight:bold">(</span>ctx, comms, num_comms<span style="color:#000;font-weight:bold">)</span>
+                drpc_accept
+                d_list_add<span style="color:#000;font-weight:bold">(</span>&amp;session_node-&gt;link
+          ABT_thread_yield<span style="color:#000;font-weight:bold">()</span>
+          drpc_progress_context_close<span style="color:#000;font-weight:bold">(</span>ctx<span style="color:#000;font-weight:bold">)</span>
+
+
+drpc_handler_ult 执行控制器
+  ctx-&gt;session-&gt;handler<span style="color:#000;font-weight:bold">(</span>ctx-&gt;call, ctx-&gt;resp<span style="color:#000;font-weight:bold">)</span> -&gt; drpc_hdlr_process_msg
+  drpc_hdlr_process_msg
+    <span style="color:#008080">handler</span> <span style="color:#000;font-weight:bold">=</span> drpc_hdlr_get_handler<span style="color:#000;font-weight:bold">(</span>request-&gt;module<span style="color:#000;font-weight:bold">)</span> 根据请求中的模块id, 获取请求对应的模块
+      <span style="color:#008080">handler</span> <span style="color:#000;font-weight:bold">=</span> registry_table<span style="color:#000;font-weight:bold">[</span>module_id<span style="color:#000;font-weight:bold">]</span> 从注册表中获取控制器
+    handler<span style="color:#000;font-weight:bold">(</span>request, resp<span style="color:#000;font-weight:bold">)</span> 处理请求
+  <span style="color:#008080">rc</span> <span style="color:#000;font-weight:bold">=</span> drpc_send_response<span style="color:#000;font-weight:bold">(</span>ctx-&gt;session, ctx-&gt;resp<span style="color:#000;font-weight:bold">)</span>
+free_call_ctx<span style="color:#000;font-weight:bold">(</span>ctx<span style="color:#000;font-weight:bold">)</span>
+
+
+static struct vos_sys_db	vos_db
+vos_db_init vos初始化 元数据初始化
+  vos_db_init_ex<span style="color:#000;font-weight:bold">(</span>db_path, NULL, false, <span style="color:#0086b3">false</span><span style="color:#000;font-weight:bold">)</span>
+  memset<span style="color:#000;font-weight:bold">(</span>&amp;vos_db, 0, sizeof<span style="color:#000;font-weight:bold">(</span>vos_db<span style="color:#000;font-weight:bold">))</span> 系统db置零 /mnt/daos/daos_sys/sys_db 系统数据库sys_db
+  vos_db.db_poh <span style="color:#000;font-weight:bold">=</span> DAOS_HDL_INVAL
+  vos_db.db_pub.sd_fetch	  <span style="color:#000;font-weight:bold">=</span> db_fetch ...
+  uuid_parse<span style="color:#000;font-weight:bold">(</span>SYS_DB_POOL, vos_db.db_pool<span style="color:#000;font-weight:bold">)</span> 保留系统池,容器的uuid
+  db_open_create<span style="color:#000;font-weight:bold">(</span>&amp;vos_db.db_pub, !!create<span style="color:#000;font-weight:bold">)</span> 创建或打开 vos_pool_open
+    access 先检查文件是否存在 第二轮创建
+    vos_pool_create 创建vosp 系统scm池<span style="color:#000;font-weight:bold">(</span>128MB<span style="color:#000;font-weight:bold">)</span> jump
+    vos_cont_create<span style="color:#000;font-weight:bold">(</span>vdb-&gt;db_poh, vdb-&gt;db_cont<span style="color:#000;font-weight:bold">)</span> 在vos池中<span style="color:#000;font-weight:bold">(</span>vpool<span style="color:#000;font-weight:bold">)</span>创建一个容器
+      cont_df_lookup<span style="color:#000;font-weight:bold">(</span>vpool, &amp;ukey, &amp;args<span style="color:#000;font-weight:bold">)</span>
+        dbtree_lookup<span style="color:#000;font-weight:bold">(</span>vpool-&gt;vp_cont_th, &amp;key, &amp;value<span style="color:#000;font-weight:bold">)</span> b树搜索
+          dbtree_fetch<span style="color:#000;font-weight:bold">(</span>toh, BTR_PROBE_EQ, DAOS_INTENT_DEFAULT, key, NULL 探测键等于提供键的记录
+            btr_probe_key<span style="color:#000;font-weight:bold">(</span>tcx, opc, intent, key<span style="color:#000;font-weight:bold">)</span>
+              btr_hkey_gen<span style="color:#000;font-weight:bold">(</span>tcx, key, hkey<span style="color:#000;font-weight:bold">)</span>
+              btr_probe<span style="color:#000;font-weight:bold">(</span>tcx, probe_opc, intent, key, hkey<span style="color:#000;font-weight:bold">)</span> 查找b树
+                btr_context_set_depth
+                btr_cmp 二分查找
+                btr_node_is_leaf
+                btr_trace_set
+                btr_node_child_at
+                ... b树
+      umem_tx_begin<span style="color:#000;font-weight:bold">(</span>vos_pool2umm<span style="color:#000;font-weight:bold">(</span>vpool<span style="color:#000;font-weight:bold">)</span>, NULL<span style="color:#000;font-weight:bold">)</span>
+      dbtree_update<span style="color:#000;font-weight:bold">(</span>vpool-&gt;vp_cont_th, &amp;key, &amp;value<span style="color:#000;font-weight:bold">)</span>
+        btr_upsert<span style="color:#000;font-weight:bold">(</span>tcx, BTR_PROBE_EQ, DAOS_INTENT_UPDATE, key, val<span style="color:#000;font-weight:bold">)</span> 更新或插入
+      umem_tx_end<span style="color:#000;font-weight:bold">(</span>vos_pool2umm<span style="color:#000;font-weight:bold">(</span>vpool<span style="color:#000;font-weight:bold">)</span>, rc<span style="color:#000;font-weight:bold">)</span>
+    vos_cont_open<span style="color:#000;font-weight:bold">(</span>vdb-&gt;db_poh, vdb-&gt;db_cont, &amp;vdb-&gt;db_coh<span style="color:#000;font-weight:bold">)</span>
+      cont_lookup<span style="color:#000;font-weight:bold">(</span>&amp;ukey, &amp;pkey, &amp;cont<span style="color:#000;font-weight:bold">)</span>
+        d_uhash_link_lookup<span style="color:#000;font-weight:bold">(</span>vos_cont_hhash_get<span style="color:#000;font-weight:bold">()</span>, key, pkey<span style="color:#000;font-weight:bold">)</span>
+      cont_df_lookup<span style="color:#000;font-weight:bold">(</span>pool, &amp;ukey, &amp;args<span style="color:#000;font-weight:bold">)</span>
+      uuid_copy<span style="color:#000;font-weight:bold">(</span>cont-&gt;vc_id, co_uuid<span style="color:#000;font-weight:bold">)</span>
+      cont-&gt;vc_pool	 <span style="color:#000;font-weight:bold">=</span> pool 设置容器属性
+      D_INIT_LIST_HEAD<span style="color:#000;font-weight:bold">(</span>&amp;cont-&gt;vc_dtx_act_list<span style="color:#000;font-weight:bold">)</span>
+      gc_check_cont<span style="color:#000;font-weight:bold">(</span>cont<span style="color:#000;font-weight:bold">)</span> 检查是否需要加入gc列表
+        D_INIT_LIST_HEAD<span style="color:#000;font-weight:bold">(</span>&amp;cont-&gt;vc_gc_link<span style="color:#000;font-weight:bold">)</span>
+        d_list_add_tail<span style="color:#000;font-weight:bold">(</span>&amp;cont-&gt;vc_gc_link, &amp;cont-&gt;vc_pool-&gt;vp_gc_cont<span style="color:#000;font-weight:bold">)</span>
+      dbtree_open_inplace_ex<span style="color:#000;font-weight:bold">(</span>&amp;cont-&gt;vc_cont_df-&gt;cd_obj_root
+      lrua_array_alloc<span style="color:#000;font-weight:bold">(</span>&amp;cont-&gt;vc_dtx_array 分配LRU数组, 活动的dtx记录
+      dbtree_create_inplace_ex<span style="color:#000;font-weight:bold">(</span>VOS_BTR_DTX_ACT_TABLE
+      dbtree_create_inplace_ex<span style="color:#000;font-weight:bold">(</span>VOS_BTR_DTX_CMT_TABLE
+      vea_hint_load<span style="color:#000;font-weight:bold">(</span>&amp;cont-&gt;vc_cont_df-&gt;cd_hint_df<span style="color:#000;font-weight:bold">[</span>i<span style="color:#000;font-weight:bold">]</span>
+      vos_dtx_act_reindex<span style="color:#000;font-weight:bold">(</span>cont<span style="color:#000;font-weight:bold">)</span>
+        lrua_allocx_inplace<span style="color:#000;font-weight:bold">(</span>cont-&gt;vc_dtx_array
+        dbtree_upsert<span style="color:#000;font-weight:bold">(</span>cont-&gt;vc_dtx_active_hdl
+        dae-&gt;dae_start_time <span style="color:#000;font-weight:bold">=</span> crt_hlc_get<span style="color:#000;font-weight:bold">()</span>
+        d_list_add_tail<span style="color:#000;font-weight:bold">(</span>&amp;dae-&gt;dae_link, &amp;cont-&gt;vc_dtx_act_list<span style="color:#000;font-weight:bold">)</span> dtx可能在其他线程中遍历此链表
+      cont_insert<span style="color:#000;font-weight:bold">(</span>cont, &amp;ukey, &amp;pkey, coh<span style="color:#000;font-weight:bold">)</span>
+        d_uhash_ulink_init<span style="color:#000;font-weight:bold">(</span>&amp;cont-&gt;vc_uhlink, &amp;co_hdl_uh_ops<span style="color:#000;font-weight:bold">)</span>
+        d_uhash_link_insert<span style="color:#000;font-weight:bold">(</span>vos_cont_hhash_get<span style="color:#000;font-weight:bold">()</span>, key 插入uuid hash表
+    <span style="color:#008080">rc</span> <span style="color:#000;font-weight:bold">=</span> db_upsert<span style="color:#000;font-weight:bold">(</span>db, SYS_DB_MD, &amp;key, &amp;val<span style="color:#000;font-weight:bold">)</span> metadata元数据,做容器dkey
+      db_io_init<span style="color:#000;font-weight:bold">(</span>&amp;io, table, key, val<span style="color:#000;font-weight:bold">)</span>
+        io-&gt;io_iod.iod_type <span style="color:#000;font-weight:bold">=</span> DAOS_IOD_SINGLE 一个不可分割的值以原子方式更新
+      vos_obj_update<span style="color:#000;font-weight:bold">(</span>vdb-&gt;db_coh 更新指定对象的记录。 如果sql中没有提供输入缓冲区，则该函数返回新分配的地址来存放记录，上层可以直接向这些地址写入数据（rdma模式）
+        vos_obj_update_ex
+          vos_update_begin
+            vos_check_akeys<span style="color:#000;font-weight:bold">(</span>iod_nr, iods<span style="color:#000;font-weight:bold">)</span>
+            vos_ioc_create
+              vos_ilog_fetch_init<span style="color:#000;font-weight:bold">(</span>&amp;ioc-&gt;ic_dkey_info<span style="color:#000;font-weight:bold">)</span>
+                ilog_fetch_init<span style="color:#000;font-weight:bold">(</span>&amp;info-&gt;ii_entries<span style="color:#000;font-weight:bold">)</span>
+              vos_ilog_fetch_init<span style="color:#000;font-weight:bold">(</span>&amp;ioc-&gt;ic_akey_info<span style="color:#000;font-weight:bold">)</span>
+              vos_ioc_reserve_init<span style="color:#000;font-weight:bold">(</span>ioc, dth<span style="color:#000;font-weight:bold">)</span>
+              vos_ts_set_allocate
+                vos_kh_clear<span style="color:#000;font-weight:bold">()</span>
+                vos_ts_set_append_cflags<span style="color:#000;font-weight:bold">(</span>*ts_set, cflags<span style="color:#000;font-weight:bold">)</span>
+              bio_iod_alloc
+              <span style="color:#008080">bsgl</span> <span style="color:#000;font-weight:bold">=</span> bio_iod_sgl<span style="color:#000;font-weight:bold">(</span>ioc-&gt;ic_biod, i<span style="color:#000;font-weight:bold">)</span>
+              <span style="color:#008080">rc</span> <span style="color:#000;font-weight:bold">=</span> bio_sgl_init<span style="color:#000;font-weight:bold">(</span>bsgl, iov_nr<span style="color:#000;font-weight:bold">)</span>
+            vos_space_hold<span style="color:#000;font-weight:bold">(</span>vos_cont2pool
+              vos_space_query<span style="color:#000;font-weight:bold">(</span>pool, &amp;vps, <span style="color:#0086b3">false</span><span style="color:#000;font-weight:bold">)</span>
+                pmemobj_ctl_get<span style="color:#000;font-weight:bold">(</span>pool-&gt;vp_umm.umm_pool stats.heap.curr_allocated
+                vea_query<span style="color:#000;font-weight:bold">(</span>pool-&gt;vp_vea_info, attr, stat<span style="color:#000;font-weight:bold">)</span> 查询nvme
+                  dbtree_iterate<span style="color:#000;font-weight:bold">(</span>vsi-&gt;vsi_md_free_btr count_free_persistent
+                    verify_free_entry
+                  dbtree_iterate count_free_transient
+                  d_binheap_size
+                  d_binheap_root
+                    d_binheap_find
+                      d_binheap_find_locked
+                        d_binheap_pointer
+              estimate_space 估计更新请求将消耗多少空间。 这个保守的估计总是假设新对象、dkey、akey 将被创建用于更新
+                umem_slab_usize
+                <span style="color:#008080">scm</span> <span style="color:#000;font-weight:bold">+=</span> estimate_space_key<span style="color:#000;font-weight:bold">(</span>umm, dkey<span style="color:#000;font-weight:bold">)</span>
+                vos_media_select
+            dkey_update_begin<span style="color:#000;font-weight:bold">(</span>ioc<span style="color:#000;font-weight:bold">)</span>
+              iod_set_cursor
+              akey_update_begin
+                vos_media_select<span style="color:#000;font-weight:bold">(</span>vos_cont2pool<span style="color:#000;font-weight:bold">(</span>ioc-&gt;ic_cont<span style="color:#000;font-weight:bold">)</span>
+                vos_reserve_single<span style="color:#000;font-weight:bold">(</span>ioc, media, size<span style="color:#000;font-weight:bold">)</span>
+                  reserve_space<span style="color:#000;font-weight:bold">(</span>ioc, DAOS_MEDIA_SCM, scm_size, &amp;off<span style="color:#000;font-weight:bold">)</span>
+                    vos_reserve_scm
+                      umem_reserve
+                    vos_reserve_blocks
+                      vea_reserve
+                  vos_irec_init_csum<span style="color:#000;font-weight:bold">(</span>irec, value_csum<span style="color:#000;font-weight:bold">)</span>
+                  bio_addr_set_hole
+                vos_reserve_recx<span style="color:#000;font-weight:bold">(</span>ioc, media, size, recx_csum
+                  bio_addr_set_hole
+                  vos_dedup_lookup 去重
+                    d_hash_rec_find<span style="color:#000;font-weight:bold">(</span>pool-&gt;vp_dedup_hash
+                  iod_reserve
+                    bio_iod_sgl 获取 io 描述符的指定 SG 列表的辅助函数
+          vos_obj_copy
+            bio_iod_prep
+              iterate_biov<span style="color:#000;font-weight:bold">(</span>biod, arg ? bulk_map_one : dma_map_one, arg<span style="color:#000;font-weight:bold">)</span>
+              dma_rw<span style="color:#000;font-weight:bold">(</span>biod<span style="color:#000;font-weight:bold">)</span>
+            bio_iod_copy
+              iterate_biov<span style="color:#000;font-weight:bold">(</span>biod, copy_one, &amp;arg<span style="color:#000;font-weight:bold">)</span>
+            bio_iod_post
+              dma_rw<span style="color:#000;font-weight:bold">(</span>biod<span style="color:#000;font-weight:bold">)</span>
+              <span style="color:#008080">bdb</span> <span style="color:#000;font-weight:bold">=</span> iod_dma_buf<span style="color:#000;font-weight:bold">(</span>biod<span style="color:#000;font-weight:bold">)</span>
+              dma_drop_iod<span style="color:#000;font-weight:bold">(</span>bdb<span style="color:#000;font-weight:bold">)</span>
+                ABT_cond_broadcast<span style="color:#000;font-weight:bold">(</span>bdb-&gt;bdb_wait_iods<span style="color:#000;font-weight:bold">)</span>
+          vos_update_end
+            vos_dedup_verify_fini
+            vos_ts_set_add
+            vos_tx_begin
+            vos_dtx_commit_internal
+            vos_obj_hold<span style="color:#000;font-weight:bold">(</span>vos_obj_cache_current<span style="color:#000;font-weight:bold">()</span>
+            dkey_update
+            vos_ts_set_check_conflict
+            vos_space_unhold
+dss_srv_tls_init
+
+dsm_tls_init
+  ds_cont_child_cache_create
+  daos_lru_cache_create cont_child_cache_ops
+  ds_cont_hdl_hash_create
+
+obj_tls_init
+  每个IO指标
+</code></pre></td></tr></table>
+</div>
+</div><p>
+        <img class="mx-auto" alt="server_start" src="./daos_stor_cache_spdk_cart_mercury_ofi_libfabric_rdma_data_struct_queue-start.drawio.png" />   
+    
+
+        <img class="mx-auto" alt="engine_main" src="./daos_stor_cache_spdk_cart_mercury_ofi_libfabric_rdma_data_struct_queue-engine_start.drawio.png" />   
+    </p>
+<h2 id="author-晓兵">Author 晓兵</h2>
+<p>首发链接: <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a></p>
+<p>博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a></p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/daos/daos_server_engine_start/">https://logread.cn/post/daos/daos_server_engine_start/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/daos/daos_spdk_bdev/">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</a></li>
+        
+        <li><a href="/post/fs/gfs_paper/">谷歌文件系统</a></li>
+        
+        <li><a href="/post/net/rpc/hg/mercury_enable_rpc_for_hpc/">Mercury为高性能计算启用远程过程调用(RPC)</a></li>
+        
+        <li><a href="/post/stor/ceph/ceph_msg/">MSGR2 协议（MSGR2.0 和 MSGR2.1）</a></li>
+        
+        <li><a href="/post/linux/trace/linux_google_trace_dapper/">Linux_google_trace_dapper</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+                <li><a href='/tags/daos'>daos</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2023
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/study/summary/" title="常用学习网站汇总(随时更新)">常用学习网站汇总(随时更新)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_server_engine_start/" title="DAOS引擎启动流程-源码分析">DAOS引擎启动流程-源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/fs/gfs_paper/" title="谷歌文件系统">谷歌文件系统</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_spdk_bdev/" title="基于DOAS文件系统接口(DFS)暴露的SPDK块设备">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/" title="Mercury为高性能计算启用远程过程调用(RPC)">Mercury为高性能计算启用远程过程调用(RPC)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/stor/ceph/ceph_msg/" title="MSGR2 协议（MSGR2.0 和 MSGR2.1）">MSGR2 协议（MSGR2.0 和 MSGR2.1）</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/trace/linux_google_trace_dapper/" title="Linux_google_trace_dapper">Linux_google_trace_dapper</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/ofa/ofa_librabric/" title="OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织">OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/storage/ceph_rdma/" title="利用 RDMA 技术加速 Ceph 存储解决方案">利用 RDMA 技术加速 Ceph 存储解决方案</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/storage/spdk_pm/" title="在存储性能开发套件 (SPDK) 中启用持久内存(PM)">在存储性能开发套件 (SPDK) 中启用持久内存(PM)</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title" style="color:red">福利派送</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a href="https://mp.weixin.qq.com/s?__biz=MzUyOTAzNTI3NA==&amp;mid=2247487635&amp;idx=1&amp;sn=3c1066ffe3243738a6cf8d2f4e20122e&amp;chksm=fa6669f6cd11e0e00a9a9f2dd33848961b626ca410a94868aa61fc4f50b9a556e80b13c054e9&amp;token=226329094&amp;lang=zh_CN#rd" title="【2023双12】ALL IN CLoud 低至1折" target="_blank" style="color:red">
+                
+                    <img src="https://img.alicdn.com/tfs/TB1_rYHo7P2gK0jSZPxXXacQpXa-690-388.jpg">
+                
+            </a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (10)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (15)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://github.com/ssbandjl/golang-design-pattern" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

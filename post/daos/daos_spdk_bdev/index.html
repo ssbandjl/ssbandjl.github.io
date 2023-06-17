@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>基于DOAS文件系统接口(DFS)暴露的SPDK块设备 | 晓兵</title>
+    <meta property="og:title" content="基于DOAS文件系统接口(DFS)暴露的SPDK块设备 - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2023-05-20T11:17:30&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2023-05-20T11:17:30&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储, ceph, 分布式块存储, 云计算">
+    <meta name="description" content="基于DOAS文件系统接口(DFS)暴露的SPDK块设备">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/daos/daos_spdk_bdev/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#整体架构">整体架构</a>
+      <ul>
+        <li><a href="#daos_spdk_bdev_archdaos_spdk_bdev_archpng"><img src="./daos_spdk_bdev_arch.png" alt="daos_spdk_bdev_arch"></a></li>
+        <li><a href="#步骤">步骤</a></li>
+      </ul>
+    </li>
+    <li><a href="#关键函数">关键函数</a></li>
+    <li><a href="#关键数据结构">关键数据结构</a></li>
+    <li><a href="#注意点">注意点</a></li>
+    <li><a href="#思考">思考</a></li>
+    <li><a href="#参考">参考</a></li>
+    <li><a href="#author-晓兵">Author 晓兵</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年5月20日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="基于doas文件系统dfs后端暴露的spdk块设备">基于DOAS文件系统(DFS后端)暴露的SPDK块设备</h1>
+<h2 id="整体架构">整体架构</h2>
+<h3 id="daos_spdk_bdev_archdaos_spdk_bdev_archpng">
+        <img class="mx-auto" alt="daos_spdk_bdev_arch" src="./daos_spdk_bdev_arch.png" />   
+    </h3>
+<h3 id="步骤">步骤</h3>
+<ol>
+<li>
+<p>编译daos, 记录daos安装目录, 比如/opt/daos, 启动daos_agent, daos_engine, daos_server</p>
+</li>
+<li>
+<p>编译spdk</p>
+<p>git clone <a href="https://github.com/spdk/spdk.git">https://github.com/spdk/spdk.git</a></p>
+<p>git submodule update &ndash;init</p>
+<p>./configure &ndash;with-daos #指定daos include目录和lib目录</p>
+<p>make -j 16</p>
+</li>
+<li>
+<p>启动spdk nvmf_tgt
+sudo HUGE_EVEN_ALLOC=yes scripts/setup.sh</p>
+<p>sudo ./build/bin/nvmf_tgt -m [21,22,23,24]</p>
+</li>
+<li>
+<p>创建传输层</p>
+<p>sudo ./scripts/rpc.py nvmf_create_transport -t TCP -u 2097152 -i 2097152</p>
+</li>
+<li>
+<p>创建块设备: ./scripts/rpc.py bdev_daos_create daosdev0 test-pool test-cont 64 4096   # 4K * 64 = 256KB -&gt; |4K|4K|&hellip;|</p>
+</li>
+<li>
+<p>创建子系统: ./scripts/rpc.py nvmf_create_subsystem $subsystem -a -s SPDK0000000000000$i -d SPDK_Virtual_Controller_$i</p>
+</li>
+<li>
+<p>子系统添加命名空间: ./scripts/rpc.py nvmf_subsystem_add_ns $subsystem  disk$i</p>
+</li>
+<li>
+<p>添加监听: scripts/rpc.py nvmf_subsystem_add_listener $subsystem -t tcp -a ${BIND_IP} -s 4420</p>
+</li>
+<li>
+<p>nvme客户端连接: nvme connect-all -t tcp -a 172.31.91.61 -s 4420, 得到块设备后, 格式化即可使用, 如: mkfs.ext4 -F -O mmp /dev/nvme1n1</p>
+</li>
+</ol>
+<p>在设计方面，此 bdev 是一个名为 bdev 本身的文件，位于 DAOS POSIX 容器中，每个 io 通道使用 daos 事件队列。 每个 io 通道都有一个事件队列来支撑最佳 IO 吞吐量。 该实现使用每个设备通道的独立池和容器连接以获得最佳 IO 吞吐量</p>
+<h2 id="关键函数">关键函数</h2>
+<p>bdev_daos_create</p>
+<p>​	bdev_get_daos_engine 初始化daos引擎</p>
+<p>​	bdev_daos_io_channel_create_cb 用创建通道的方式检测容器连通性, 如果在通道创建过程中，由于参数不正确而发生错误，例如: 池/容器名称错误，或其他一些内部 DAOS 错误（如达到 CART 上下文限制），bdev_daos_io_channel_create_cb() 会发出有关此类错误的信号，但是，spdk_io_device_register() 不会将它们考虑在内。 设备创建成功，返回成功的 RPC 响应并将 bdev 留在 bdev 列表中，但它完全无法使用且不可修改, 尝试在创建通道的时候连接到DAOS容器，所以在这里模拟创建一个通道，这样我们就可以在创建DAOS bdev的时候返回一个失败，而不是等到第一个通道创建的时候才发现，留下不可用的bdev注册</p>
+<p>​	spdk_io_device_register 将不透明的 io_device 上下文注册为 I/O 设备。 I/O设备注册后，可以使用spdk_get_io_channel()函数返回I/O通道</p>
+<p>​	spdk_bdev_register 注册一个新的 bdev。 必须从 SPDK APP线程调用此函数</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#a61717;background-color:#e3d2d2">大致流程</span>
+.<span style="color:#000;font-weight:bold">/</span>scripts<span style="color:#000;font-weight:bold">/</span>rpc.py bdev_daos_create daosdev0 test<span style="color:#000;font-weight:bold">-</span>pool test<span style="color:#000;font-weight:bold">-</span>cont <span style="color:#099">64</span> <span style="color:#099">4096</span>  <span style="color:#000;font-weight:bold">-&gt;</span> from spdk.rpc.client <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#099">4</span>K <span style="color:#000;font-weight:bold">*</span> <span style="color:#099">64</span> <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">256</span>KB <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#000;font-weight:bold">|</span><span style="color:#099">4</span>K<span style="color:#000;font-weight:bold">|</span><span style="color:#099">4</span>K<span style="color:#000;font-weight:bold">|</span>...<span style="color:#000;font-weight:bold">|</span>
+SPDK_RPC_REGISTER(<span style="color:#d14">&#34;bdev_daos_create&#34;</span>, rpc_bdev_daos_create, SPDK_RPC_RUNTIME)
+rpc_bdev_daos_create <span style="color:#000;font-weight:bold">-&gt;</span> module<span style="color:#000;font-weight:bold">/</span>bdev<span style="color:#000;font-weight:bold">/</span>daos<span style="color:#000;font-weight:bold">/</span>bdev_daos_rpc.c
+  create_bdev_daos
+    block_size <span style="color:#000;font-weight:bold">%</span> <span style="color:#099">512</span> <span style="color:#099">512</span><span style="color:#a61717;background-color:#e3d2d2">对齐</span>
+    daos<span style="color:#000;font-weight:bold">-&gt;</span>disk.fn_table <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">&amp;</span>daos_fn_table <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#000;font-weight:bold">static</span> <span style="color:#000;font-weight:bold">const</span> <span style="color:#000;font-weight:bold">struct</span> spdk_bdev_fn_table daos_fn_table <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">提交</span>IO请求 <span style="color:#000;font-weight:bold">-&gt;</span> bdev_daos_submit_request <span style="color:#000;font-weight:bold">-&gt;</span> ... <span style="color:#000;font-weight:bold">-&gt;</span> dfs_write <span style="color:#000;font-weight:bold">-&gt;</span>  src<span style="color:#000;font-weight:bold">/</span>client<span style="color:#000;font-weight:bold">/</span>dfs<span style="color:#000;font-weight:bold">/</span>dfs.c <span style="color:#000;font-weight:bold">-&gt;</span> daos_array_write
+    bdev_get_daos_engine
+      daos_init()
+    bdev_daos_io_channel_create_cb
+      spdk_call_unaffinitized(_bdev_daos_io_channel_create_cb, ch)
+        rte_thread_get_affinity(<span style="color:#000;font-weight:bold">&amp;</span>orig_cpuset)
+        spdk_unaffinitize_thread() <span style="color:#a61717;background-color:#e3d2d2">移除</span>cpu亲和性
+          CPU_ZERO(<span style="color:#000;font-weight:bold">&amp;</span>new_cpuset)
+        _bdev_daos_io_channel_create_cb
+          bdev_get_daos_engine
+          daos_pool_connect
+          daos_cont_open
+          dfs_mount(ch<span style="color:#000;font-weight:bold">-&gt;</span>pool, ch<span style="color:#000;font-weight:bold">-&gt;</span>cont, O_RDWR, <span style="color:#000;font-weight:bold">&amp;</span>ch<span style="color:#000;font-weight:bold">-&gt;</span>dfs)
+          dfs_open
+          daos_eq_create
+        rte_thread_set_affinity(<span style="color:#000;font-weight:bold">&amp;</span>orig_cpuset) <span style="color:#a61717;background-color:#e3d2d2">将</span>cpu亲和性设回去
+      ch<span style="color:#000;font-weight:bold">-&gt;</span>poller <span style="color:#000;font-weight:bold">=</span> SPDK_POLLER_REGISTER(bdev_daos_channel_poll, ch, <span style="color:#099">0</span>)
+    bdev_daos_io_channel_destroy_cb
+      spdk_poller_unregister
+      daos_eq_destroy
+      dfs_release
+      dfs_umount
+      daos_cont_close
+      daos_pool_disconnect
+      bdev_daos_put_engine
+    spdk_io_device_register(daos, bdev_daos_io_channel_create_cb, bdev_daos_io_channel_destroy_cb <span style="color:#000;font-weight:bold">-&gt;</span> lib<span style="color:#000;font-weight:bold">/</span><span style="color:#000;font-weight:bold">thread</span><span style="color:#000;font-weight:bold">/</span><span style="color:#000;font-weight:bold">thread</span>.c
+      <span style="color:#000;font-weight:bold">thread</span> <span style="color:#000;font-weight:bold">=</span> spdk_get_thread() <span style="color:#a61717;background-color:#e3d2d2">此外，在注册</span> io <span style="color:#a61717;background-color:#e3d2d2">设备之前将</span> UT <span style="color:#a61717;background-color:#e3d2d2">更改为</span> set_thread()
+      dev<span style="color:#000;font-weight:bold">-&gt;</span>create_cb <span style="color:#000;font-weight:bold">=</span> create_cb <span style="color:#000;font-weight:bold">=</span> bdev_daos_io_channel_create_cb
+      dev<span style="color:#000;font-weight:bold">-&gt;</span>destroy_cb <span style="color:#000;font-weight:bold">=</span> destroy_cb
+      tmp <span style="color:#000;font-weight:bold">=</span> RB_INSERT(io_device_tree, <span style="color:#000;font-weight:bold">&amp;</span>g_io_devices, dev) <span style="color:#000;font-weight:bold">-&gt;</span> io_device_tree_RB_INSERT(<span style="color:#000;font-weight:bold">&amp;</span>g_io_devices, dev) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">将</span>IO设备对象插入红黑树(g_io_devices全局红黑树头) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">利用宏生成红黑树插入函数</span><span style="color:#000;font-weight:bold">:</span> <span style="color:#a61717;background-color:#e3d2d2">#</span>define RB_GENERATE_INSERT <span style="color:#000;font-weight:bold">-&gt;</span> name<span style="color:#a61717;background-color:#e3d2d2">##</span>_RB_INSERT
+    spdk_bdev_register <span style="color:#000;font-weight:bold">-&gt;</span> spdk_bdev_register(<span style="color:#000;font-weight:bold">struct</span> spdk_bdev <span style="color:#000;font-weight:bold">*</span>bdev)
+      bdev_register(bdev) <span style="color:#000;font-weight:bold">-&gt;</span> lib<span style="color:#000;font-weight:bold">/</span>bdev<span style="color:#000;font-weight:bold">/</span>bdev.c <span style="color:#000;font-weight:bold">-&gt;</span> bdev_register(<span style="color:#000;font-weight:bold">struct</span> spdk_bdev <span style="color:#000;font-weight:bold">*</span>bdev)
+        spdk_bdev_get_memory_domains <span style="color:#a61717;background-color:#e3d2d2">获取给定</span> bdev <span style="color:#a61717;background-color:#e3d2d2">使用的</span> SPDK <span style="color:#a61717;background-color:#e3d2d2">内存域。</span> <span style="color:#a61717;background-color:#e3d2d2">如果</span> bdev <span style="color:#a61717;background-color:#e3d2d2">报告它使用内存域，这意味着它可以使用位于这些内存域中的数据缓冲区。</span> <span style="color:#a61717;background-color:#e3d2d2">用户可以调用此函数并将</span> domains <span style="color:#a61717;background-color:#e3d2d2">设置为</span> <span style="color:#0086b3">NULL</span> <span style="color:#a61717;background-color:#e3d2d2">并将</span> array_size <span style="color:#a61717;background-color:#e3d2d2">设置为</span> <span style="color:#099">0</span> <span style="color:#a61717;background-color:#e3d2d2">以获取</span> bdev <span style="color:#a61717;background-color:#e3d2d2">使用的内存域数</span>
+        spdk_bdev_is_md_separate
+        bdev_alloc_io_stat
+        bdev_name_add
+        spdk_bdev_get_buf_align
+        spdk_io_device_register
+      bdev_open
+      bdev_examine
+      spdk_bdev_wait_for_examine(bdev_register_finished, desc)
+    <span style="color:#000;font-weight:bold">*</span>bdev <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">&amp;</span>(daos<span style="color:#000;font-weight:bold">-&gt;</span>disk)
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="关键数据结构">关键数据结构</h2>
+<p>struct <strong>bdev_daos</strong> *daos;</p>
+<p>struct <strong>bdev_daos_io_channel</strong> ch = {};</p>
+<h2 id="注意点">注意点</h2>
+<p>默认容器类型为: OC_SX (oclass SX 保证IOPS优先, 该参数用于数据冗余和保护)</p>
+<h2 id="思考">思考</h2>
+<ol>
+<li>daos bdev优点, 支持rdma和全闪nvme介质, 将daos后端存储能力通过通用的块暴露给应用</li>
+<li>编程思想: 用最少的成本, 尽快返回RPC错误并退出;  分层解耦思想; 独立通道(优先级通道); 用户层尽量开箱即用,复用原来的接口, 降低学习成本</li>
+</ol>
+<h2 id="参考">参考</h2>
+<p><a href="https://spdk.io/doc/bdev.html">https://spdk.io/doc/bdev.html</a></p>
+<p><a href="https://github.com/ssbandjl/spdk/commit/2e283fcb67a8ee1d9b4f470f17bec57bbe3adad5">https://github.com/ssbandjl/spdk/commit/2e283fcb67a8ee1d9b4f470f17bec57bbe3adad5</a></p>
+<p><a href="https://docs.daos.io/v2.3/user/blockdev/">https://docs.daos.io/v2.3/user/blockdev/</a></p>
+<p><a href="https://www.cnblogs.com/whl320124/articles/10064186.html">https://www.cnblogs.com/whl320124/articles/10064186.html</a></p>
+<p><a href="https://rootw.github.io/2018/05/SPDK-subsys-bdev/">https://rootw.github.io/2018/05/SPDK-subsys-bdev/</a></p>
+<h2 id="author-晓兵">Author 晓兵</h2>
+<p>首发链接: <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a></p>
+<p>博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a></p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/daos/daos_spdk_bdev/">https://logread.cn/post/daos/daos_spdk_bdev/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/storage/spdk_pm/">在存储性能开发套件 (SPDK) 中启用持久内存(PM)</a></li>
+        
+        <li><a href="/post/net/rpc/hg/mercury_enable_rpc_for_hpc/">Mercury为高性能计算启用远程过程调用(RPC)</a></li>
+        
+        <li><a href="/post/stor/ceph/ceph_msg/">MSGR2 协议（MSGR2.0 和 MSGR2.1）</a></li>
+        
+        <li><a href="/post/linux/trace/linux_google_trace_dapper/">Linux_google_trace_dapper</a></li>
+        
+        <li><a href="/post/ofa/ofa_librabric/">OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+                <li><a href='/tags/daos'>daos</a></li>
+                
+                <li><a href='/tags/spdk'>spdk</a></li>
+                
+                <li><a href='/tags/bdev'>bdev</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2023
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/study/summary/" title="常用学习网站汇总(随时更新)">常用学习网站汇总(随时更新)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_server_engine_start/" title="DAOS引擎启动流程-源码分析">DAOS引擎启动流程-源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/fs/gfs_paper/" title="谷歌文件系统">谷歌文件系统</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_spdk_bdev/" title="基于DOAS文件系统接口(DFS)暴露的SPDK块设备">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/" title="Mercury为高性能计算启用远程过程调用(RPC)">Mercury为高性能计算启用远程过程调用(RPC)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/stor/ceph/ceph_msg/" title="MSGR2 协议（MSGR2.0 和 MSGR2.1）">MSGR2 协议（MSGR2.0 和 MSGR2.1）</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/trace/linux_google_trace_dapper/" title="Linux_google_trace_dapper">Linux_google_trace_dapper</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/ofa/ofa_librabric/" title="OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织">OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/storage/ceph_rdma/" title="利用 RDMA 技术加速 Ceph 存储解决方案">利用 RDMA 技术加速 Ceph 存储解决方案</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/storage/spdk_pm/" title="在存储性能开发套件 (SPDK) 中启用持久内存(PM)">在存储性能开发套件 (SPDK) 中启用持久内存(PM)</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title" style="color:red">福利派送</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a href="https://mp.weixin.qq.com/s?__biz=MzUyOTAzNTI3NA==&amp;mid=2247487635&amp;idx=1&amp;sn=3c1066ffe3243738a6cf8d2f4e20122e&amp;chksm=fa6669f6cd11e0e00a9a9f2dd33848961b626ca410a94868aa61fc4f50b9a556e80b13c054e9&amp;token=226329094&amp;lang=zh_CN#rd" title="【2023双12】ALL IN CLoud 低至1折" target="_blank" style="color:red">
+                
+                    <img src="https://img.alicdn.com/tfs/TB1_rYHo7P2gK0jSZPxXXacQpXa-690-388.jpg">
+                
+            </a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (10)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (15)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://github.com/ssbandjl/golang-design-pattern" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

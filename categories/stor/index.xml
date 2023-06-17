@@ -6,7 +6,43 @@
     <description>Recent content in stor on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 13 May 2023 10:06:46 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/stor/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 17 Jun 2023 22:47:44 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/stor/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>常用学习网站汇总(随时更新)</title>
+      <link>https://logread.cn/post/study/summary/</link>
+      <pubDate>Sat, 17 Jun 2023 22:47:44 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/study/summary/</guid>
+      <description>性能 P99 CONF 大会(P99分位数, 极致)是面向工程师和由工程师举办的跨行业虚拟活动，以低延迟、高性能设计为中心, 突出低延迟、高性能分布式计算所需的工程挑战和创造性解决方案 https://www.p99conf.io/on-demand/ HPC高性能计算 Mochi 项目是阿贡国家实验室、洛斯阿拉莫斯国家实验室、卡内基梅隆大学和 HDF 集团之间的合作。 该项目的目标是探</description>
+    </item>
+    
+    <item>
+      <title>DAOS引擎启动流程-源码分析</title>
+      <link>https://logread.cn/post/daos/daos_server_engine_start/</link>
+      <pubDate>Thu, 01 Jun 2023 23:20:35 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/daos/daos_server_engine_start/</guid>
+      <description>执行:daos_server start, server通过golang调用engine的c 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101</description>
+    </item>
+    
+    <item>
+      <title>谷歌文件系统</title>
+      <link>https://logread.cn/post/fs/gfs_paper/</link>
+      <pubDate>Tue, 30 May 2023 16:02:46 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/fs/gfs_paper/</guid>
+      <description>Google File System 谷歌文件系统 论文[译] The Google File System Sanjay Ghemawat, Howard Gobioff, and Shun Tak Leung Google 我们设计并实现了 Google 文件系统，这是一种可扩展的分布式文件系统，适用于大型分布式数据密集型应用程序。 它在廉价的商品硬件上运行时提供容错，并为大量客户端提供高聚合性能。虽然与以前的分布式文件系统有许多相同的目标，但我们的设计是由对我</description>
+    </item>
+    
+    <item>
+      <title>基于DOAS文件系统接口(DFS)暴露的SPDK块设备</title>
+      <link>https://logread.cn/post/daos/daos_spdk_bdev/</link>
+      <pubDate>Sat, 20 May 2023 11:17:30 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/daos/daos_spdk_bdev/</guid>
+      <description>基于DOAS文件系统(DFS后端)暴露的SPDK块设备 整体架构 步骤 编译daos, 记录daos安装目录, 比如/opt/daos, 启动daos_agent, daos_engine, daos_server 编译spdk git clone https://github.com/spdk/spdk.git git submodule update &amp;ndash;init ./configure &amp;ndash;with-daos #指定daos include目录和lib目录 make -j 16 启动spdk nvmf_tgt sudo HUGE_EVEN_ALLOC=yes scripts/setup.sh sudo ./build/bin/nvmf_tgt -m [21,22,23,24] 创建传输层 sudo ./scripts/rpc.py nvmf_create_transport</description>
+    </item>
+    
     <item>
       <title>Mercury为高性能计算启用远程过程调用(RPC)</title>
       <link>https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/</link>
