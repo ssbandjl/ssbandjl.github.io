@@ -1,0 +1,1310 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译] | 晓兵</title>
+    <meta property="og:title" content="Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译] - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2023-06-18T12:41:32&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2023-06-18T12:41:32&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储, ceph, 分布式块存储, 云计算">
+    <meta name="description" content="Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/linux/linux_kernel_vs_dpdk/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#概述">概述</a></li>
+    <li><a href="#为内核辩护">为内核辩护</a></li>
+    <li><a href="#免责声明">免责声明</a></li>
+    <li><a href="#路线图">路线图</a>
+      <ul>
+        <li><a href="#入门">入门</a></li>
+        <li><a href="#dpdk-设置和优化">DPDK 设置和优化</a></li>
+        <li><a href="#内核堆栈优化">内核堆栈优化</a></li>
+        <li><a href="#结果注意事项和好奇心">结果、注意事项和好奇心</a></li>
+        <li><a href="#结束">结束</a></li>
+      </ul>
+    </li>
+    <li><a href="#编译seastar">编译seastar</a></li>
+    <li><a href="#http服务器">HTTP服务器</a></li>
+    <li><a href="#源代码">源代码</a></li>
+    <li><a href="#基准设置">基准设置</a></li>
+    <li><a href="#硬件">硬件</a></li>
+    <li><a href="#软件">软件</a></li>
+    <li><a href="#基准配置">基准配置</a></li>
+    <li><a href="#dpdk-on-aws">DPDK on AWS</a></li>
+    <li><a href="#初始火焰图">初始火焰图</a></li>
+    <li><a href="#火焰图分析">火焰图分析</a></li>
+    <li><a href="#dpdk优化">DPDK优化</a></li>
+    <li><a href="#火焰图分析-1">火焰图分析</a></li>
+    <li><a href="#一项艰巨的任务">一项艰巨的任务</a></li>
+    <li><a href="#基线内核性能">基线内核性能</a></li>
+    <li><a href="#操作系统级别优化">操作系统级别优化</a></li>
+    <li><a href="#perfect-locality-and-busy-polling">Perfect Locality and Busy Polling</a></li>
+    <li><a href="#火焰图分析-2">火焰图分析</a></li>
+    <li><a href="#perfect-locality-and-busy-polling-take-two">Perfect Locality and Busy Polling: Take two</a></li>
+    <li><a href="#火焰图分析-3">火焰图分析</a></li>
+    <li><a href="#impatiently-waiting">Impatiently Waiting</a></li>
+    <li><a href="#火焰图分析-4">火焰图分析</a></li>
+    <li><a href="#constant-context-switching">Constant Context Switching</a></li>
+    <li><a href="#火焰图分析-5">火焰图分析</a></li>
+    <li><a href="#最好是recv">最好是RECV</a></li>
+    <li><a href="#火焰图分析-6">火焰图分析</a></li>
+    <li><a href="#remember-to-flush">Remember to Flush</a></li>
+    <li><a href="#火焰图分析-7">火焰图分析</a></li>
+    <li><a href="#最终获胜者是">最终获胜者是&hellip;</a></li>
+    <li><a href="#dpdk-注意事项">DPDK 注意事项</a></li>
+    <li><a href="#speculative-execution-mitigations-推测执行缓解措施">Speculative Execution Mitigations 推测执行缓解措施</a></li>
+    <li><a href="#结论">结论</a></li>
+    <li><a href="#附录">附录</a></li>
+    <li><a href="#参考">参考</a></li>
+    <li><a href="#晓兵">晓兵</a></li>
+    <li><a href="#author-晓兵">Author 晓兵</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年6月18日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+            <span class="meta-category"><a href='/categories/linux'>linux</a></span>
+            
+            <span class="meta-category"><a href='/categories/dpdk'>dpdk</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h2 id="概述">概述</h2>
+<p>在这篇文章中，我将使用一个简单的 HTTP 基准测试在 Linux 内核的网络堆栈和由 DPDK 提供支持的内核旁路堆栈之间进行正面性能比较。 我将使用 Seastar 运行我的测试，Seastar 是一个用于构建高性能服务器应用程序的 C++ 框架。 Seastar 支持构建使用 Linux 内核或 DPDK 进行网络连接的应用程序，因此它是进行此比较的完美框架。</p>
+<p>我将以我之前的性能调优帖子中的许多想法和技术为基础，因此在继续之前至少阅读概述部分可能是值得的。</p>
+<h2 id="为内核辩护">为内核辩护</h2>
+<p>绕过内核可以打开一个全新的高吞吐量和低延迟的世界。 根据您询问的对象，您可能会听说绕过内核会使性能提高 3-5 倍。 然而，大多数这些比较都是在内核方面没有进行太多优化的情况下完成的。</p>
+<p>Linux 内核旨在快速，但它也被设计为多用途，因此默认情况下它并未针对高速网络进行完美优化。 另一方面，像 DPDK 这样的内核绕过技术对网络性能采取一种专一的方法。 整个网络接口专用于单个应用程序，并使用积极的繁忙轮询(busy polling)来实现高吞吐量和低延迟。 在这篇文章中，我想看看当经过微调的内核/应用程序在无限制的战斗中与内核旁路正面交锋时，性能差距会是什么样子。</p>
+<p>DPDK 拥护者建议绕过内核是必要的，因为内核“慢”，但实际上 DPDK 的很多性能优势并非来自绕过内核，而是来自强制执行某些约束。 事实证明，这些优势中的许多都可以在仍然使用内核的情况下实现。 通过关闭一些功能，打开其他功能，并相应地调整应用程序，可以实现接近内核旁路速度的性能。</p>
+<p>以下是一些也可以使用内核完成的 DPDK 策略：</p>
+<p>忙轮询（中断仲裁(Interrupt moderation) + net.core.busy_poll=1）
+完美的本地化（RSS + XPS + SO_REUSEPORT_CBPF）
+简化的 TCP/IP 子系统（禁用 iptables/系统调用审计/AF_PACKET 套接字）
+内核绕过技术仍然具有的一个优势是，它们避免了在用户态和内核之间来回转换（和复制数据）所产生的系统调用开销。 所以DPDK应该还是有整体优势的，但问题是优势有多大。</p>
+<h2 id="免责声明">免责声明</h2>
+<p>这个探索性项目的工作由 ScyllaDB, Inc 的人员赞助，他们是开源 Seastar 框架的主要管理者，也是 P99 CONF 的组织者。 去年我在 P99 CONF 上发言后，他们联系了我，看看是否有任何我们可以探索的共同感兴趣的领域。 我的上一个实验让我对进行内核与 DPDK 的摊牌感到好奇，而 Seastar 完全符合要求，所以这篇文章就是这种参与的结果。 所有技术讨论都在他们的公共 Slack 频道和邮件列表中进行。</p>
+<h2 id="路线图">路线图</h2>
+<p>这篇文章很长，所以这里有一个高级大纲，以防您想跳转到感兴趣的特定领域。</p>
+<h3 id="入门">入门</h3>
+<p>编译海星 Building Seastar
+基准设置</p>
+<h3 id="dpdk-设置和优化">DPDK 设置和优化</h3>
+<p>AWS 上的 DPDK
+DPDK优化</p>
+<h3 id="内核堆栈优化">内核堆栈优化</h3>
+<p>基线内核性能
+操作系统级别优化
+完美本地化和繁忙的轮询（需要多次尝试才能使它正常工作）Perfect Locality and Busy Polling
+常量上下文切换
+最好是RECV
+记得冲刷 flush</p>
+<h3 id="结果注意事项和好奇心">结果、注意事项和好奇心</h3>
+<p>最终获胜者是&hellip;
+DPDK 注意事项
+推测执行缓解措施</p>
+<h3 id="结束">结束</h3>
+<p>结论
+附录</p>
+<p>在原文中单击右上角的菜单图标将打开一个目录，以便您可以轻松跳转到特定部分。</p>
+<h2 id="编译seastar">编译seastar</h2>
+<p>最初构建 Seastar 时我遇到了一些挑战。 我想使用 Amazon Linux 2，因为我对它非常熟悉，但很明显，我正在与过时的依赖项进行一场注定失败的战斗。 我切换到香草 CentOS 8 并设法让它运行，尽管有一些问题，但我仍然觉得我的基础不够坚实。 在与 CentOS Stream 9 短暂接触后，我在公共 Slack 频道寻求帮助，我被指向 Fedora 34 的方向作为构建最新版本代码库的最佳操作系统。</p>
+<p>实际上，我的大部分研究和测试都是使用 Fedora 34（内核 5.15）进行的，但是尽管 Fedora 的前沿更新可能很棒，但有时前沿会成为最前沿。 当我决定从头开始重现我的结果时，我意识到最新的 Fedora 34 更新正在将内核从 5.11 直接升级到 5.16 版。 不幸的是，内核 5.16 触发了我的测试性能回归，所以我需要一个替代方案。</p>
+<p>事实证明，Amazon Linux 2022 基于 Fedora 34，但具有更保守的内核更新策略，选择坚持使用 5.15 LTS 版本，因此我选择 AL 2022 作为这些测试的新基础操作系统，它有一些修正历史，在接下来的帖子中，我会假装我一直在使用它。</p>
+<h2 id="http服务器">HTTP服务器</h2>
+<p>我开始使用 Seastar 的内置 HTTP 服务器 (httpd) 进行测试，但我决定从 httpd 降低一个级别，使用一个简单的 TCP 服务器，它只是假装是一个 HTTP 服务器。 服务器只是发回一个固定的 HTTP 响应，而不做任何解析或路由。 这简化了我的分析，并更清楚地突出了我所做的每项更改的影响。 特别是我想从等式中消除 Seastar 的内置 HTTP 解析器。 在我删除它之前，性能会根据客户端发送的 HTTP 标头数量而有很大差异。 因此，我没有深入了解那里发生了什么，而是决定使用我简单的 tcp_httpd 服务器来替代。</p>
+<h2 id="源代码">源代码</h2>
+<p>基于我为这个项目所做的工作，我在主要的 Seastar 存储库上打开了一些 PR，但是大多数更改不适合上游，因为它们依赖于 epoll，并且当前的开发现在集中在 aio 和 io_uring 上。 本文中使用的所有补丁都可以在我的 GitHub 上的 Seastar 存储库(<a href="https://github.com/talawahtech/seastar/tree/http-performance/">https://github.com/talawahtech/seastar/tree/http-performance/</a>)中找到。</p>
+<h2 id="基准设置">基准设置</h2>
+<p>这是 AWS 基准测试设置的基本概述。 我使用 Techempower JSON 序列化测试作为本次实验的参考基准。
+<a href="https://www.techempower.com/benchmarks/#section=intro">https://www.techempower.com/benchmarks/#section=intro</a>
+<a href="https://github.com/TechEmpower/FrameworkBenchmarks/wiki/Project-Information-Framework-Tests-Overview#json-serialization">https://github.com/TechEmpower/FrameworkBenchmarks/wiki/Project-Information-Framework-Tests-Overview#json-serialization</a></p>
+<h2 id="硬件">硬件</h2>
+<p>服务器：4 vCPU c5n.xlarge 实例
+客户端：16 vCPU c5n.4xlarge 实例（如果我尝试使用较小的实例大小，客户端就会成为瓶颈）
+网络：服务器和客户端位于集群归置组中的同一可用区（use2-az1）</p>
+<h2 id="软件">软件</h2>
+<p>操作系统：Amazon Linux 2022（内核 5.15）
+服务器：我的简单 tcp_httpd 服务器：sudo ./tcp_httpd &ndash;reactor-backend epoll
+客户：我对流行的 HTTP 基准测试工具 wrk 进行了一些修改，并将其昵称为 twrk。 twrk 在短时间、低延迟的测试运行中提供更一致的结果。 wrk 的标准版本应该在吞吐量方面产生类似的数字，但 twrk 允许改进 p99 延迟，并增加了对显示 p99.99 延迟的支持。</p>
+<h2 id="基准配置">基准配置</h2>
+<p>我使用以下参数从客户端手动运行 twrk：
+无流水线
+256个连接
+16 个线程（每个 vCPU 1 个），每个线程固定到一个 vCPU
+统计数据收集开始前 1 秒预热，然后测试运行 5 秒</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">twrk --latency --pin-cpus -H <span style="color:#d14">&#39;Host: server.tld&#39;</span> <span style="color:#d14">&#34;http://172.31.XX.XX:8080/json&#34;</span> -t <span style="color:#099">16</span> -c <span style="color:#099">256</span> -D <span style="color:#099">1</span> -d <span style="color:#099">5</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="dpdk-on-aws">DPDK on AWS</h2>
+<p>让 Seastar 和 DPDK 在 AWS 上运行绝非易事。 AWS ENA 驱动程序的 DPDK 文档最近有了很大的改进，但我开始时有点粗糙，很难找到将 Seastar 与 DPDK 一起使用的工作示例。 值得庆幸的是，在 Slack 频道的帮助和我顽固的坚持之间，我能够让事情顺利进行。</p>
+<p>对于那些希望这样做的人来说，以下是一些亮点：</p>
+<p>DPDK 需要能够接管整个网络接口，因此除了用于通过 SSH 连接实例的主接口（eth0/ens5）之外，您还需要附加一个专用于 DPDK 的辅助接口（eth1/ens6） .</p>
+<p>DPDK 依赖于两个可用的内核框架之一，用于将设备直接访问公开到用户空间、VFIO 或 UIO。 VFIO 是推荐的选择，它在最近的内核上默认可用。 默认情况下，VFIO 依赖于硬件 IOMMU 支持以确保以安全的方式进行直接内存访问，但是 IOMMU 支持仅适用于 *.metal EC2 实例。 对于非金属实例，VFIO 通过在加载内核模块时设置 enable_unsafe_noiommu_mode=1 来支持在没有 IOMMU 的情况下运行。</p>
+<p>Seastar 使用 DPDK 19.05，此时有点过时。 AWS ENA 驱动程序有一组适用于 DPDK 19.05 的补丁，必须应用这些补丁才能让 Seastar 在 AWS 上运行。 为了方便起见，我将补丁反向移植到我的 DPDK 分支。</p>
+<p>最后但同样重要的是，我在 DPDK/ENA 驱动程序中遇到了一个错误，该错误导致出现以下错误消息：运行时错误：ena_queue_start()：无法填充 rx 环。 这个问题去年在 DPDK 代码库中得到修复，因此我将更改反向移植到我的 DPDK 分支中。</p>
+<p>使用 tcp_httpd 应用程序，我使用 DPDK 作为底层网络堆栈运行我的基准测试：</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">sudo ./tcp_httpd --network-stack native --dpdk-pmd
+Running 5s <span style="color:#0086b3">test</span> @ http://172.31.12.71:8080/json
+  <span style="color:#099">16</span> threads and <span style="color:#099">256</span> connections
+  Thread Stats   Avg     Stdev       Max       Min   +/- Stdev
+    Latency   205.32us   36.57us    1.34ms   62.00us   69.36%
+    Req/Sec    74.80k     1.81k    77.85k    69.06k    73.85%
+  Latency Distribution
+  50.00%  204.00us
+  90.00%  252.00us
+  99.00%  297.00us
+  99.99%  403.00us
+  <span style="color:#099">5954189</span> requests in 5.00s, 0.86GB <span style="color:#0086b3">read</span>
+Requests/sec: 1190822.80
+</code></pre></td></tr></table>
+</div>
+</div><p>DPDK 性能一开始就令人印象深刻: 1.19M req/s !!!</p>
+<h2 id="初始火焰图">初始火焰图</h2>
+<p>火焰图提供了一种独特的方式来可视化 CPU 使用率并识别您的应用程序最常用的代码路径。 它们是一种强大的优化工具，因为它们可以让您快速识别和消除瓶颈。 单击下图将打开由 Flamegraph 工具生成的原始 SVG 文件。 这些 SVG 是交互式的。 您可以单击一个细分以深入了解更详细的视图，或者您可以搜索（Ctrl + F 或单击右上角的链接）函数名称。 请注意，每个完整的火焰图都捕获了四个几乎相同的堆栈，代表 4 个反应器(reactor)线程（每个 vCPU 一个），但在整个帖子中，我们将主要关注分析单个反应器/vCPU 的数据。
+<a href="https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-initial-app-unoptimized-os.svg">https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-initial-app-unoptimized-os.svg</a></p>
+<h2 id="火焰图分析">火焰图分析</h2>
+<p>快速查看一下火焰图就足以看出 eth_ena_xmit_pkts 函数看起来大得可疑，占整个火焰图的 53.1%。
+<a href="https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-dpdk-no-wc.svg?x=1198.8&amp;y=357&amp;s=eth_ena_xmit_pkts">https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-dpdk-no-wc.svg?x=1198.8&amp;y=357&amp;s=eth_ena_xmit_pkts</a>
+
+        <img class="mx-auto" alt="在这里插入图片描述" src="https://img-blog.csdnimg.cn/64189034658b4fd6a224a93c0163ed49.png" />   
+    </p>
+<h2 id="dpdk优化">DPDK优化</h2>
+<p>在第 5 代以上的实例上，ENA 硬件/驱动程序支持 LLQ（低延迟队列 Low Latency Queue）模式以提高性能。 使用这些实例时，强烈建议您启用相应内核模块（VFIO 或 UIO）的写组合(write combining feature)功能，否则，性能将因 PCI 事务缓慢而受到影响。</p>
+<p>默认情况下，VFIO 模块不支持写入组合，但 ENA 团队提供了一个补丁和一个脚本来自动执行向内核模块添加 WC 支持的过程。 我最初在使用内核 5.15 时遇到了一些问题，但 ENA 团队对修复这些问题反应迅速。 该团队最近还表示他们打算将 VFIO 补丁上游，这有望在未来让事情变得更加轻松。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">Running 5s <span style="color:#0086b3">test</span> @ http://172.31.12.71:8080/json
+  <span style="color:#099">16</span> threads and <span style="color:#099">256</span> connections
+  Thread Stats   Avg     Stdev       Max       Min   +/- Stdev
+    Latency   153.79us   31.63us    1.43ms   52.00us   68.70%
+    Req/Sec    95.18k     2.31k   100.94k    89.75k    68.88%
+  Latency Distribution
+  50.00%  152.00us
+  90.00%  195.00us
+  99.00%  233.00us
+  99.99%  352.00us
+  <span style="color:#099">7575198</span> requests in 5.00s, 1.09GB <span style="color:#0086b3">read</span>
+Requests/sec: 1515010.51
+</code></pre></td></tr></table>
+</div>
+</div><p>启用写入组合可将性能从 1.19M req/s 提高到 1.51M req/s，性能提升 27%</p>
+<h2 id="火焰图分析-1">火焰图分析</h2>
+<p>我们的火焰图现在看起来更加平衡，eth_ena_xmit_pkts 从火焰图的 53.1% 下降到仅仅 6.1%
+
+        <img class="mx-auto" alt="在这里插入图片描述" src="https://img-blog.csdnimg.cn/ad10313d05194ef88df3a8f69f10805b.png" />   
+    
+<a href="https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-dpdk-wc.svg?x=1200.4&amp;y=341&amp;s=eth_ena_xmit_pkts">https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-dpdk-wc.svg?x=1200.4&amp;y=341&amp;s=eth_ena_xmit_pkts</a></p>
+<h2 id="一项艰巨的任务">一项艰巨的任务</h2>
+<p>DPDK 以绝对巨大的表现打破了挑战。 在 4 个 vCPU 实例上每秒 1.51M 请求是巨大的。 内核甚至可以接近吗？</p>
+<h2 id="基线内核性能">基线内核性能</h2>
+<p>从未修改的 AL 2022 AMI 开始，tcp_httpd 性能开始时约为 358k req/s。 从绝对意义上讲，这确实非常非常快，但相比之下就显得平庸了。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">Running 5s <span style="color:#0086b3">test</span> @ http://172.31.XX.XX:8080/json
+  <span style="color:#099">16</span> threads and <span style="color:#099">256</span> connections
+  Thread Stats   Avg     Stdev       Max       Min   +/- Stdev
+    Latency   711.06us   97.91us    1.65ms  108.00us   70.06%
+    Req/Sec    22.48k   205.46     23.10k    21.83k    68.62%
+  Latency Distribution
+  50.00%  696.00us
+  90.00%    0.85ms
+  99.00%    0.96ms
+  99.99%    1.10ms
+  <span style="color:#099">1789658</span> requests in 5.00s, 264.55MB <span style="color:#0086b3">read</span>
+Requests/sec: 357927.16
+</code></pre></td></tr></table>
+</div>
+</div><p>火焰图
+
+        <img class="mx-auto" alt="在这里插入图片描述" src="https://img-blog.csdnimg.cn/1bb2d5e7f4b944b1a68edca45d0fac83.png" />   
+    
+<a href="https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-initial-app-unoptimized-os.svg?x=1179.9&amp;y=853">https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-initial-app-unoptimized-os.svg?x=1179.9&amp;y=853</a></p>
+<h2 id="操作系统级别优化">操作系统级别优化</h2>
+<p>我不会详细介绍我所做的特定 Linux 更改。 从较高的层面来看，这些更改在本质上与我在上一篇文章(<a href="https://talawah.io/blog/extreme-http-performance-tuning-one-point-two-million/">https://talawah.io/blog/extreme-http-performance-tuning-one-point-two-million/</a>)中对 Amazon Linux 2/kernel 4.14 所做的调整非常相似。 也就是说，从内核 4.14 和 5.15 开始，此工作负载实际上出现了显着的性能退化，并且需要做大量工作才能使性能恢复到标准水平。 但我现在想专注于内核与 DPDK 的比较，所以我将把这些细节留到另一天，另一篇文章。 以下是所用操作系统优化的高级概述：</p>
+<p>禁用推测执行缓解措施(Disable Speculative Execution Mitigations): <a href="https://talawah.io/blog/extreme-http-performance-tuning-one-point-two-million/#_2-speculative-execution-mitigations">https://talawah.io/blog/extreme-http-performance-tuning-one-point-two-million/#_2-speculative-execution-mitigations</a>
+配置 RSS 和 XPS 以获得完美的本地化(Configure RSS and XPS for perfect locality): <a href="https://talawah.io/blog/extreme-http-performance-tuning-one-point-two-million/#receive-side-scaling-rss">https://talawah.io/blog/extreme-http-performance-tuning-one-point-two-million/#receive-side-scaling-rss</a>
+中断仲裁和忙轮询(Interrupt Moderation and Busy Polling): <a href="https://talawah.io/blog/extreme-http-performance-tuning-one-point-two-million/#_6-interrupt-optimizations">https://talawah.io/blog/extreme-http-performance-tuning-one-point-two-million/#_6-interrupt-optimizations</a>
+禁用原始/数据包套接字(Disable Raw/Packet Sockets )（仅供参考，这次它不是同一个爱管闲事的邻居）:https://talawah.io/blog/extreme-http-performance-tuning-one-point-two-million/#_7-the-case-of-the-nosy-neighbor
+GRO、拥塞控制和静态中断调节(GRO, Congestion Control, and Static Interrupt Moderation): <a href="https://talawah.io/blog/extreme-http-performance-tuning-one-point-two-million/#_9-this-goes-to-twelve">https://talawah.io/blog/extreme-http-performance-tuning-one-point-two-million/#_9-this-goes-to-twelve</a>
+一些新的优化
+我们的操作系统优化将吞吐量从 358k req/s 提升到了惊人的 726k req/s。 性能提升 103%。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">Running 5s <span style="color:#0086b3">test</span> @ http://172.31.XX.XX:8080/json
+  <span style="color:#099">16</span> threads and <span style="color:#099">256</span> connections
+  Thread Stats   Avg     Stdev       Max       Min   +/- Stdev
+    Latency   346.76us   86.26us    1.51ms   62.00us   72.62%
+    Req/Sec    45.61k     0.88k    48.82k    42.50k    70.15%
+  Latency Distribution
+  50.00%  347.00us
+  90.00%  455.00us
+  99.00%  564.00us
+  99.99%  758.00us
+  <span style="color:#099">3630818</span> requests in 5.00s, 536.71MB <span style="color:#0086b3">read</span>
+Requests/sec: 726153.58
+</code></pre></td></tr></table>
+</div>
+</div><p>
+        <img class="mx-auto" alt="在这里插入图片描述" src="https://img-blog.csdnimg.cn/de6e2c1e17db4ad6b2a9c74d0e18c554.png" />   
+    
+<a href="https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-initial-app-optimized-os.svg?x=1180.7&amp;y=837">https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-initial-app-optimized-os.svg?x=1180.7&amp;y=837</a></p>
+<h2 id="perfect-locality-and-busy-polling">Perfect Locality and Busy Polling</h2>
+<p>在正确配置应用程序之前，操作系统级别的更改以启用完美的位置/繁忙轮询并没有太大影响。 我的下一步是将 SO_ATTACH_REUSEPORT_CBPF(<a href="https://talawah.io/blog/extreme-http-performance-tuning-one-point-two-million/#so-attach-reuseport-cbpf">https://talawah.io/blog/extreme-http-performance-tuning-one-point-two-million/#so-attach-reuseport-cbpf</a>) 支持添加到我的 Seastar 分支中，以便完成完美的位置设置。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">Running 5s <span style="color:#0086b3">test</span> @ http://172.31.XX.XX:8080/json
+  <span style="color:#099">16</span> threads and <span style="color:#099">256</span> connections
+  Thread Stats   Avg     Stdev       Max       Min   +/- Stdev
+    Latency   338.93us   90.62us    1.56ms   61.00us   68.11%
+    Req/Sec    46.57k     2.67k    54.00k    40.32k    64.29%
+  Latency Distribution
+  50.00%  330.00us
+  90.00%  466.00us
+  99.00%  562.00us
+  99.99%  759.00us
+  <span style="color:#099">3706485</span> requests in 5.00s, 547.89MB <span style="color:#0086b3">read</span>
+Requests/sec: 741286.62
+</code></pre></td></tr></table>
+</div>
+</div><p>吞吐量从 736k req/s 变为令人印象深刻的 741k req/s。 2% 的性能提升远低于我对这一变化的预期。
+<a href="https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-enable-so_attach_reuse_port_cbpf.svg?x=1185.7&amp;y=837">https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-enable-so_attach_reuse_port_cbpf.svg?x=1185.7&amp;y=837</a></p>
+<h2 id="火焰图分析-2">火焰图分析</h2>
+<p>火焰图显示繁忙轮询的证据为零。 完美的局部性和繁忙的轮询在良性循环中协同工作，因此缺少繁忙的轮询是我们的设置存在问题的有力指标。 完美的局部性需要配置操作系统和应用程序，以便一旦网络数据包到达给定队列，所有进一步的处理都由相同的 vCPU/队列筒仓处理传入和传出数据。 这意味着进程/线程的启动顺序，以及它们固定到的 CPU 必须受到控制。</p>
+<h2 id="perfect-locality-and-busy-polling-take-two">Perfect Locality and Busy Polling: Take two</h2>
+<p>我创建了一个 bftrace 脚本来仔细查看实际发生的情况。 该脚本将 kprobes 附加到 reuseport_alloc() 和 reuseport_add_sock() 以跟踪进程/线程启动顺序和 cpu 亲和力。 结果马上就暴露了问题。 即使反应器线程按顺序启动（tcp_httpd/reactor-0、reactor-1、reactor-2、reactor-3），CPU pinning 也是乱序的（0、2、1、3）。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">tcp_httpd, <span style="color:#008080">cpu</span><span style="color:#000;font-weight:bold">=</span>0, socket <span style="color:#099">0</span>
+reactor-1, <span style="color:#008080">cpu</span><span style="color:#000;font-weight:bold">=</span>2, socket <span style="color:#099">1</span>
+reactor-2, <span style="color:#008080">cpu</span><span style="color:#000;font-weight:bold">=</span>1, socket <span style="color:#099">2</span>
+reactor-3, <span style="color:#008080">cpu</span><span style="color:#000;font-weight:bold">=</span>3, socket <span style="color:#099">3</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>进一步的调查显示，Seastar 使用 hwloc 来了解硬件拓扑并相应地进行优化。 但是默认的 CPU 分配策略对于我们的用例来说并不是最佳的，所以在邮件列表中提出这个问题后，我在我的分支中添加了一个函数，将反应堆分片 ID 和 CPU ID 之间的映射公开给在 Seastar 上构建的应用程序。</p>
+<p>我修改了 tcp_httpd 以确保 cpu id 和 socket id 匹配。 这导致了我的 bpftrace 脚本的预期输出。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">tcp_httpd, <span style="color:#008080">cpu</span><span style="color:#000;font-weight:bold">=</span>0, socket <span style="color:#099">0</span>
+reactor-2, <span style="color:#008080">cpu</span><span style="color:#000;font-weight:bold">=</span>1, socket <span style="color:#099">1</span>
+reactor-1, <span style="color:#008080">cpu</span><span style="color:#000;font-weight:bold">=</span>2, socket <span style="color:#099">2</span>
+reactor-3, <span style="color:#008080">cpu</span><span style="color:#000;font-weight:bold">=</span>3, socket <span style="color:#099">3</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>Performance improves slightly, but still leaves a lot to be desired.</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">Running 5s <span style="color:#0086b3">test</span> @ http://172.31.XX.XX:8080/json
+  <span style="color:#099">16</span> threads and <span style="color:#099">256</span> connections
+  Thread Stats   Avg     Stdev       Max       Min   +/- Stdev
+    Latency   317.99us   74.65us    1.39ms   78.00us   76.29%
+    Req/Sec    49.51k     2.01k    54.74k    44.35k    68.88%
+  Latency Distribution
+  50.00%  312.00us
+  90.00%  405.00us
+  99.00%  531.00us
+  99.99%  749.00us
+  <span style="color:#099">3938893</span> requests in 5.00s, 582.25MB <span style="color:#0086b3">read</span>
+Requests/sec: 787768.20
+</code></pre></td></tr></table>
+</div>
+</div><p>这次性能提高了 6%，但仍远低于预期。</p>
+<h2 id="火焰图分析-3">火焰图分析</h2>
+<p>火焰图也没有显示太多变化，仍然没有繁忙的轮询发生，所以有其他地方不对劲。 我研究了我的性能分析工具包，看看我是否能弄清楚还发生了什么。
+<a href="https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-optimize-reuse_port_cbpf.svg?x=1190.6&amp;y=789">https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-optimize-reuse_port_cbpf.svg?x=1190.6&amp;y=789</a></p>
+<h2 id="impatiently-waiting">Impatiently Waiting</h2>
+<p>我能够使用 libreactor 作为参考点，了解完全优化的基于 epoll 的 HTTP 服务器的行为方式，并将其与 tcp_httpd 进行对比。 运行 10 秒的 syscount 跟踪 (syscount -d 10)，同时为 libreactor 和 tcp_httpd 运行基准测试产生了一些有启发性的结果：</p>
+<p>libreactor</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">SYSCALL                   COUNT
+recvfrom                <span style="color:#099">9755167</span>
+sendto                  <span style="color:#099">9353652</span>
+epoll_wait               <span style="color:#099">754685</span>
+<span style="color:#0086b3">read</span>                         <span style="color:#099">94</span>
+bpf                          <span style="color:#099">43</span>
+newfstatat                   <span style="color:#099">18</span>
+ppoll                        <span style="color:#099">11</span>
+pselect6                      <span style="color:#099">7</span>
+futex                         <span style="color:#099">5</span>
+write                         <span style="color:#099">5</span>
+
+</code></pre></td></tr></table>
+</div>
+</div><p>tcp_httpd</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">SYSCALL                   COUNT
+epoll_pwait             <span style="color:#099">7525419</span>
+<span style="color:#0086b3">read</span>                    <span style="color:#099">7272935</span>
+sendto                  <span style="color:#099">6926720</span>
+epoll_ctl                <span style="color:#099">824992</span>
+poll                      <span style="color:#099">76612</span>
+timerfd_settime           <span style="color:#099">34276</span>
+rt_sigprocmask            <span style="color:#099">11356</span>
+ioctl                      <span style="color:#099">6447</span>
+membarrier                 <span style="color:#099">5676</span>
+newfstatat                   <span style="color:#099">18</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>对于 libreactor，前两个系统调用是发送/接收，epoll_wait 排在第三位。 与 tcp_httpd 相反，epoll_pwait 是第一个系统调用。 这是一个很好的指标，表明我需要查看在 Seastar 代码库中如何调用 epoll_pwait。</p>
+<p>epoll_pwait 系统调用等待与文件描述符相关的事件。 在我们的例子中，我们专门处理套接字文件描述符（代表 TCP 连接），每个事件都表示准备好发送或接收数据。</p>
+<p>原始的 epoll_(p)wait 系统调用可以被认为是为超时参数取 3 种类型的值</p>
+<p>-1：系统调用无限期地等待一个事件
+0：无论是否有任何事件准备好，系统调用都会立即返回
+n：系统调用等待直到文件描述符传递事件或 n 毫秒过去
+libreactor 使用完全围绕 epoll 构建的相对简单的反应器引擎，因此它可以无限期地等待下一个事件。 另一方面，Seastar 要复杂一些。 Seastar 支持多种不同的高分辨率计时器、轮询函数和跨反应器消息队列； 并且它试图对任务预计运行多长时间实施某些保证。 在主 do_run 循环中，Seastar 调用 epoll_pwait，超时为 0（它根本不等待），这就是我们没有看到任何繁忙轮询发生的原因。 使用无限期超时调用 epoll_pwait 对 Seastar 来说是行不通的，即使使用 epoll_pwait 最小值 1ms 调用它也可能有点太长了。 Seastar 的任务应在单个周期内运行多长时间 (task-quota-ms) 的默认值为 0.5 (500us)，这一事实证明了这一点。</p>
+<p>为了在框架的延迟预期和我的性能目标之间取得平衡，我决定使用相对较新的 epoll_pwait2 系统调用。 epoll_pwait2 等同于 epoll_pwait，但超时参数可以指定为纳秒分辨率。 我选择 100us 的超时值作为性能和延迟保证之间的良好平衡。 新的系统调用从内核 5.11 开始可用，但相应的 glibc 包装器直到 glibc 2.35 才可用，而 Amazon Linux 2022 随 glibc 2.34 一起提供。 为了解决这个问题，我破解了一个名为 epoll_pwait_us 的包装函数，并更新了我的 Seastar 分支以使用值 100 调用它。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">Running 5s <span style="color:#0086b3">test</span> @ http://172.31.XX.XX:8080/
+  <span style="color:#099">16</span> threads and <span style="color:#099">256</span> connections
+  Thread Stats   Avg     Stdev       Max       Min   +/- Stdev
+    Latency   273.38us   39.11us    1.37ms   79.00us   71.32%
+    Req/Sec    57.48k   742.64     59.34k    55.62k    67.98%
+  Latency Distribution
+  50.00%  271.00us
+  90.00%  322.00us
+  99.00%  378.00us
+  99.99%  613.00us
+  <span style="color:#099">4575332</span> requests in 5.00s, 676.32MB <span style="color:#0086b3">read</span>
+Requests/sec: 915053.04
+</code></pre></td></tr></table>
+</div>
+</div><p>性能从 788k req/s 移动到 915k req/s，稳步增长 16%。</p>
+<h2 id="火焰图分析-4">火焰图分析</h2>
+<p>查看火焰图，您可以清楚地看到繁忙的轮询终于开始了，查看我们的系统调用计数，我们可以看到预期的模式出现了。
+<a href="https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-epoll_wait-100us.svg?x=1192.4&amp;y=773">https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-epoll_wait-100us.svg?x=1192.4&amp;y=773</a></p>
+<p>tcp_httpd</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">SYSCALL                   COUNT
+<span style="color:#0086b3">read</span>                    <span style="color:#099">8422317</span>
+sendto                  <span style="color:#099">7964784</span>
+epoll_ctl                <span style="color:#099">450827</span>
+epoll_pwait2             <span style="color:#099">375947</span>
+poll                      <span style="color:#099">79836</span>
+ioctl                       <span style="color:#099">202</span>
+bpf                          <span style="color:#099">49</span>
+newfstatat                   <span style="color:#099">18</span>
+ppoll                        <span style="color:#099">11</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="constant-context-switching">Constant Context Switching</h2>
+<p>我继续使用更多 perf 工具比较 tcp_httpd 和 libreactor，看看我是否能发现更多异常。 果然，使用 sar -w 1 来监视上下文切换为 tcp_httpd 产生了一些令人惊讶的数字。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">libreactor
+01:13:50 AM    proc/s   cswch/s
+01:13:57 AM      0.00    277.00
+01:13:58 AM      0.00    229.00
+01:13:59 AM      0.00    290.00
+01:14:00 AM      0.00    340.00
+</code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">tcp_httpd
+01:03:03 AM    proc/s   cswch/s
+01:03:04 AM      0.00  17132.00
+01:03:05 AM      0.00  17060.00
+01:03:06 AM      0.00  17048.00
+01:03:07 AM      0.00  17026.00
+</code></pre></td></tr></table>
+</div>
+</div><p>在不放大的情况下查看火焰图，我注意到对于每个反应器线程，Seastar 创建了一个匹配的定时器线程，名称为 timer-0、timer-1 等。起初我没有太注意它们，因为我没有明确地 设置任何计时器，它们在火焰图上几乎看不到，但鉴于上下文切换数字，我决定仔细查看。</p>
+<p>对于每个 reactor/cpu 核心，start_tick() 使用 task_quota_timer_thread_fn() 函数启动一个线程。 该函数等待反应器的 _task_quota_timer 到期，然后通过调用 request_preemption() 中断主线程。 这样做是为了确保主线程上的任务不会在没有抢占的情况下运行超过 X 毫秒而占用资源。 但是对于我们的特定工作负载，它会导致过多的上下文切换和坦克性能。 我们想要做的是将它设置得足够长，以便 reactor::run_some_tasks() 可以完成所有任务并重置抢占而不会被中断。 应该注意的是，Seastar 的默认 aio 后端似乎使用了一些特定于 aio 的抢占功能来处理任务配额，因此这种特殊行为仅限于 epoll 后端。</p>
+<p>Seastar 允许用户通过命令行传入一个值来设置 &ndash;task-quota-ms。 默认值为 0.5，但我发现 10 毫秒对于此工作负载来说是一个更合理的值。</p>
+<p>tcp_httpd 与 &ndash;task-quota-ms 10</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">01:04:58 AM    proc/s   cswch/s
+01:04:59 AM      0.00   1327.00
+01:05:00 AM      0.00   1303.00
+01:05:01 AM      0.00   1339.00
+01:05:02 AM      0.00   1296.00
+</code></pre></td></tr></table>
+</div>
+</div><p>每秒上下文切换次数从 17k 急剧下降到 1.3k</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">Running 5s <span style="color:#0086b3">test</span> @ http://172.31.XX.XX:8080/json
+  <span style="color:#099">16</span> threads and <span style="color:#099">256</span> connections
+  Thread Stats   Avg     Stdev       Max       Min   +/- Stdev
+    Latency   259.14us   29.51us    1.51ms   77.00us   71.92%
+    Req/Sec    60.55k   532.97     61.77k    58.82k    66.71%
+  Latency Distribution
+  50.00%  257.00us
+  90.00%  296.00us
+  99.00%  337.00us
+  99.99%  557.00us
+  <span style="color:#099">4820680</span> requests in 5.00s, 712.59MB <span style="color:#0086b3">read</span>
+Requests/sec: 964121.54
+</code></pre></td></tr></table>
+</div>
+</div><p>吞吐量从 915k req/s 提高到 964k req/s，提高了 5.3%</p>
+<h2 id="火焰图分析-5">火焰图分析</h2>
+<p>火焰图中的变化非常微妙。 如果你缩小到“全部”视图，然后搜索计时器——你会看到最右边的一小部分从前一个火焰图的 0.7% 变为当前火焰图的 0.1%。 火焰图非常有用，但它们并不总是以成比例的方式捕捉性能影响。 有时您必须在 perf 工具箱中翻找，以找到合适的工具来发现异常。
+<a href="https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-epoll_wait-100us-task-quota-ms-10.svg?x=1198.8&amp;y=885">https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-epoll_wait-100us-task-quota-ms-10.svg?x=1198.8&amp;y=885</a></p>
+<h2 id="最好是recv">最好是RECV</h2>
+<p>这是我在优化 libreactor 时想到的一个简单修复。 使用套接字时，使用 Linux 的接收/发送功能比更通用的读/写功能更有效。 通常差异可以忽略不计，但是当您超过 50k req/s 时，它开始增加。 Seastar 已经对传出数据使用 send，但它对传入请求使用 read，因此我做了相对简单的更改，将其切换为 recv。</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">Running 5s <span style="color:#0086b3">test</span> @ http://172.31.XX.XX:8080/json
+  <span style="color:#099">16</span> threads and <span style="color:#099">256</span> connections
+  Thread Stats   Avg     Stdev       Max       Min   +/- Stdev
+    Latency   253.53us   30.51us    1.21ms   93.00us   74.63%
+    Req/Sec    61.72k   597.21     62.99k    58.46k    71.81%
+  Latency Distribution
+  50.00%  250.00us
+  90.00%  291.00us
+  99.00%  342.00us
+  99.99%  652.00us
+  <span style="color:#099">4911503</span> requests in 5.00s, 726.02MB <span style="color:#0086b3">read</span>
+Requests/sec: 982287.44
+</code></pre></td></tr></table>
+</div>
+</div><p>吞吐量从 964k req/s 提高到 982k req/s，性能提高不到 2%。</p>
+<h2 id="火焰图分析-6">火焰图分析</h2>
+<p>如果您查看火焰图左侧的读取/接收堆栈(read/recv)，您会发现 __libc_recv 比 __libc_read 更直接。
+<a href="https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-recv-syscall.svg?x=1198.2&amp;y=757">https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-recv-syscall.svg?x=1198.2&amp;y=757</a></p>
+<h2 id="remember-to-flush">Remember to Flush</h2>
+<p>我通过在代码库中漫游并打开/关闭事物以查看它们做了什么来找到最终的优化。 使用 epoll 反应器后端时，output_stream 上的 batch_flushes 选项会在调用 flush() 时立即延迟调用 send()。 它旨在优化可能多次调用 flush() 的 RPC 工作负载，但它不会为我们的简单请求/响应工作负载提供任何好处。 事实上，它增加了一点开销，所以作为快速修复，我只是禁用了 batch_flushes。
+<a href="https://github.com/talawahtech/seastar/commit/58545f05d0250d8dc720ddf422f22cb557ebc365">https://github.com/talawahtech/seastar/commit/58545f05d0250d8dc720ddf422f22cb557ebc365</a></p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">Running 5s <span style="color:#0086b3">test</span> @ http://172.31.XX.XX:8080/json
+  <span style="color:#099">16</span> threads and <span style="color:#099">256</span> connections
+  Thread Stats   Avg     Stdev       Max       Min   +/- Stdev
+    Latency   246.66us   34.32us    1.25ms   61.00us   74.07%
+    Req/Sec    63.30k     0.88k    65.72k    61.63k    66.84%
+  Latency Distribution
+  50.00%  246.00us
+  90.00%  288.00us
+  99.00%  333.00us
+  99.99%  436.00us
+  <span style="color:#099">5038933</span> requests in 5.00s, 744.85MB <span style="color:#0086b3">read</span>
+Requests/sec: 1007771.89
+</code></pre></td></tr></table>
+</div>
+</div><p>吞吐量从 982k req/s 增加到 1.0M req/s，性能提升 2.2%。</p>
+<h2 id="火焰图分析-7">火焰图分析</h2>
+<p><a href="https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-optimized.svg?x=1198.4&amp;y=837">https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-optimized.svg?x=1198.4&amp;y=837</a>
+火焰图显示发送堆栈从 batch_flush_pollfn::poll 移动到 output_stream<!-- raw HTML omitted -->::flush</p>
+<p>我们的优化工作为我们的最终数字带来了心理上令人满意的基数 10, 达到了1.0M 请求/秒，仅使用良好的旧 Linux 内核。</p>
+<h2 id="最终获胜者是">最终获胜者是&hellip;</h2>
+<p>最终，DPDK 仍然保持着对内核 51% 的性能领先优势。 是多还是少取决于你的观点。 在我看来，当您比较内核/应用程序的未优化和优化版本时，我们已将 DPDK 的性能优势从 4.2 倍缩小到仅 1.5 倍。
+
+        <img class="mx-auto" alt="在这里插入图片描述" src="https://img-blog.csdnimg.cn/29916c921e2c4b4798752349b75cd948.png" />   
+    </p>
+<h2 id="dpdk-注意事项">DPDK 注意事项</h2>
+<p>DPDK 的 51% 优势不容小觑，但是如果我让您陷入 DPDK 的空洞而不添加一些关于 DPDK 挑战的免责声明，那我就是失职了。</p>
+<p>首先，它是一种小众技术，因此在线查找文章和示例（尤其是对于既定领域之外的用例）可能具有挑战性。</p>
+<p>绕过内核意味着您也绕过了其久经考验的 TCP 堆栈。 如果您的应用程序使用基于 TCP 的协议（如 HTTP），您需要在用户空间中提供自己的 TCP 网络堆栈。 Seastar 和 F-Stack 等框架可以提供帮助，但将您的应用程序迁移到它们可能并非易事。</p>
+<p>使用自定义框架也可能意味着您绑定到它支持的特定 DPDK 版本，这可能不是您的网络驱动程序或内核支持的版本。</p>
+<p>在绕过内核时，您还绕过了用于保护、监控和配置网络流量的现有工具和功能的丰富生态系统。 您习惯使用的许多工具和技术不再有效。</p>
+<p>如果您使用轮询模式处理，您的 CPU 使用率将始终为 100%。 除了不节能/不环保之外，它还难以使用 CPU 使用率作为衡量标准来快速评估/排除工作负载故障。</p>
+<p>基于 DPDK 的应用程序可以完全控制网络接口，这意味着：</p>
+<p>您必须有多个接口。
+如果要修改设备设置，则必须在启动前或通过应用程序进行。
+如果要捕获指标，则必须配置应用程序才能执行此操作； 即时进行故障排除要困难得多。
+话虽这么说，除了纯粹的性能之外，可能还有其他理由去追求定制的 TCP/IP 堆栈。 应用程序内 TCP 堆栈允许应用程序精确控制内存分配（避免应用程序和内核之间的内存争用）和调度（避免 CPU 时间争用）。 这对于不仅力求最大吞吐量而且力求出色的 p99 延迟的应用程序来说可能很重要。</p>
+<p>归根结底，这是关于平衡优先事项。 例如，尽管 ScyllaDB 团队偶尔会收到与内核网络堆栈相关的反应器停顿报告，但他们仍然选择坚持使用其旗舰产品的内核，因为切换到 DPDK 绝非易事。</p>
+<h2 id="speculative-execution-mitigations-推测执行缓解措施">Speculative Execution Mitigations 推测执行缓解措施</h2>
+<p>在这篇文章的开头，我掩盖了我在开始优化应用程序之前所做的操作系统级优化。 从高层次上看，这些变化与我之前的帖子类似，对于那些想要深入了解更多细节的人，我计划“在某个时候”写一篇内核 4.14 vs 5.15 的帖子。 然而，在这个内核与 DPDK 的对决中，有一项特殊的优化值得进一步分析：禁用推测执行缓解措施。</p>
+<p>我不会重复我对这些缓解措施的看法，您可以在此处阅读(<a href="https://talawah.io/blog/extreme-http-performance-tuning-one-point-two-million/#_2-speculative-execution-mitigations">https://talawah.io/blog/extreme-http-performance-tuning-one-point-two-million/#_2-speculative-execution-mitigations</a>)。 出于本文的目的，我将它们关闭，但如果您查看下图，您会发现重新打开它们会显示一些有趣的结果。
+
+        <img class="mx-auto" alt="在这里插入图片描述" src="https://img-blog.csdnimg.cn/01db2d260bf14f35b0ebf36cee8348d3.png" />   
+    
+正如您所看到的，虽然禁用缓解措施会在内核端产生 33% 的性能提升，但它对 DPDK 性能的影响为零。 这导致两个主要结论：</p>
+<p>对于必须进行推测执行缓解的环境，DPDK 代表了比内核 TCP 堆栈更大的性能改进。</p>
+<p>绕过 I/O 系统调用接口的 io_uring 等内核技术在提高大多数工作负载的性能方面具有更大的潜力。</p>
+<p>大多数人不会禁用 Spectre 缓解措施，因此启用它们的解决方案很重要。 我不是 100% 确定所有的缓解开销都来自系统调用，但按理说，其中很多开销来自用户到内核和内核到用户转换中的安全强化。 这种影响在火焰图上的系统调用相关函数中肯定是可见的。
+<a href="https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-optimized-mitigations-on.svg?x=1197.4&amp;y=837">https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/tcp_httpd-final-optimized-mitigations-on.svg?x=1197.4&amp;y=837</a></p>
+<h2 id="结论">结论</h2>
+<p>我们已经证明，即使将操作系统和应用程序优化到极致，DPDK 仍然比内核网络堆栈有 51% 的性能领先。 我没有将这种差异视为不可逾越的障碍，而是将差距视为内核方面未实现的潜力。 这个差距只是提出了一个问题：在不损害其通用性质的情况下，Linux 内核可以在多大程度上针对每核线程应用程序进一步优化？</p>
+<p>DPDK 让我们了解在理想情况下什么是可能的，并作为努力实现的目标。 即使差距不能完全缩小，它也会量化任务并将障碍抛向更清晰的焦点。</p>
+<p>一个非常明显的障碍是每秒进行数百万次系统调用时系统调用接口的开销。 值得庆幸的是，io_uring 似乎为该特定挑战提供了一个潜在的解决方案。 我一直在密切关注 io_uring，因为它仍在大量开发中。 我特别兴奋地看到最近一波以网络为中心的优化浪潮，例如繁忙的轮询支持、recv 提示，甚至是无锁 TCP 支持等实验性探索。 它在我要“很快”测试的事情清单上仍然排在前列。
+<a href="https://twitter.com/axboe/status/1504263869824266241">https://twitter.com/axboe/status/1504263869824266241</a>
+<a href="https://twitter.com/axboe/status/1502002250557923337">https://twitter.com/axboe/status/1502002250557923337</a>
+<a href="https://twitter.com/axboe/status/1519404690001305600">https://twitter.com/axboe/status/1519404690001305600</a>
+<a href="https://twitter.com/axboe/status/1514013578629574656">https://twitter.com/axboe/status/1514013578629574656</a></p>
+<h2 id="附录">附录</h2>
+<p>特别感谢
+特别感谢我的审阅者：Dor 和 Kenia，以及 Seastar Slack 频道和邮件列表中的每个人，尤其是 Piotr、Avi 和 Max。</p>
+<p>C/C++ 入门
+我利用我有限的 C 知识，结合基本的模式识别，在 Seastar 的 C++ 代码库中摸索了比我应该拥有的时间更长的时间，但是当需要添加 get_cpu_to_shard_mapping() 函数时，我决定停止自欺欺人并学习一点 C++。 如果您发现自己处于类似的困境，我推荐 A Tour of C++ 作为一本不错的入门书。 如果您还需要快速复习 C，我推荐 Essential C 和 Pointers and Memory。
+<a href="https://isocpp.org/tour">https://isocpp.org/tour</a>
+<a href="http://cslibrary.stanford.edu/101/EssentialC.pdf">http://cslibrary.stanford.edu/101/EssentialC.pdf</a>
+<a href="http://cslibrary.stanford.edu/102/PointersAndMemory.pdf">http://cslibrary.stanford.edu/102/PointersAndMemory.pdf</a></p>
+<h2 id="参考">参考</h2>
+<p>更多细节和链接请查看原文:
+<a href="https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/#perfect-locality-and-busy-polling-take-two">https://talawah.io/blog/linux-kernel-vs-dpdk-http-performance-showdown/#perfect-locality-and-busy-polling-take-two</a>
+
+        <img class="mx-auto" alt="在这里插入图片描述" src="https://img-blog.csdnimg.cn/0b096799b6044828b2d8b9da1a6ee46f.png" />   
+    </p>
+<h2 id="晓兵">晓兵</h2>
+<p>博客: <a href="https://logread.cn">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a></p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<h2 id="author-晓兵">Author 晓兵</h2>
+<p>首发链接: <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a></p>
+<p>博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a></p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/linux/linux_kernel_vs_dpdk/">https://logread.cn/post/linux/linux_kernel_vs_dpdk/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/study/summary/">常用学习网站汇总(随时更新)</a></li>
+        
+        <li><a href="/post/daos/daos_server_engine_start/">DAOS引擎启动流程-源码分析</a></li>
+        
+        <li><a href="/post/fs/gfs_paper/">谷歌文件系统</a></li>
+        
+        <li><a href="/post/daos/daos_spdk_bdev/">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</a></li>
+        
+        <li><a href="/post/net/rpc/hg/mercury_enable_rpc_for_hpc/">Mercury为高性能计算启用远程过程调用(RPC)</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+                <li><a href='/tags/dpdk'>dpdk</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2023
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/linux/linux_kernel_vs_dpdk/" title="Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]">Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/study/summary/" title="常用学习网站汇总(随时更新)">常用学习网站汇总(随时更新)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_server_engine_start/" title="DAOS引擎启动流程-源码分析">DAOS引擎启动流程-源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/fs/gfs_paper/" title="谷歌文件系统">谷歌文件系统</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_spdk_bdev/" title="基于DOAS文件系统接口(DFS)暴露的SPDK块设备">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/" title="Mercury为高性能计算启用远程过程调用(RPC)">Mercury为高性能计算启用远程过程调用(RPC)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/stor/ceph/ceph_msg/" title="MSGR2 协议（MSGR2.0 和 MSGR2.1）">MSGR2 协议（MSGR2.0 和 MSGR2.1）</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/trace/linux_google_trace_dapper/" title="Linux_google_trace_dapper">Linux_google_trace_dapper</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/ofa/ofa_librabric/" title="OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织">OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/storage/ceph_rdma/" title="利用 RDMA 技术加速 Ceph 存储解决方案">利用 RDMA 技术加速 Ceph 存储解决方案</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title" style="color:red">福利派送</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a href="https://mp.weixin.qq.com/s?__biz=MzUyOTAzNTI3NA==&amp;mid=2247487635&amp;idx=1&amp;sn=3c1066ffe3243738a6cf8d2f4e20122e&amp;chksm=fa6669f6cd11e0e00a9a9f2dd33848961b626ca410a94868aa61fc4f50b9a556e80b13c054e9&amp;token=226329094&amp;lang=zh_CN#rd" title="【2023双12】ALL IN CLoud 低至1折" target="_blank" style="color:red">
+                
+                    <img src="https://img.alicdn.com/tfs/TB1_rYHo7P2gK0jSZPxXXacQpXa-690-388.jpg">
+                
+            </a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (11)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (16)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://github.com/ssbandjl/golang-design-pattern" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

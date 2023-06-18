@@ -6,14 +6,23 @@
     <description>Recent content on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 17 Jun 2023 22:47:44 +0800</lastBuildDate><atom:link href="https://logread.cn/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 18 Jun 2023 12:41:32 +0800</lastBuildDate><atom:link href="https://logread.cn/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]</title>
+      <link>https://logread.cn/post/linux/linux_kernel_vs_dpdk/</link>
+      <pubDate>Sun, 18 Jun 2023 12:41:32 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/linux/linux_kernel_vs_dpdk/</guid>
+      <description>概述 在这篇文章中，我将使用一个简单的 HTTP 基准测试在 Linux 内核的网络堆栈和由 DPDK 提供支持的内核旁路堆栈之间进行正面性能比较。 我将使用 Seastar 运行我的测试，Seastar 是一个用于构建高性能服务器应用程序的 C++ 框架。 Seastar 支持构建使用 Linux 内核或 DPDK 进行网络连接的应用程序，因此它是进行此比较的完美框架。 我将以</description>
+    </item>
+    
     <item>
       <title>常用学习网站汇总(随时更新)</title>
       <link>https://logread.cn/post/study/summary/</link>
       <pubDate>Sat, 17 Jun 2023 22:47:44 +0800</pubDate>
       
       <guid>https://logread.cn/post/study/summary/</guid>
-      <description>性能 P99 CONF 大会(P99分位数, 极致)是面向工程师和由工程师举办的跨行业虚拟活动，以低延迟、高性能设计为中心, 突出低延迟、高性能分布式计算所需的工程挑战和创造性解决方案 https://www.p99conf.io/on-demand/ HPC高性能计算 Mochi 项目是阿贡国家实验室、洛斯阿拉莫斯国家实验室、卡内基梅隆大学和 HDF 集团之间的合作。 该项目的目标是探</description>
+      <description>性能 P99 CONF 大会(P99分位数, 极致)是面向工程师和由工程师举办的跨行业虚拟活动，以低延迟、高性能设计为中心, 突出低延迟、高性能分布式计算所需的工程挑战和创造性解决方案 P99大会: https://www.p99conf.io/on-demand/ HPC高性能计算 Mochi 项目是阿贡国家实验室、洛斯阿拉莫斯国家实验室、卡内基梅隆大学和 HDF 集团之间的合作。 该项</description>
     </item>
     
     <item>
