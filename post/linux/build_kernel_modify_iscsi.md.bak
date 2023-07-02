@@ -1,0 +1,301 @@
+---
+title: "Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信"
+date: 2023-06-20T11:51:19+08:00
+draft: true
+categories: ['stor', '存储', 'kernel','iscsi']
+tags: ['linux', 'stor', 'kernel','iscsi']
+---
+# Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信
+
+## 背景
+
+需求: 如何利用ISCSI协议保留字段, 在Initiator和Tgt端传递, 完成一些控制开关或其他管理功能 ?
+
+解决: 定制内核SCSI层协议, 修改用户态TGT项目来适配保留字段
+
+
+
+## 环境
+
+CentOS Linux (5.10.38-21.hl10.el7.x86_64) 7 (Core)(带有SCSI协议驱动), 客户端
+
+TGT 用户态服务端
+
+
+
+## 获取源码
+
+获取源码一般有以下途径
+
+1. 官方源码, 参考(https://wiki.centos.org/HowTos/I_need_the_Kernel_Source) 获取源码和安装编译依赖软件和打包软件(rpmbuild)及依赖
+2. 本文采用我司源码(http://10.153.3.130/h3linux/1/kernel/source/kernel-alt-5.10.38-21.hl10.el7.src.rpm),  源码列表: http://10.153.3.130/h3linux/1/kernel/source/
+
+## 安装源码
+
+- 创建非root用户, 比如useradd mockbuild
+
+- 生成RPM目录
+
+  ```bash
+   mkdir -p ~/rpmbuild/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+   echo '%_topdir %(echo $HOME)/rpmbuild' > ~/.rpmmacros
+  ```
+
+- 用rpm -ivh xxx.rpm安装源码, 安装后的目录树
+
+  ```bash
+  [mockbuild@node1 ~]$ tree -L 2 rpmbuild
+  rpmbuild
+  ├── BUILD
+  │   ├── debugfiles.list
+  │   ├── debugfiles.list.dirs.sed
+  │   ├── debuginfodebug.list
+  │   ├── debuginfokdump.list
+  │   ├── debuginfo.list
+  │   ├── debuglinks.list
+  │   ├── debugsources.list
+  │   ├── elfbins.list
+  │   ├── kernel-alt-5.10.38-21.01.el7
+  │   ├── perf-debuginfo.list
+  │   ├── python-perf-debuginfo.list
+  │   └── tools-debuginfo.list
+  ├── BUILDROOT
+  ├── RPMS
+  │   └── x86_64
+  ├── SOURCES
+  │   ├── centos-ca-secureboot.der
+  │   ├── centos-kpatch.x509
+  │   ├── centos-ldup.x509
+  │   ├── centossecureboot001.crt
+  │   ├── check-kabi
+  │   ├── cpupower.config
+  │   ├── cpupower.service
+  │   ├── H3Linux_patches
+  │   ├── H3Linux_patches.tar.gz
+  │   ├── kernel-alt-5.10.38-aarch64.config
+  │   ├── kernel-alt-5.10.38-aarch64-debug.config
+  │   ├── kernel-alt-5.10.38-x86_64.config
+  │   ├── kernel-alt-5.10.38-x86_64-debug.config
+  │   ├── linux-5.10.38
+  │   ├── linux-5.10.38.tar.xz
+  │   ├── Makefile.common
+  │   ├── Module.kabi_s390x
+  │   ├── Module.kabi_x86_64
+  │   ├── sign-modules
+  │   └── x509.genkey
+  ├── SPECS
+  │   ├── kernel-alt.spec
+  │   └── run.sh
+  └── SRPMS
+  
+  10 directories, 31 files
+  [mockbuild@node1 ~]$ 
+  ```
+
+
+
+## 修改源码WRITE10(驱动: drivers/scsi/sd.c)
+
+```c
+static blk_status_t sd_setup_rw10_cmnd(struct scsi_cmnd *cmd, bool write,
+				       sector_t lba, unsigned int nr_blocks,
+				       unsigned char flags)
+{
+	int a = 0;
+	cmd->cmd_len = 10;
+	cmd->cmnd[0] = write ? WRITE_10 : READ_10;
+	cmd->cmnd[1] = flags;
+	// cmd->cmnd[6] = 0;
+	// cmd->cmnd[6] = (unsigned char)0xc0; // RESERVED 1100 0000(GROUP_NUM)
+    
+    // 如下图, 参考协议WRITE(10), 将第7字节(INDEX=6, cmnd[6])的高第7,6位置位1, 得到该字节为0xc0(11000000)
+    a |=(1<<6);
+    a |=(1<<7);
+	cmd->cmnd[6] = a;
+	cmd->cmnd[9] = 0;
+	put_unaligned_be32(lba, &cmd->cmnd[2]);
+	put_unaligned_be16(nr_blocks, &cmd->cmnd[7]);
+
+	return BLK_STS_OK;
+}
+```
+
+![image-20230620140358140](image-20230620140358140.png)
+
+修改源码后,打包源码
+
+```bash
+cd ~/rpmbuild/SOURCES/ && sudo rm -rf linux-5.10.38.tar.xz  linux-5.10.38.tar linux-5.10.38.tar && tar -cvf linux-5.10.38.tar linux-5.10.38/ && xz -v -T 0 -0 linux-5.10.38.tar
+```
+
+tgt端修改源码如下:
+
+bs_rbd_.c -> bs_rbd_request
+
+![image-20230620141549239](C:\Users\s30893\AppData\Roaming\Typora\typora-user-images\image-20230620141549239.png)
+
+重新部署tgt
+
+## 编译内核为RPM
+
+参考官方编译流程(https://wiki.centos.org/HowTos/Custom_Kernel)
+
+- 只安装依赖即可(.config文件源码中已经有了, 无需拷贝和修改)
+
+- 编译成RPM包
+
+  ```bash
+  cd ~/rpmbuild/SPECS
+  sudo rpmbuild -bb --target=`uname -m` kernel-alt.spec
+  #编译后的驱动为sd_mod.ko
+  ```
+
+- 安装(初次安装直接安装即可, 后续更新, 需要先做一个内核切换)
+
+  ```bash
+  #rpm -ivh kernel-*.rpm
+  
+  # 改默认内核
+  # 查看内核列表
+  grubby --info=ALL
+  
+  # 设置内核索引号
+  grub2-set-default "CentOS Linux (5.10.38-21.hl10.el7.x86_64) 7 (Core)" # index=2, 设置为原来的, reboot后删除编译的, 然后更新编译的新核
+  # grub2-set-default 2
+  
+  # reboot
+  
+  # 查看内核
+  grub2-editenv list
+  
+  # 查看内核索引
+  grubby --default-index
+  
+  # yum remove kernel-debuginfo
+  # yum remove kernel-debug*
+  # sudo yum remove kernel-debug-devel-5.10.38-21.hl10.el7.x86_64 -y
+  
+  # 安装新内核, 带有debug字段
+  cd ~mockbuild/rpmbuild/RPMS/`uname -m`/
+  sudo yum localinstall kernel-*.rpm -y
+  
+  # 设置为新核
+  grub2-set-default 0
+  ```
+
+- 重启系统, 查看模块: modinfo sd_mod
+
+- 打开调试开关
+
+  ```bash
+  echo -1 > /proc/sys/dev/scsi/logging_level
+  dmesg -w #监听scsi驱动日志
+  ```
+
+- Initiator连接tgt后, 格式化块设备, 触发WRITE(10), 查看initiator端和tgt端日志, 字节6均为c0
+
+  ```
+  initiator: Write(10) 2a 00 34 c4 d4 20 c0 00 18 00
+  tgt: 2023-06-20 11:32:41.008554-[INFO]-[TGT]-[pid:1215900][tid:1216396][bs_rbd.c][bs_rbd_request][line:1001]:pdu byte6:0xc0
+  ```
+
+- 通信完成
+
+## 参考
+
+内核模块原理及编译外部模块: https://docs.kernel.org/kbuild/modules.html 
+
+获取源码和安装依赖: https://wiki.centos.org/HowTos/I_need_the_Kernel_Source
+
+编译RPM: https://wiki.centos.org/HowTos/Custom_Kernel
+
+RPM及SPEC文件详解: https://rpm-packaging-guide.github.io/
+
+单独构建模块: https://wiki.centos.org/HowTos/BuildingKernelModules
+
+内核makfile(编译树采用递归下降): https://docs.kernel.org/kbuild/makefiles.html
+
+内核配置文件kconfig(.config,控制模块打开和关闭): https://docs.kernel.org/kbuild/kconfig.html
+
+```bash
+Linux存储IO调用栈(参考)
+IO路径-文件系统-系统调用
+int main()
+{
+       char buff[128] = {0};
+       int fd = open("/var/pilgrimtao.txt", O_CREAT|O_RDWR);
+
+       write(fd, "pilgrimtao is cool", 18);
+       pread(fd, buff, 128, 0);
+       printf("%s\n", buff);
+
+       close(fd);
+       return 0;
+}
+
+IO路径-块层
+SYSCALL_DEFINE3(write, ...) -> ksys_write -> vfs_write -> new_sync_write -> call_write_iter ->write_iter -> xfs_file_write_iter
+xfs_file_write_iter -> xfs_file_buffered_write -> iomap_file_buffered_write -> iomap_iter -> .iomap_begin -> xfs_buffered_write_iomap_begin -> xfs_iread_extents -> xfs_btree_visit_blocks -> xfs_btree_readahead_ptr -> xfs_buf_readahead -> xfs_buf_readahead_map -> xfs_buf_read_map -> xfs_buf_read -> xfs_buf_submit -> __xfs_buf_submit -> xfs_buf_ioapply_map -> submit_bio -> submit_bio_noacct -> submit_bio_noacct_nocheck -> __ submit_bio_noacct_mq/ __ submit_bio_noacct -> __ submit_bio -> blk_mq_submit_bio -> blk_add_rq_to_plug -> bio合并： blk_mq_submit_bio -> blk_mq_get_new_requests -> blk_mq_sched_bio_merge -> blk_bio_list_merge -> blk_attempt_bio_merge
+request插入ctx：blk_mq_submit_bio -> blk_mq_sched_insert_request -> __ blk_mq_insert_request -> __ blk_mq_insert_req_list -> list_add(&rq->queuelist, &ctx->rq_lists[type])
+取出request：blk_mq_run_hw_queue -> __ blk_mq_delay_run_hw_queue -> __ blk_mq_run_hw_queue -> blk_mq_sched_dispatch_requests -> __ blk_mq_sched_dispatch_requests -> blk_mq_do_dispatch_ctx -> blk_mq_dequeue_from_ctx -> dispatch_rq_from_ctx -> __blk_mq_sched_dispatch_requests -> blk_mq_flush_busy_ctxs （取出）/ blk_mq_dispatch_rq_list （发送给磁盘）
+
+IO路径, 块io, iscsi层, iopath, 
+bool blk_mq_dispatch_rq_list
+		ret = q->mq_ops->queue_rq(hctx, &bd) # 关键函数 queue_rq, IO请求入队列
+		.queue_rq	= scsi_queue_rq
+		static blk_status_t scsi_queue_rq( -> scsi处理流程: https://blog.csdn.net/marlos/article/details/131171560, 这个函数之后大致要完成的工作是，把队列中的request再转化为对硬件的command，接着下发command到硬件，完成io。也就是说，对于request的解析，一定是在command生成之前的。在上面代码的35行之前，是在做一些必要的检查，确保队列、硬件处于正常工作的状态，接着37行，出现一个关键的函数 scsi_prepare_cmd, 顾名思义，command可能会在这个函数中进行初始化
+			struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(req) -> cmd已经填充了?
+			WARN_ON_ONCE(cmd->budget_token < 0) -> 预算令牌, scsi：blk-mq：从 .get_budget 回调中返回预算令牌 SCSI 使用全局原子变量来跟踪每个 LUN/请求队列的队列深度,当有很多 CPU 核心并且磁盘非常快时，这不能很好地扩展。 通过在 I/O 路径中的 sdev->device_busy 跟踪队列深度，观察到 IOPS 受到很大影响,从 .get_budget 回调中返回预算令牌。 预算令牌可以传递给驱动程序，这样我们就可以用 sbitmap_queue 替换原子变量，并以这种方式缓解缩放问题, 链接：https://lore.kernel.org/r/20210122023317.687987-9-ming.lei@redhat.com
+			ret = BLK_STS_RESOURCE -> 块：引入新的块状态代码类型目前我们在块层中使用标准的 Linux errno 值，虽然我们接受任何错误，但一些错误具有超载的魔法含义。 这个补丁引入了一个新的 blk_status_t 值，它包含块层特定的状态代码并明确解释它们的含义。 现在提供了与以前的特殊含义相互转换的助手，但我怀疑我们希望从长远来看摆脱它们——那些有错误输入（例如网络）的驱动程序通常会得到不知道特殊块层的错误 重载，并类似地将它们返回到用户空间通常会返回一些严格来说对于文件系统操作不正确的东西，但这留作以后的练习。目前错误集是一个非常有限的集合，与之前重载的 errno 值密切相关 , 但有一些低挂果来改进它。blk_status_t (ab) 使用稀疏的 __bitwise 注释来允许稀疏类型检查，这样我们就可以很容易地捕捉到传递错误值的地方
+			scsi_prepare_cmd -> static blk_status_t scsi_prepare_cmd(struct request *req)
+				struct scsi_cmnd
+				cmd->prot_op = SCSI_PROT_NORMAL 命令保护操作
+				return scsi_cmd_to_driver(cmd)->init_command(cmd) -> .init_command		= sd_init_command -> scsi_init_command -> static blk_status_t sd_init_command -> scsi层里面，高级驱动可不止sd一个，因此，我们可以猜测这个函数只是在做一些通用性的命令初始化，对于特异性的初始化，一定会转交sd驱动处理，所以直接看代码的66行，调用了对应cmd绑定驱动的init_command函数
+					case REQ_OP_WRITE
+					return sd_setup_read_write_cmnd(cmd)
+						bool write = rq_data_dir(rq) == WRITE
+						scsi_alloc_sgtables
+						dix = scsi_prot_sg_count(cmd) -> 数据保护
+						if (protect && sdkp->protection_type == T10_PI_TYPE2_PROTECTION) -> T10保护信息(T10 Protection Information (PI))
+						sd_setup_rw10_cmnd(cmd, write, lba, nr_blocks -> static blk_status_t sd_setup_rw10_cmnd -> 打印日志: SCSI_LOG_  -> SCSI_LOG_HLQUEUE -> [66521.609478] sd 6:0:0:0: [sda] tag#23 sd_setup_read_write_cmnd: block=893164736, count=8
+							cmd->cmd_len = 10
+
+			static int scsi_dispatch_cmd(struct scsi_cmnd *cmd)
+				trace_scsi_dispatch_cmd_start(cmd)
+				rtn = host->hostt->queuecommand(host, cmd) -> .queuecommand           = iscsi_queuecommand, -> int iscsi_queuecommand
+					iscsi_session_chkready -> 检查会话通过iscsi_session_chkready进行。当会话状态不是ISCSI_SESSION_LOGGED_IN时，不适合处理scsi指令。链接检查通过链接是否存在、链接状态、链接可接收的命令窗口是否达到最大值。这几个方面判断
+					task = iscsi_alloc_task(conn, sc)
+					iscsi_prep_scsi_cmd_pdu(task)
+						ISCSI_DBG_SESSION
+					list_add_tail(&task->running, &conn->cmdqueue) -> 将任务插入命令队列 cmdqueue -> 由 iscsi_xmitworker 线程发送命令
+					iscsi_conn_queue_xmit(conn)
+
+
+static void iscsi_xmitworker(struct work_struct *work)
+	do iscsi_data_xmit(conn)
+		iscsi_xmit_task
+			rc = conn->session->tt->xmit_task(task) -> .xmit_task		= iscsi_tcp_task_xmit 发送常规PDU任务
+				rc = session->tt->xmit_pdu(task) -> static int iscsi_sw_tcp_pdu_xmit
+					iscsi_sw_tcp_xmit
+						while (1) iscsi_sw_tcp_xmit_segment(tcp_conn, segment) 传输分段
+							tcp_sw_conn->sendpage(sk, sg_page(sg), offset
+						segment->done(tcp_conn, segment) 首选按页发送
+						kernel_sendmsg(sk, &msg, &iov, 1, copy) 其次降级为内核发送消息
+							iov_iter_kvec
+							sock_sendmsg(sock, msg)
+					memalloc_noreclaim_restore
+				iscsi_tcp_get_curr_r2t
+				conn->session->tt->alloc_pdu
+				iscsi_prep_data_out_pdu -> 初始化 Data-Out
+					hdr->ttt = r2t->ttt
+					hdr->opcode = ISCSI_OP_SCSI_DATA_OUT
+				rc = conn->session->tt->init_pdu
+			iscsi_put_task(task)
+```
+
+
+
+
+
+
+

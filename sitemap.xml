@@ -4,7 +4,57 @@
   
   <url>
     <loc>https://logread.cn/categories/</loc>
-    <lastmod>2023-06-18T12:41:32+08:00</lastmod>
+    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/linux/</loc>
+    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/linux/multipath/linux_kernel_multipath_fail_path/</loc>
+    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/multipath/</loc>
+    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/</loc>
+    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/stor/</loc>
+    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/stor/</loc>
+    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/</loc>
+    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/</loc>
+    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</loc>
+    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/</loc>
+    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
   </url>
   
   <url>
@@ -18,47 +68,12 @@
   </url>
   
   <url>
-    <loc>https://logread.cn/tags/linux/</loc>
-    <lastmod>2023-06-18T12:41:32+08:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://logread.cn/categories/linux/</loc>
     <lastmod>2023-06-18T12:41:32+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/post/linux/linux_kernel_vs_dpdk/</loc>
-    <lastmod>2023-06-18T12:41:32+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/post/</loc>
-    <lastmod>2023-06-18T12:41:32+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/stor/</loc>
-    <lastmod>2023-06-18T12:41:32+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/stor/</loc>
-    <lastmod>2023-06-18T12:41:32+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/</loc>
-    <lastmod>2023-06-18T12:41:32+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</loc>
-    <lastmod>2023-06-18T12:41:32+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/</loc>
     <lastmod>2023-06-18T12:41:32+08:00</lastmod>
   </url>
   

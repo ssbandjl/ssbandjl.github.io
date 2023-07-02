@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>kernel on 晓兵</title>
+    <link>https://logread.cn/categories/kernel/</link>
+    <description>Recent content in kernel on 晓兵</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Tue, 20 Jun 2023 11:51:19 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/kernel/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信</title>
+      <link>https://logread.cn/post/linux/build_kernel_modify_iscsi/</link>
+      <pubDate>Tue, 20 Jun 2023 11:51:19 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/linux/build_kernel_modify_iscsi/</guid>
+      <description>Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信 背景 需求: 如何利用ISCSI协议保留字段, 在Initiator和Tgt端传递, 完成一些控制开关或其他管理功能 ? 解决: 定制内核SCSI层协议, 修改用户态TGT项目来适配保留字段 环境 CentOS Linux (5.10.38-21.hl10.el7.x86_64) 7 (Core)(带</description>
+    </item>
+    
+    <item>
+      <title>Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信</title>
+      <link>https://logread.cn/post/linux/build_kernel_modify_iscsi_with_header/</link>
+      <pubDate>Tue, 20 Jun 2023 11:51:19 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/linux/build_kernel_modify_iscsi_with_header/</guid>
+      <description>Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信 背景 需求: 如何利用ISCSI协议保留字段, 在Initiator和Tgt端传递, 完成一些控制开关或其他管理功能 ? 解决: 定制内核SCSI层协议, 修改用户态TGT项目来适配保留字段 环境 CentOS Linux (5.10.38-21.hl10.el7.x86_64) 7 (Core)(带</description>
+    </item>
+    
+  </channel>
+</rss>

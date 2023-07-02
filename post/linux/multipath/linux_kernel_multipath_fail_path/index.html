@@ -1,0 +1,1029 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2 | 晓兵</title>
+    <meta property="og:title" content="linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2 - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2023-06-30T22:46:42&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2023-06-30T22:46:42&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储, ceph, 分布式块存储, 云计算">
+    <meta name="description" content="linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/linux/multipath/linux_kernel_multipath_fail_path/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#简介">简介</a></li>
+    <li><a href="#多路径故障流程图">多路径故障流程图</a></li>
+    <li><a href="#fail_path路径故障简介">fail_path路径故障简介</a></li>
+    <li><a href="#多路径关键源码分析">多路径关键源码分析</a></li>
+    <li><a href="#参考">参考</a></li>
+    <li><a href="#晓兵">晓兵</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年6月30日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+            <span class="meta-category"><a href='/categories/multipath'>multipath</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="linux内核多路径故障fail_path流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2">linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2</h1>
+<h2 id="简介">简介</h2>
+<p>linux多路径multipath, 允许将客户主机端与后端存储引擎或存储阵列之间的多个物理连接组合成一个虚拟设备, 这样做可以为您的存储提供更具弹性的连接（即断开的路径不会妨碍其他连接），或者聚合存储带宽以提高性能. 本文梳理了路径故障时的内核和相关组件处理流程及源码分析, 如下图</p>
+<h2 id="多路径故障流程图">多路径故障流程图</h2>
+<p>
+        <img class="mx-auto" alt="multipath" src="../storage_multi_path_device_mapper_fail_path.png" />   
+    </p>
+<h2 id="fail_path路径故障简介">fail_path路径故障简介</h2>
+<ol>
+<li>initiator与tgt创建连接时设置定时器, 连接启动时开启定时器, 参考命令:ISCSI_UEVENT_CREATE_CONN</li>
+<li>一条路径故障时, 触发内核iscsi驱动的iscsi_check_transport_timeouts函数ping收不到响应(NOP), 默认是5秒超时, 然后将会话设备状态设置为离线(block-&gt;offline), 并通过Netlink给用户态发连接错误事件(ISCSI_KEVENT_CONN_ERROR), iscsid进程收到事件后关闭连接, 在/var/log/message中可看到错误打印</li>
+<li>用户态multipathd的check_path循环函数检测到该设备离线状态, 通过ioctl通知内核态, 内核态执行fail_path动作, 将路径标记为NULL</li>
+<li>IO流程中检查到当前路径为NULL时, 重新选择其他路径下发IO</li>
+</ol>
+<h2 id="多路径关键源码分析">多路径关键源码分析</h2>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">102
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">103
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">104
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">105
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">106
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">107
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">108
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">109
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">110
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">111
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">112
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">113
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">114
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">115
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">116
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">117
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">118
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">119
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">120
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">121
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">122
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">123
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">124
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">125
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">126
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">127
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">128
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">129
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">130
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">131
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">132
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">133
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">134
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">135
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">136
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">137
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">138
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">139
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">140
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">141
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">142
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">143
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">144
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">145
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">146
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">147
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">148
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">149
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">150
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">151
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">152
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">153
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">154
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">155
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">156
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">157
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">158
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">159
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">160
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">161
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">162
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">163
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">164
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">165
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">166
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">167
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">168
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">169
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">170
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">171
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">172
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">173
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">174
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">175
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">176
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">177
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">178
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">179
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">180
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">181
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">182
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">183
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">184
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">185
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">186
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">187
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">188
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">189
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">190
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">191
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">192
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">193
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">194
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">195
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">196
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">197
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">198
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">199
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">200
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">201
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">202
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">内核超时检测流程
+drivers/scsi/libiscsi.c
+static void iscsi_check_transport_timeouts
+	struct iscsi_conn *conn <span style="color:#000;font-weight:bold">=</span> from_timer<span style="color:#000;font-weight:bold">(</span>conn, t, transport_timer<span style="color:#000;font-weight:bold">)</span> -&gt; from_timer, 新版本内核对于void <span style="color:#000;font-weight:bold">(</span>*function<span style="color:#000;font-weight:bold">)(</span>struct timer_list *<span style="color:#000;font-weight:bold">)</span>处理函数的参数发生了变化，struct timer_list *定时器地址可以通过from_timer也就是container_of计算出传参进来的结构体首地址，这样来达到传参的目标
+	iscsi_has_ping_timed_out<span style="color:#000;font-weight:bold">(</span>conn<span style="color:#000;font-weight:bold">)</span>
+	iscsi_conn_failure<span style="color:#000;font-weight:bold">(</span>conn, ISCSI_ERR_NOP_TIMEDOUT<span style="color:#000;font-weight:bold">)</span> -&gt; 连接超时, 故障处理, initiator -&gt; tgt的ping超时
+		iscsi_set_conn_failed
+			set_bit<span style="color:#000;font-weight:bold">(</span>ISCSI_CONN_FLAG_SUSPEND_TX, &amp;conn-&gt;flags<span style="color:#000;font-weight:bold">)</span> -&gt; 挂起发送和接收
+			set_bit<span style="color:#000;font-weight:bold">(</span>ISCSI_CONN_FLAG_SUSPEND_RX, &amp;conn-&gt;flags<span style="color:#000;font-weight:bold">)</span>
+		iscsi_conn_error_event<span style="color:#000;font-weight:bold">(</span>conn-&gt;cls_conn, err<span style="color:#000;font-weight:bold">)</span> -&gt; 控制平面<span style="color:#000;font-weight:bold">(</span>上行<span style="color:#000;font-weight:bold">)</span>调用
+			<span style="color:#000;font-weight:bold">case</span> ISCSI_CONN_UP -&gt; 连接状态为up<span style="color:#000;font-weight:bold">(</span>0<span style="color:#000;font-weight:bold">)</span>
+			test_and_set_bit ISCSI_CLS_CONN_BIT_CLEANUP
+			queue_work<span style="color:#000;font-weight:bold">(</span>iscsi_conn_cleanup_workq -&gt; static void iscsi_cleanup_conn_work_fn -&gt; 清理连接
+				iscsi_ep_disconnect<span style="color:#000;font-weight:bold">(</span>conn, <span style="color:#0086b3">false</span><span style="color:#000;font-weight:bold">)</span>
+					WRITE_ONCE<span style="color:#000;font-weight:bold">(</span>conn-&gt;state, ISCSI_CONN_FAILED<span style="color:#000;font-weight:bold">)</span> -&gt; 将连接状态置为失败
+					session-&gt;transport-&gt;unbind_conn<span style="color:#000;font-weight:bold">(</span>conn, is_active<span style="color:#000;font-weight:bold">)</span> -&gt; void iscsi_conn_unbind
+						iscsi_suspend_queue<span style="color:#000;font-weight:bold">(</span>conn<span style="color:#000;font-weight:bold">)</span>
+						void iscsi_suspend_tx
+							flush_work<span style="color:#000;font-weight:bold">(</span>&amp;conn-&gt;xmitwork<span style="color:#000;font-weight:bold">)</span>
+						iscsi_set_conn_failed<span style="color:#000;font-weight:bold">(</span>conn<span style="color:#000;font-weight:bold">)</span>
+					session-&gt;transport-&gt;ep_disconnect<span style="color:#000;font-weight:bold">(</span>ep<span style="color:#000;font-weight:bold">)</span> -&gt; static void iscsi_iser_ep_disconnect ?
+				iscsi_stop_conn<span style="color:#000;font-weight:bold">(</span>conn, STOP_CONN_RECOVER<span style="color:#000;font-weight:bold">)</span>
+					conn-&gt;transport-&gt;stop_conn<span style="color:#000;font-weight:bold">(</span>conn, flag<span style="color:#000;font-weight:bold">)</span> -&gt; static void iscsi_sw_tcp_conn_stop
+						iscsi_suspend_tx
+						iscsi_sw_tcp_release_conn
+							kernel_sock_shutdown
+						iscsi_conn_stop
+							iscsi_block_session<span style="color:#000;font-weight:bold">(</span>session-&gt;cls_session<span style="color:#000;font-weight:bold">)</span>
+								queue_work<span style="color:#000;font-weight:bold">(</span>session-&gt;workq, &amp;session-&gt;block_work<span style="color:#000;font-weight:bold">)</span> -&gt; __iscsi_block_session
+									scsi_target_block<span style="color:#000;font-weight:bold">(</span>&amp;session-&gt;dev<span style="color:#000;font-weight:bold">)</span>
+										starget_for_each_device device_block
+											scsi_internal_device_block
+												__scsi_internal_device_block_nowait
+													<span style="color:#000;font-weight:bold">(</span>scsi_device_set_state<span style="color:#000;font-weight:bold">(</span>sdev, SDEV_BLOCK<span style="color:#000;font-weight:bold">))</span> -&gt; 设置block状态后, 用户态multipathd检测到该状态 -&gt; sdb: path <span style="color:#008080">state</span> <span style="color:#000;font-weight:bold">=</span> blocked
+									queue_delayed_work<span style="color:#000;font-weight:bold">(</span>session-&gt;workq recovery_work -&gt; 启动延迟任务 -&gt; session_recovery_timedout
+										iscsi_alloc_session
+										INIT_DELAYED_WORK<span style="color:#000;font-weight:bold">(</span>&amp;session-&gt;recovery_work, session_recovery_timedout<span style="color:#000;font-weight:bold">)</span>
+										session_recovery_timedout
+											scsi_target_unblock<span style="color:#000;font-weight:bold">(</span>&amp;session-&gt;dev, SDEV_TRANSPORT_OFFLINE<span style="color:#000;font-weight:bold">)</span>
+											session-&gt;transport-&gt;session_recovery_timedout<span style="color:#000;font-weight:bold">(</span>session<span style="color:#000;font-weight:bold">)</span> -&gt; void iscsi_session_recovery_timedout
+												wake_up<span style="color:#000;font-weight:bold">(</span>&amp;session-&gt;ehwait<span style="color:#000;font-weight:bold">)</span> -&gt; 会话状态: ISCSI_STATE_IN_RECOVERY -&gt; wait_event_interruptible<span style="color:#000;font-weight:bold">(</span>session-&gt;ehwait -&gt; sleep <span style="color:#000;font-weight:bold">until</span> a condition gets true: https://linuxtv.org/downloads/v4l-dvb-internals/device-drivers/API-wait-event-interruptible.html, 等待队列（Wait Queue）
+												int iscsi_eh_session_reset
+												...
+			iscsi_if_transport_lookup<span style="color:#000;font-weight:bold">(</span>conn-&gt;transport<span style="color:#000;font-weight:bold">)</span>
+			alloc_skb
+			__nlmsg_put
+			ev-&gt;type <span style="color:#000;font-weight:bold">=</span> ISCSI_KEVENT_CONN_ERROR -&gt; 给用户态发事件<span style="color:#000;font-weight:bold">(</span>连接超时错误<span style="color:#000;font-weight:bold">)</span> -&gt; 转到用户态处理
+			iscsi_multicast_skb
+				nlmsg_multicast
+					netlink_broadcast
+		<span style="color:#000;font-weight:bold">return</span>
+	iscsi_send_nopout
+
+
+
+
+
+iscsid用户态进程收到事件后关闭连接, 错误处理:
+void iscsi_conn_error_event
+  ev-&gt;type <span style="color:#000;font-weight:bold">=</span> ISCSI_KEVENT_CONN_ERROR; 内核设置连接错误状态事件
+  ...
+static int ctldev_handle
+  <span style="color:#000;font-weight:bold">case</span> ISCSI_KEVENT_CONN_ERROR
+  <span style="color:#008080">session</span> <span style="color:#000;font-weight:bold">=</span> session_find_by_sid<span style="color:#000;font-weight:bold">(</span>sid<span style="color:#000;font-weight:bold">)</span>
+  ipc_ev_clbk-&gt;sched_ev_context EV_CONN_ERROR -&gt; iscsi_sched_ev_context -&gt; static int iscsi_sched_ev_context
+    <span style="color:#000;font-weight:bold">case</span> EV_CONN_ERROR
+    ...
+<span style="color:#000;font-weight:bold">case</span> EV_CONN_ERROR
+  actor_init<span style="color:#000;font-weight:bold">(</span>&amp;ev_context-&gt;actor, session_conn_error -&gt; static void session_conn_error<span style="color:#000;font-weight:bold">(</span>void *data<span style="color:#000;font-weight:bold">)</span> -&gt; 设置回调 -&gt; 收到内核事件 -&gt; Kernel reported iSCSI connection 27:0 error <span style="color:#000;font-weight:bold">(</span><span style="color:#099">1022</span> - ISCSI_ERR_NOP_TIMEDOUT: A NOP has timed out<span style="color:#000;font-weight:bold">)</span> state <span style="color:#000;font-weight:bold">(</span>3<span style="color:#000;font-weight:bold">)</span>
+    cat /var/log/messages|grep <span style="color:#d14">&#39;Kernel reported&#39;</span> -&gt; Jun <span style="color:#099">26</span> 17:00:59 node1 iscsid: iscsid: Kernel reported iSCSI connection 1:0 error <span style="color:#000;font-weight:bold">(</span><span style="color:#099">1022</span> - ISCSI_ERR_NOP_TIMEDOUT: A NOP has timed out<span style="color:#000;font-weight:bold">)</span> state <span style="color:#000;font-weight:bold">(</span>3<span style="color:#000;font-weight:bold">)</span> -&gt; multipathd: checker failed path 8:16 in map mpatha
+    iscsi_ev_context_put<span style="color:#000;font-weight:bold">(</span>ev_context<span style="color:#000;font-weight:bold">)</span>
+    __conn_error_handle
+      session_conn_shutdown -&gt; no
+      <span style="color:#000;font-weight:bold">case</span> ISCSI_CONN_STATE_LOGGED_IN
+      session_conn_reopen
+        __session_conn_reopen
+          re-opening session
+          iscsi_flush_context_pool<span style="color:#000;font-weight:bold">(</span>session<span style="color:#000;font-weight:bold">)</span>
+          conn-&gt;session-&gt;t-&gt;template-&gt;ep_disconnect<span style="color:#000;font-weight:bold">(</span>conn<span style="color:#000;font-weight:bold">)</span> -&gt; iscsi_io_tcp_disconnect<span style="color:#000;font-weight:bold">(</span>iscsi_conn_t *conn<span style="color:#000;font-weight:bold">)</span>
+            setsockopt<span style="color:#000;font-weight:bold">(</span>conn-&gt;socket_fd, SOL_SOCKET
+            close<span style="color:#000;font-weight:bold">(</span>conn-&gt;socket_fd<span style="color:#000;font-weight:bold">)</span>
+          <span style="color:#000;font-weight:bold">if</span> <span style="color:#000;font-weight:bold">(</span>ipc-&gt;stop_conn<span style="color:#000;font-weight:bold">(</span>session-&gt;t-&gt;handle -&gt; kstop_conn<span style="color:#000;font-weight:bold">(</span>uint64_t transport_handle
+            ev.type <span style="color:#000;font-weight:bold">=</span> ISCSI_UEVENT_STOP_CONN
+            <span style="color:#008080">rc</span> <span style="color:#000;font-weight:bold">=</span> __kipc_call<span style="color:#000;font-weight:bold">(</span>iov, 2<span style="color:#000;font-weight:bold">)</span> -&gt; 内核
+          queue_delayed_reopen<span style="color:#000;font-weight:bold">(</span>qtask, delay<span style="color:#000;font-weight:bold">)</span> -&gt; static void iscsi_login_timedout
+            iscsi_login_eh<span style="color:#000;font-weight:bold">(</span>conn, qtask, ISCSI_ERR_TRANS_TIMEOUT<span style="color:#000;font-weight:bold">)</span>
+              <span style="color:#000;font-weight:bold">case</span> ISCSI_CONN_STATE_XPT_WAIT
+              <span style="color:#000;font-weight:bold">case</span> R_STAGE_SESSION_REOPEN
+              session_conn_reopen<span style="color:#000;font-weight:bold">(</span>conn, qtask, 0<span style="color:#000;font-weight:bold">)</span>
+                __session_conn_reopen
+                  第二次不进 <span style="color:#000;font-weight:bold">if</span> <span style="color:#000;font-weight:bold">(</span>do_stop<span style="color:#000;font-weight:bold">)</span> 
+                  <span style="color:#000;font-weight:bold">if</span> <span style="color:#000;font-weight:bold">(</span>iscsi_set_net_config
+                  <span style="color:#000;font-weight:bold">if</span> <span style="color:#000;font-weight:bold">(</span>iscsi_conn_connect
+                  ...
+
+
+
+用户态multipathd检查到设备状态异常
+multipathd<span style="color:#d14">\m</span>ain.c -&gt; main <span style="color:#000;font-weight:bold">(</span>int argc, char *argv<span style="color:#000;font-weight:bold">[])</span>
+pthread_create<span style="color:#000;font-weight:bold">(</span>&amp;check_thr, &amp;misc_attr, checkerloop, vecs<span style="color:#000;font-weight:bold">)</span>
+  check_path <span style="color:#000;font-weight:bold">(</span>struct vectors * vecs, struct path * pp, unsigned int ticks<span style="color:#000;font-weight:bold">)</span>
+    <span style="color:#008080">conf</span> <span style="color:#000;font-weight:bold">=</span> get_multipath_config<span style="color:#000;font-weight:bold">()</span>
+    <span style="color:#008080">newstate</span> <span style="color:#000;font-weight:bold">=</span> path_offline<span style="color:#000;font-weight:bold">(</span>pp<span style="color:#000;font-weight:bold">)</span>
+      sysfs_attr_get_value<span style="color:#000;font-weight:bold">(</span>parent, <span style="color:#d14">&#34;state&#34;</span>, buff, sizeof<span style="color:#000;font-weight:bold">(</span>buff<span style="color:#000;font-weight:bold">))</span> -&gt; 通过udev读路径状态,  cat /sys/devices/platform/host15/session2/target15:0:0/15:0:0:1/state -&gt; offline -&gt; 何时设置为 offline
+      fail_path<span style="color:#000;font-weight:bold">(</span>pp, 1<span style="color:#000;font-weight:bold">)</span> -&gt; <span style="color:#008080">newstate</span> <span style="color:#000;font-weight:bold">==</span> PATH_DOWN
+      fail_path <span style="color:#000;font-weight:bold">(</span>struct path * pp, int del_active<span style="color:#000;font-weight:bold">)</span>
+        condlog<span style="color:#000;font-weight:bold">(</span>2, <span style="color:#d14">&#34;checker failed path %s in map %s&#34;</span> -&gt; checker failed path
+        dm_fail_path<span style="color:#000;font-weight:bold">(</span>pp-&gt;mpp-&gt;alias, pp-&gt;dev_t<span style="color:#000;font-weight:bold">)</span>
+          snprintf<span style="color:#000;font-weight:bold">(</span>message, 32, <span style="color:#d14">&#34;fail_path %s&#34;</span>, path<span style="color:#000;font-weight:bold">)</span> -&gt; 生成路径故障消息, 比如<span style="color:#000;font-weight:bold">(</span>failed path 8:16<span style="color:#000;font-weight:bold">)</span>
+          dm_message<span style="color:#000;font-weight:bold">(</span>mapname, message<span style="color:#000;font-weight:bold">)</span>
+            libmp_dm_task_create<span style="color:#000;font-weight:bold">(</span>DM_DEVICE_TARGET_MSG<span style="color:#000;font-weight:bold">)</span> -&gt; <span style="color:#0086b3">type</span>
+            dm_task_set_message<span style="color:#000;font-weight:bold">(</span>dmt, message<span style="color:#000;font-weight:bold">)</span>
+            dm_task_no_open_count<span style="color:#000;font-weight:bold">(</span>dmt<span style="color:#000;font-weight:bold">)</span>
+            libmp_dm_task_run<span style="color:#000;font-weight:bold">(</span>dmt<span style="color:#000;font-weight:bold">)</span>
+              dm_task_run<span style="color:#000;font-weight:bold">(</span>dmt<span style="color:#000;font-weight:bold">)</span> -&gt; libmultipath：使用互斥锁保护 acy libdevmapper 调用 dm_udev_wait<span style="color:#000;font-weight:bold">()</span> 和 dm_task_run<span style="color:#000;font-weight:bold">()</span> 可以访问 libdevmapper 中的全局/静态状态。 它们需要通过我们的多线程库中的锁进行保护，修改后的调用序列需要修复 dmevents 测试：必须将 devmapper.c 添加到 dmevents-test_OBJDEPS 以捕获对 dm_task_run<span style="color:#000;font-weight:bold">()</span> 的调用。 另外，setup<span style="color:#000;font-weight:bold">()</span> 中对 dmevent_poll_supported<span style="color:#000;font-weight:bold">()</span> 的调用将导致 init_versions<span style="color:#000;font-weight:bold">()</span> 被调用，这需要在测试设置阶段绕过包装器, libdevmapper, __strncpy_sse2_unaligned <span style="color:#000;font-weight:bold">()</span> 
+              at ../sysdeps/x86_64/multiarch/strcpy-sse2-unaligned.S:43, 最终发ioctl给内核, lvm2项目 -&gt; int dm_task_run<span style="color:#000;font-weight:bold">(</span>struct dm_task *dmt<span style="color:#000;font-weight:bold">)</span>
+    <span style="color:#008080">newstate</span> <span style="color:#000;font-weight:bold">=</span> get_state<span style="color:#000;font-weight:bold">(</span>pp, 1, newstate<span style="color:#000;font-weight:bold">)</span> -&gt; 如果路径状态是up -&gt; get_state <span style="color:#000;font-weight:bold">(</span>struct path * pp, int daemon, int oldstate<span style="color:#000;font-weight:bold">)</span>
+      <span style="color:#008080">state</span> <span style="color:#000;font-weight:bold">=</span> checker_check<span style="color:#000;font-weight:bold">(</span>c, oldstate<span style="color:#000;font-weight:bold">)</span>
+      int checker_check
+      c-&gt;check <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">(</span>int <span style="color:#000;font-weight:bold">(</span>*<span style="color:#000;font-weight:bold">)(</span>struct checker *<span style="color:#000;font-weight:bold">))</span> dlsym<span style="color:#000;font-weight:bold">(</span>c-&gt;handle, <span style="color:#d14">&#34;libcheck_check&#34;</span><span style="color:#000;font-weight:bold">)</span>
+      libcheck_check
+        <span style="color:#008080">ret</span> <span style="color:#000;font-weight:bold">=</span> sg_read<span style="color:#000;font-weight:bold">(</span>c-&gt;fd, &amp;buf<span style="color:#000;font-weight:bold">[</span>0<span style="color:#000;font-weight:bold">]</span>, 4096, &amp;sbuf<span style="color:#000;font-weight:bold">[</span>0<span style="color:#000;font-weight:bold">]</span>,
+                SENSE_BUFF_LEN, c-&gt;timeout<span style="color:#000;font-weight:bold">)</span>
+          <span style="color:#000;font-weight:bold">while</span> <span style="color:#000;font-weight:bold">(((</span><span style="color:#008080">res</span> <span style="color:#000;font-weight:bold">=</span> ioctl<span style="color:#000;font-weight:bold">(</span>sg_fd, SG_IO, &amp;io_hdr<span style="color:#000;font-weight:bold">))</span> &lt; 0<span style="color:#000;font-weight:bold">)</span> <span style="color:#000;font-weight:bold">&amp;&amp;</span> <span style="color:#000;font-weight:bold">(</span><span style="color:#008080">EINTR</span> <span style="color:#000;font-weight:bold">==</span> errno<span style="color:#000;font-weight:bold">))</span>;
+        MSG<span style="color:#000;font-weight:bold">(</span>c, MSG_READSECTOR0_UP<span style="color:#000;font-weight:bold">)</span>
+    <span style="color:#000;font-weight:bold">if</span> <span style="color:#000;font-weight:bold">(</span>del_active<span style="color:#000;font-weight:bold">)</span> -&gt; update_queue_mode_del_path<span style="color:#000;font-weight:bold">(</span>pp-&gt;mpp<span style="color:#000;font-weight:bold">)</span>
+    update_multipath_strings -&gt; 同步内核状态
+
+
+
+
+
+内核驱动处理fail_path:
+static ioctl_fn lookup_ioctl
+<span style="color:#000;font-weight:bold">{</span>DM_TARGET_MSG_CMD, 0, target_message<span style="color:#000;font-weight:bold">}</span> -&gt; static int target_message -&gt; 由lvm发送给内核态 -&gt; libdm/libdevmapper.h -&gt; DM_DEVICE_TARGET_MSG -&gt; <span style="color:#099">17</span>
+	ti-&gt;type-&gt;message<span style="color:#000;font-weight:bold">(</span>ti, argc, argv, result, maxlen<span style="color:#000;font-weight:bold">)</span> -&gt; static int multipath_message
+		<span style="color:#008080">action</span> <span style="color:#000;font-weight:bold">=</span> fail_path;
+		action_dev<span style="color:#000;font-weight:bold">(</span>m, dev, action<span style="color:#000;font-weight:bold">)</span> -&gt; static int action_dev
+			action<span style="color:#000;font-weight:bold">(</span>pgpath<span style="color:#000;font-weight:bold">)</span> -&gt; static int fail_path
+dm-mpath.c -&gt; static int fail_path <span style="color:#998;font-style:italic">#路径故障</span>
+	pgpath-&gt;pg-&gt;ps.type-&gt;fail_path<span style="color:#000;font-weight:bold">(</span>&amp;pgpath-&gt;pg-&gt;ps, &amp;pgpath-&gt;path<span style="color:#000;font-weight:bold">)</span> -&gt; .fail_path	<span style="color:#000;font-weight:bold">=</span> st_fail_path -&gt; static void st_fail_path
+		list_move<span style="color:#000;font-weight:bold">(</span>&amp;pi-&gt;list, &amp;s-&gt;failed_paths<span style="color:#000;font-weight:bold">)</span>
+	DMWARN<span style="color:#000;font-weight:bold">(</span><span style="color:#d14">&#34;%s: Failing path %s.&#34;</span> ...
+	m-&gt;current_pgpath <span style="color:#000;font-weight:bold">=</span> NULL -&gt; 将当前路径清空
+	dm_path_uevent<span style="color:#000;font-weight:bold">(</span>DM_UEVENT_PATH_FAILED -&gt; 此补丁添加了对失败路径和恢复路径的 dm_path_event 的调用 -&gt; void dm_path_uevent -&gt; _dm_uevent_type_names<span style="color:#000;font-weight:bold">[]</span> -&gt; <span style="color:#000;font-weight:bold">{</span>DM_UEVENT_PATH_FAILED, KOBJ_CHANGE, <span style="color:#d14">&#34;PATH_FAILED&#34;</span><span style="color:#000;font-weight:bold">}</span>
+		dm_build_path_uevent
+		dm_uevent_add -&gt; void dm_uevent_add -&gt; list_add<span style="color:#000;font-weight:bold">(</span>elist, &amp;md-&gt;uevent_list<span style="color:#000;font-weight:bold">)</span> -&gt; 挂链表
+		dm_send_uevents -&gt; void dm_send_uevents
+			dm_copy_name_and_uuid
+			kobject_uevent_env 发送uevent, kobject_uevent这个函数原型如下，就是向用户空间发送uevent，可以理解为驱动（内核态）向用户（用户态）发送了一个KOBJ_ADD
+				kobject_uevent_net_broadcast -&gt; 参考热拔插原理, todo...
+	queue_work<span style="color:#000;font-weight:bold">(</span>dm_mpath_wq, &amp;m-&gt;trigger_event<span style="color:#000;font-weight:bold">)</span> -&gt; 触发一个event以唤起用户态的对该Multipath事件的监听线程, 用户态<span style="color:#000;font-weight:bold">(</span>multipath-tools<span style="color:#000;font-weight:bold">)</span>关键字: PATH_FAILED
+	enable_nopath_timeout<span style="color:#000;font-weight:bold">(</span>m<span style="color:#000;font-weight:bold">)</span>
+		mod_timer<span style="color:#000;font-weight:bold">(</span>&amp;m-&gt;nopath_timer
+
+
+
+
+
+
+
+内核IO映射时选择其他路径:
+static const struct blk_mq_ops <span style="color:#008080">dm_mq_ops</span> <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">{</span>
+	.queue_rq <span style="color:#000;font-weight:bold">=</span> dm_mq_queue_rq,
+	.complete <span style="color:#000;font-weight:bold">=</span> dm_softirq_done,
+	.init_request <span style="color:#000;font-weight:bold">=</span> dm_mq_init_request,
+<span style="color:#000;font-weight:bold">}</span>;
+static blk_status_t dm_mq_queue_rq -&gt; blk-mq 新的多队列块IO排队机制, struct request -&gt; 尝试将引用的字段放在同一个缓存行中
+	dm_start_request<span style="color:#000;font-weight:bold">(</span>md, rq<span style="color:#000;font-weight:bold">)</span>
+		blk_mq_start_request -&gt; 设备驱动程序使用的函数来通知块层现在将处理请求，因此 blk 层可以进行适当的初始化，例如启动超时计时器
+			trace_block_rq_issue<span style="color:#000;font-weight:bold">(</span>rq<span style="color:#000;font-weight:bold">)</span> -&gt; 下发io到驱动, Linux下block层的监控工具blktrace, https://blog.csdn.net/hs794502825/article/details/8541235, linux跟踪系统, https://elinux.org/Kernel_Trace_Systems
+			test_bit<span style="color:#000;font-weight:bold">(</span>QUEUE_FLAG_STATS, &amp;q-&gt;queue_flags<span style="color:#000;font-weight:bold">)</span> -&gt; int test_bit<span style="color:#000;font-weight:bold">(</span>nr, void *addr<span style="color:#000;font-weight:bold">)</span> 原子的返回addr位所指对象nr位
+			blk_add_timer<span style="color:#000;font-weight:bold">(</span>rq<span style="color:#000;font-weight:bold">)</span> -&gt; 启动单个请求超时计时器
+				mod_timer<span style="color:#000;font-weight:bold">(</span>&amp;q-&gt;timeout, expiry<span style="color:#000;font-weight:bold">)</span>
+			WRITE_ONCE<span style="color:#000;font-weight:bold">(</span>rq-&gt;bio-&gt;bi_cookie, blk_rq_to_qc<span style="color:#000;font-weight:bold">(</span>rq<span style="color:#000;font-weight:bold">))</span> -&gt; Linux内核中的READ_ONCE和WRITE_ONCE宏, https://zhuanlan.zhihu.com/p/344256943, 缓存一致性: https://blog.csdn.net/zxp_cpinfo/article/details/53523697, 所以就出现了缓存一致性协议。最出名的就是Intel 的MESI协议，MESI协议保证了每个缓存中使用的共享变量的副本是一致的。它核心的思想是：当CPU写数据时，如果发现操作的变量是共享变量，即在其他CPU中也存在该变量的副本，会发出信号通知其他CPU将该变量的缓存行置为无效状态，因此当其他CPU需要读取这个变量时，发现自己缓存中缓存该变量的缓存行是无效的，那么它就会从内存重新读取
+		dm_get<span style="color:#000;font-weight:bold">(</span>md<span style="color:#000;font-weight:bold">)</span>
+	init_tio<span style="color:#000;font-weight:bold">(</span>tio, rq, md<span style="color:#000;font-weight:bold">)</span> -&gt; target_io
+	map_request<span style="color:#000;font-weight:bold">(</span>tio<span style="color:#000;font-weight:bold">)</span>
+		ti-&gt;type-&gt;clone_and_map_rq -&gt; static int multipath_clone_and_map
+			Do we need to <span style="color:#000;font-weight:bold">select</span> a new pgpath? 我们是否需要选择一个新的优先级组路径?
+			<span style="color:#008080">pgpath</span> <span style="color:#000;font-weight:bold">=</span> choose_pgpath<span style="color:#000;font-weight:bold">(</span>m, nr_bytes<span style="color:#000;font-weight:bold">)</span> -&gt; Switchgroup消息传递到内核，会修改内核multipath对象的current_pgpath<span style="color:#000;font-weight:bold">=</span>NULL和nextpg，failback消息传递到内核，会调用 fail_path 方法修改内核multipath对象的 <span style="color:#008080">current_pgpath</span><span style="color:#000;font-weight:bold">=</span>NULL，之后的读写请求到multipath_target的map_io时就会选择的新的路径
+				choose_path_in_pg -&gt; dm mpath：消除 IO 快速路径中自旋锁的使用,此提交的主要动机是提高大型 NUMA 系统上 DM 多路径的可扩展性，其中 m-&gt;lock 自旋锁争用已被证明是真正快速存储的严重瓶颈在此提交中利用了使用 lockless_dereference<span style="color:#000;font-weight:bold">()</span> 以原子方式读取指针的能力。 但是所有指针写入仍然受到 m-&gt;lock 自旋锁的保护（这很好，因为这些现在都发生在慢速路径中）以下函数在其快速路径中不再需要 m-&gt;lock 自旋锁：multipath_busy<span style="color:#000;font-weight:bold">()</span>、__multipath_map<span style="color:#000;font-weight:bold">()</span> 和 do_end_io<span style="color:#000;font-weight:bold">()</span>并且 Choose_pgpath<span style="color:#000;font-weight:bold">()</span> 被修改为_不_更新 m-&gt;current_pgpath 除非它也切换路径组。 这样做是为了避免每次 __multipath_map<span style="color:#000;font-weight:bold">()</span> 调用 Choose_pgpath<span style="color:#000;font-weight:bold">()</span> 时都需要获取 m-&gt;lock。 但是如果通过fail_path<span style="color:#000;font-weight:bold">()</span>失败，m-&gt;current_pgpath将被重置
+					<span style="color:#008080">path</span> <span style="color:#000;font-weight:bold">=</span> pg-&gt;ps.type-&gt;select_path<span style="color:#000;font-weight:bold">(</span>&amp;pg-&gt;ps, nr_bytes<span style="color:#000;font-weight:bold">)</span> -&gt; static struct dm_path *st_select_path -&gt; st_compare_load
+			<span style="color:#008080">clone</span> <span style="color:#000;font-weight:bold">=</span> blk_mq_alloc_request
+				blk_mq_alloc_cached_request
+			pgpath-&gt;pg-&gt;ps.type-&gt;start_io -&gt; static int st_start_io -&gt; 调用路径线算法的 start_io 函数, 如果成功则返回 DM_MAPIO_REMAPPED, 表明映射成功，通知DM框架重新投递请求, dm mpath：添加服务时间负载均衡器，此补丁添加了一个面向服务时间的动态负载均衡器 dm-service-time，它为传入 I/O 选择估计服务时间最短的路径。 通过将进行中的 I/O 大小除以每条路径的性能值来估计服务时间。性能值可以在表加载时作为表参数给出。 如果未给出性能值，则所有路径均被视为相同, 参考流程: https://my.oschina.net/LastRitter/blog/1541330
+				atomic_add<span style="color:#000;font-weight:bold">(</span>nr_bytes, &amp;pi-&gt;in_flight_size<span style="color:#000;font-weight:bold">)</span> -&gt; 在 IO 开始与结束时，分别增减该路径正在处理的 IO 字节数 -&gt; <span style="color:#008080">sz1</span> <span style="color:#000;font-weight:bold">=</span> atomic_read<span style="color:#000;font-weight:bold">(</span>&amp;pi1-&gt;in_flight_size<span style="color:#000;font-weight:bold">)</span> &lt;- static int st_compare_load
+		<span style="color:#000;font-weight:bold">case</span> DM_MAPIO_REMAPPED -&gt; 映射成功
+		setup_clone -&gt; dm：始终将请求分配推迟给 request_queue 的所有者, 如果底层设备是 blk-mq 设备，则 DM 已在底层设备的 request_queue 上调用 blk_mq_alloc_request,  但现在我们允许驱动程序分配额外的数据并提前初始化它，我们需要对所有驱动程序执行相同的操作。 这样做并在块层中使用新的 cmd_size 基础设施极大地简化了 dm-rq 和 mpath 代码，并且还应该使 SQ 和 MQ 设备与 SQ 或 MQ 设备映射器表的任意组合成为可能，作为进一步的步骤
+			blk_rq_prep_clone dm_rq_bio_constructor
+			clone-&gt;end_io <span style="color:#000;font-weight:bold">=</span> end_clone_request
+		trace_block_rq_remap 
+		blk_insert_cloned_request<span style="color:#000;font-weight:bold">(</span>clone<span style="color:#000;font-weight:bold">)</span> -&gt; <span style="color:#998;font-style:italic">#ifdef CONFIG_BLK_MQ_STACKING -&gt; blk-mq：使 blk-mq 堆栈代码可选，堆栈 blk-mq 驱动程序的代码仅由 dm-multipath 使用，并且最好保持这种方式。 使其可选并且仅由设备映射器选择，以便构建机器人更容易捕获滥用行为，例如在最后一个合并窗口中的 ufs 驱动程序中滑入的滥用行为。 另一个积极的副作用是，内核构建时没有设备映射器也会缩小一点</span>
+			<span style="color:#000;font-weight:bold">if</span> <span style="color:#000;font-weight:bold">(</span>blk_rq_sectors<span style="color:#000;font-weight:bold">(</span>rq<span style="color:#000;font-weight:bold">)</span> &gt; max_sectors<span style="color:#000;font-weight:bold">)</span> -&gt; 如果实际支持 Write Same/Zero，SCSI 设备没有一个好的返回方法。 如果设备拒绝非读/写命令（丢弃、写入相同内容等），则低级设备驱动程序会将相关队列限制设置为 0，以防止 blk-lib 发出更多违规操作。 在重置队列限制之前排队的命令需要使用 BLK_STS_NOTSUPP 完成，以避免 I/O 错误传播到上层
+			blk_account_io_start<span style="color:#000;font-weight:bold">(</span>rq<span style="color:#000;font-weight:bold">)</span>
+				blk_do_io_stat
+				update_io_ticks
+			blk_mq_run_dispatch_ops -&gt; blk_mq_request_issue_directly -&gt; rcu -&gt; 读文件过程, 禁用调度器: https://blog.csdn.net/jasonactions/article/details/109614350
+				<span style="color:#000;font-weight:bold">if</span> <span style="color:#000;font-weight:bold">(</span>blk_mq_hctx_stopped<span style="color:#000;font-weight:bold">(</span>hctx<span style="color:#000;font-weight:bold">)</span> <span style="color:#000;font-weight:bold">||</span> blk_queue_quiesced<span style="color:#000;font-weight:bold">(</span>rq-&gt;q<span style="color:#000;font-weight:bold">))</span> -&gt; 队列禁止
+				__blk_mq_issue_directly
+					<span style="color:#008080">ret</span> <span style="color:#000;font-weight:bold">=</span> q-&gt;mq_ops-&gt;queue_rq<span style="color:#000;font-weight:bold">(</span>hctx, &amp;bd<span style="color:#000;font-weight:bold">)</span> -&gt; 内核block层Multi queue多队列的一次优化实践: https://blog.csdn.net/hu1610552336/article/details/121072592
+
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="参考">参考</h2>
+<p>linux_kernel 5.10, lvm2, open-iscsi, multipath-tool</p>
+<p><a href="https://docs.kernel.org/driver-api/scsi.html">https://docs.kernel.org/driver-api/scsi.html</a></p>
+<p><a href="https://github.com/ssbandjl/linux.git">https://github.com/ssbandjl/linux.git</a></p>
+<p>bio下发流程: <a href="https://blog.csdn.net/flyingnosky/article/details/121362813">https://blog.csdn.net/flyingnosky/article/details/121362813</a></p>
+<p>io路径: <a href="https://zhuanlan.zhihu.com/p/545906763">https://zhuanlan.zhihu.com/p/545906763</a></p>
+<p>用户态与内核态通信netlink: <a href="https://gist.github.com/lflish/15e85da8bb9200794255439d0563b195">https://gist.github.com/lflish/15e85da8bb9200794255439d0563b195</a></p>
+<p>实现rfc3720: <a href="https://github.com/ssbandjl/linux/commit/39e84790d3b65a4af1ea1fb0d8f06c3ad75304b3">https://github.com/ssbandjl/linux/commit/39e84790d3b65a4af1ea1fb0d8f06c3ad75304b3</a></p>
+<p>管理内核模块,红帽: <a href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/managing_monitoring_and_updating_the_kernel/managing-kernel-modules_managing-monitoring-and-updating-the-kernel">https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/managing_monitoring_and_updating_the_kernel/managing-kernel-modules_managing-monitoring-and-updating-the-kernel</a></p>
+<p>存储技术原理-敖青云</p>
+<p>内核定时器:</p>
+<p>bpftrace:</p>
+<p>spec: 官方指南: <a href="https://rpm-packaging-guide.github.io/,">https://rpm-packaging-guide.github.io/,</a></p>
+<p>io路径分析: <a href="https://codeantenna.com/a/ADadbOp8tQ">https://codeantenna.com/a/ADadbOp8tQ</a></p>
+<p>编译内核参考: <a href="https://wiki.centos.org/HowTos/Custom_Kernel">https://wiki.centos.org/HowTos/Custom_Kernel</a></p>
+<p>spec文件: 构建rpm包和spec基础: <a href="https://www.cnblogs.com/michael-xiang/p/10480809.html,">https://www.cnblogs.com/michael-xiang/p/10480809.html,</a> 官方指南: <a href="https://rpm-packaging-guide.github.io/,">https://rpm-packaging-guide.github.io/,</a></p>
+<p>kdir: <a href="https://stackoverflow.com/questions/59366772/what-does-the-kernel-compile-rule-exact-mean">https://stackoverflow.com/questions/59366772/what-does-the-kernel-compile-rule-exact-mean</a></p>
+<p>kernel makefile: <a href="https://www.kernel.org/doc/html/latest/kbuild/makefiles.html">https://www.kernel.org/doc/html/latest/kbuild/makefiles.html</a></p>
+<p>Linux模块文件如何编译到内核和独立编译成模块: <a href="https://z.itpub.net/article/detail/090A31801416081BC9D0781C05AC91AA">https://z.itpub.net/article/detail/090A31801416081BC9D0781C05AC91AA</a></p>
+<p>安装源码: <a href="https://wiki.centos.org/HowTos/I_need_the_Kernel_Source">https://wiki.centos.org/HowTos/I_need_the_Kernel_Source</a></p>
+<p>编译内核模块: <a href="https://wiki.centos.org/HowTos/BuildingKernelModules">https://wiki.centos.org/HowTos/BuildingKernelModules</a></p>
+<p>dm-verity简介 ——（1）: <a href="https://www.cnblogs.com/hellokitty2/p/12364836.html">https://www.cnblogs.com/hellokitty2/p/12364836.html</a></p>
+<p>管理工具源码_lvm_dmsetup: <a href="https://sourceware.org/dm/">https://sourceware.org/dm/</a></p>
+<p>多路径参考: <a href="https://www.cnblogs.com/D-Tec/archive/2013/03/01/2938969.html">https://www.cnblogs.com/D-Tec/archive/2013/03/01/2938969.html</a></p>
+<p>uevent:</p>
+<p><a href="https://www.cnblogs.com/arnoldlu/p/11246204.html">https://www.cnblogs.com/arnoldlu/p/11246204.html</a></p>
+<p>device_mapper_uevent: <a href="https://docs.kernel.org/admin-guide/device-mapper/dm-uevent.html">https://docs.kernel.org/admin-guide/device-mapper/dm-uevent.html</a></p>
+<p>用udev动态管理内核设备: <a href="https://documentation.suse.com/sles/12-SP5/html/SLES-all/cha-udev.html">https://documentation.suse.com/sles/12-SP5/html/SLES-all/cha-udev.html</a></p>
+<p>linux设备模型: <a href="https://linux-kernel-labs.github.io/refs/pull/183/merge/labs/device_model.html">https://linux-kernel-labs.github.io/refs/pull/183/merge/labs/device_model.html</a></p>
+<p>源码分析: <a href="https://groups.google.com/g/open-iscsi/c/Z0FMQUxalcU">https://groups.google.com/g/open-iscsi/c/Z0FMQUxalcU</a>
+iscsid: <a href="https://blog.csdn.net/kjtt_kjtt/article/details/38661329">https://blog.csdn.net/kjtt_kjtt/article/details/38661329</a>
+upstream: <a href="https://github.com/open-iscsi/open-iscsi.git">https://github.com/open-iscsi/open-iscsi.git</a></p>
+<p>多路径参考: <a href="https://wenku.baidu.com/view/a1dd303ab9f3f90f77c61bc9.html?rec_flag=default&amp;_wkts_=1687763240420">https://wenku.baidu.com/view/a1dd303ab9f3f90f77c61bc9.html?rec_flag=default&amp;_wkts_=1687763240420</a></p>
+<h2 id="晓兵">晓兵</h2>
+<p>博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a></p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/linux/multipath/linux_kernel_multipath_fail_path/">https://logread.cn/post/linux/multipath/linux_kernel_multipath_fail_path/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/linux/linux_kernel_vs_dpdk/">Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]</a></li>
+        
+        <li><a href="/post/study/summary/">常用学习网站汇总(随时更新)</a></li>
+        
+        <li><a href="/post/daos/daos_server_engine_start/">DAOS引擎启动流程-源码分析</a></li>
+        
+        <li><a href="/post/fs/gfs_paper/">谷歌文件系统</a></li>
+        
+        <li><a href="/post/daos/daos_spdk_bdev/">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+                <li><a href='/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84'>多路径</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2023
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/linux/multipath/linux_kernel_multipath_fail_path/" title="linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2">linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/linux_kernel_vs_dpdk/" title="Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]">Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/study/summary/" title="常用学习网站汇总(随时更新)">常用学习网站汇总(随时更新)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_server_engine_start/" title="DAOS引擎启动流程-源码分析">DAOS引擎启动流程-源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/fs/gfs_paper/" title="谷歌文件系统">谷歌文件系统</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_spdk_bdev/" title="基于DOAS文件系统接口(DFS)暴露的SPDK块设备">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/" title="Mercury为高性能计算启用远程过程调用(RPC)">Mercury为高性能计算启用远程过程调用(RPC)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/stor/ceph/ceph_msg/" title="MSGR2 协议（MSGR2.0 和 MSGR2.1）">MSGR2 协议（MSGR2.0 和 MSGR2.1）</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/trace/linux_google_trace_dapper/" title="Linux_google_trace_dapper">Linux_google_trace_dapper</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/ofa/ofa_librabric/" title="OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织">OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title" style="color:red">福利派送</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a href="https://blog.csdn.net/ssbandjl/article/details/130780497?spm=1001.2014.3001.5501" title="DAOS与SPDK" target="_blank" style="color:red">
+                
+                    <img src="https://img-blog.csdnimg.cn/f0b7b84f9d4c40388a49bacb4fa47545.png">
+                
+            </a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/multipath/">multipath (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (12)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (17)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/">多路径</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://github.com/ssbandjl/golang-design-pattern" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

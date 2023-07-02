@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信 | 晓兵</title>
+    <meta property="og:title" content="Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信 - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2023-06-20T11:51:19&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2023-06-20T11:51:19&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储, ceph, 分布式块存储, 云计算">
+    <meta name="description" content="Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/linux/build_kernel_modify_iscsi_with_header/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#背景">背景</a></li>
+    <li><a href="#环境">环境</a></li>
+    <li><a href="#获取源码">获取源码</a></li>
+    <li><a href="#安装源码">安装源码</a></li>
+    <li><a href="#修改源码write10驱动-driversscsisdc">修改源码WRITE10(驱动: drivers/scsi/sd.c)</a></li>
+    <li><a href="#编译内核为rpm">编译内核为RPM</a></li>
+    <li><a href="#参考">参考</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年6月20日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+            <span class="meta-category"><a href='/categories/kernel'>kernel</a></span>
+            
+            <span class="meta-category"><a href='/categories/iscsi'>iscsi</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="linux内核编译及利用scsi协议保留字段在initiator和tgt间通信">Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信</h1>
+<h2 id="背景">背景</h2>
+<p>需求: 如何利用ISCSI协议保留字段, 在Initiator和Tgt端传递, 完成一些控制开关或其他管理功能 ?</p>
+<p>解决: 定制内核SCSI层协议, 修改用户态TGT项目来适配保留字段</p>
+<h2 id="环境">环境</h2>
+<p>CentOS Linux (5.10.38-21.hl10.el7.x86_64) 7 (Core)(带有SCSI协议驱动), 客户端</p>
+<p>TGT 用户态服务端</p>
+<h2 id="获取源码">获取源码</h2>
+<p>获取源码一般有以下途径</p>
+<ol>
+<li>官方源码, 参考(<a href="https://wiki.centos.org/HowTos/I_need_the_Kernel_Source">https://wiki.centos.org/HowTos/I_need_the_Kernel_Source</a>) 获取源码和安装编译依赖软件和打包软件(rpmbuild)及依赖</li>
+<li>本文采用我司源码(http://10.153.3.130/h3linux/1/kernel/source/kernel-alt-5.10.38-21.hl10.el7.src.rpm),  源码列表: http://10.153.3.130/h3linux/1/kernel/source/</li>
+</ol>
+<h2 id="安装源码">安装源码</h2>
+<ul>
+<li>
+<p>创建非root用户, 比如useradd mockbuild</p>
+</li>
+<li>
+<p>生成RPM目录</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"> mkdir -p ~/rpmbuild/<span style="color:#000;font-weight:bold">{</span>BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS<span style="color:#000;font-weight:bold">}</span>
+ <span style="color:#0086b3">echo</span> <span style="color:#d14">&#39;%_topdir %(echo $HOME)/rpmbuild&#39;</span> &gt; ~/.rpmmacros
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>用rpm -ivh xxx.rpm安装源码, 安装后的目录树</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#000;font-weight:bold">[</span>mockbuild@node1 ~<span style="color:#000;font-weight:bold">]</span>$ tree -L <span style="color:#099">2</span> rpmbuild
+rpmbuild
+├── BUILD
+│   ├── debugfiles.list
+│   ├── debugfiles.list.dirs.sed
+│   ├── debuginfodebug.list
+│   ├── debuginfokdump.list
+│   ├── debuginfo.list
+│   ├── debuglinks.list
+│   ├── debugsources.list
+│   ├── elfbins.list
+│   ├── kernel-alt-5.10.38-21.01.el7
+│   ├── perf-debuginfo.list
+│   ├── python-perf-debuginfo.list
+│   └── tools-debuginfo.list
+├── BUILDROOT
+├── RPMS
+│   └── x86_64
+├── SOURCES
+│   ├── centos-ca-secureboot.der
+│   ├── centos-kpatch.x509
+│   ├── centos-ldup.x509
+│   ├── centossecureboot001.crt
+│   ├── check-kabi
+│   ├── cpupower.config
+│   ├── cpupower.service
+│   ├── H3Linux_patches
+│   ├── H3Linux_patches.tar.gz
+│   ├── kernel-alt-5.10.38-aarch64.config
+│   ├── kernel-alt-5.10.38-aarch64-debug.config
+│   ├── kernel-alt-5.10.38-x86_64.config
+│   ├── kernel-alt-5.10.38-x86_64-debug.config
+│   ├── linux-5.10.38
+│   ├── linux-5.10.38.tar.xz
+│   ├── Makefile.common
+│   ├── Module.kabi_s390x
+│   ├── Module.kabi_x86_64
+│   ├── sign-modules
+│   └── x509.genkey
+├── SPECS
+│   ├── kernel-alt.spec
+│   └── run.sh
+└── SRPMS
+  
+<span style="color:#099">10</span> directories, <span style="color:#099">31</span> files
+<span style="color:#000;font-weight:bold">[</span>mockbuild@node1 ~<span style="color:#000;font-weight:bold">]</span>$ 
+</code></pre></td></tr></table>
+</div>
+</div></li>
+</ul>
+<h2 id="修改源码write10驱动-driversscsisdc">修改源码WRITE10(驱动: drivers/scsi/sd.c)</h2>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#000;font-weight:bold">static</span> blk_status_t <span style="color:#900;font-weight:bold">sd_setup_rw10_cmnd</span>(<span style="color:#000;font-weight:bold">struct</span> scsi_cmnd <span style="color:#000;font-weight:bold">*</span>cmd, <span style="color:#458;font-weight:bold">bool</span> write,
+				       sector_t lba, <span style="color:#458;font-weight:bold">unsigned</span> <span style="color:#458;font-weight:bold">int</span> nr_blocks,
+				       <span style="color:#458;font-weight:bold">unsigned</span> <span style="color:#458;font-weight:bold">char</span> flags)
+{
+	<span style="color:#458;font-weight:bold">int</span> a <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>;
+	cmd<span style="color:#000;font-weight:bold">-&gt;</span>cmd_len <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">10</span>;
+	cmd<span style="color:#000;font-weight:bold">-&gt;</span>cmnd[<span style="color:#099">0</span>] <span style="color:#000;font-weight:bold">=</span> write <span style="color:#000;font-weight:bold">?</span> <span style="color:#900;font-weight:bold">WRITE_10</span> : READ_10;
+	cmd<span style="color:#000;font-weight:bold">-&gt;</span>cmnd[<span style="color:#099">1</span>] <span style="color:#000;font-weight:bold">=</span> flags;
+	<span style="color:#998;font-style:italic">// cmd-&gt;cmnd[6] = 0;
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#998;font-style:italic">// cmd-&gt;cmnd[6] = (unsigned char)0xc0; // RESERVED 1100 0000(GROUP_NUM)
+</span><span style="color:#998;font-style:italic"></span>    
+    <span style="color:#998;font-style:italic">// 如下图, 参考协议WRITE(10), 将第7字节(INDEX=6, cmnd[6])的高第7,6位置位1, 得到该字节为0xc0(11000000)
+</span><span style="color:#998;font-style:italic"></span>    a <span style="color:#000;font-weight:bold">|=</span>(<span style="color:#099">1</span><span style="color:#000;font-weight:bold">&lt;&lt;</span><span style="color:#099">6</span>);
+    a <span style="color:#000;font-weight:bold">|=</span>(<span style="color:#099">1</span><span style="color:#000;font-weight:bold">&lt;&lt;</span><span style="color:#099">7</span>);
+	cmd<span style="color:#000;font-weight:bold">-&gt;</span>cmnd[<span style="color:#099">6</span>] <span style="color:#000;font-weight:bold">=</span> a;
+	cmd<span style="color:#000;font-weight:bold">-&gt;</span>cmnd[<span style="color:#099">9</span>] <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>;
+	put_unaligned_be32(lba, <span style="color:#000;font-weight:bold">&amp;</span>cmd<span style="color:#000;font-weight:bold">-&gt;</span>cmnd[<span style="color:#099">2</span>]);
+	put_unaligned_be16(nr_blocks, <span style="color:#000;font-weight:bold">&amp;</span>cmd<span style="color:#000;font-weight:bold">-&gt;</span>cmnd[<span style="color:#099">7</span>]);
+
+	<span style="color:#000;font-weight:bold">return</span> BLK_STS_OK;
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>
+        <img class="mx-auto" alt="image-20230620140358140" src="C:%5cUsers%5cs30893%5cAppData%5cRoaming%5cTypora%5ctypora-user-images%5cimage-20230620140358140.png" />   
+    </p>
+<p>修改源码后,打包源码</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#0086b3">cd</span> ~/rpmbuild/SOURCES/ <span style="color:#000;font-weight:bold">&amp;&amp;</span> sudo rm -rf linux-5.10.38.tar.xz  linux-5.10.38.tar linux-5.10.38.tar <span style="color:#000;font-weight:bold">&amp;&amp;</span> tar -cvf linux-5.10.38.tar linux-5.10.38/ <span style="color:#000;font-weight:bold">&amp;&amp;</span> xz -v -T <span style="color:#099">0</span> -0 linux-5.10.38.tar
+</code></pre></td></tr></table>
+</div>
+</div><p>tgt端修改源码如下:</p>
+<p>bs_rbd_.c -&gt; bs_rbd_request</p>
+<p>
+        <img class="mx-auto" alt="image-20230620141549239" src="C:%5cUsers%5cs30893%5cAppData%5cRoaming%5cTypora%5ctypora-user-images%5cimage-20230620141549239.png" />   
+    </p>
+<p>重新部署tgt</p>
+<h2 id="编译内核为rpm">编译内核为RPM</h2>
+<p>参考官方编译流程(<a href="https://wiki.centos.org/HowTos/Custom_Kernel">https://wiki.centos.org/HowTos/Custom_Kernel</a>)</p>
+<ul>
+<li>
+<p>只安装依赖即可(.config文件源码中已经有了, 无需拷贝和修改)</p>
+</li>
+<li>
+<p>编译成RPM包</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#0086b3">cd</span> ~/rpmbuild/SPECS
+sudo rpmbuild -bb --target<span style="color:#000;font-weight:bold">=</span><span style="color:#d14">`</span>uname -m<span style="color:#d14">`</span> kernel-alt.spec
+<span style="color:#998;font-style:italic">#编译后的驱动为sd_mod.ko</span>
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>安装(初次安装直接安装即可, 后续更新, 需要先做一个内核切换)</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#998;font-style:italic">#rpm -ivh kernel-*.rpm</span>
+  
+<span style="color:#998;font-style:italic"># 改默认内核</span>
+<span style="color:#998;font-style:italic"># 查看内核列表</span>
+grubby --info<span style="color:#000;font-weight:bold">=</span>ALL
+  
+<span style="color:#998;font-style:italic"># 设置内核索引号</span>
+grub2-set-default <span style="color:#d14">&#34;CentOS Linux (5.10.38-21.hl10.el7.x86_64) 7 (Core)&#34;</span> <span style="color:#998;font-style:italic"># index=2, 设置为原来的, reboot后删除编译的, 然后更新编译的新核</span>
+<span style="color:#998;font-style:italic"># grub2-set-default 2</span>
+  
+<span style="color:#998;font-style:italic"># reboot</span>
+  
+<span style="color:#998;font-style:italic"># 查看内核</span>
+grub2-editenv list
+  
+<span style="color:#998;font-style:italic"># 查看内核索引</span>
+grubby --default-index
+  
+<span style="color:#998;font-style:italic"># yum remove kernel-debuginfo</span>
+<span style="color:#998;font-style:italic"># yum remove kernel-debug*</span>
+<span style="color:#998;font-style:italic"># sudo yum remove kernel-debug-devel-5.10.38-21.hl10.el7.x86_64 -y</span>
+  
+<span style="color:#998;font-style:italic"># 安装新内核, 带有debug字段</span>
+<span style="color:#0086b3">cd</span> ~mockbuild/rpmbuild/RPMS/<span style="color:#d14">`</span>uname -m<span style="color:#d14">`</span>/
+sudo yum localinstall kernel-*.rpm -y
+  
+<span style="color:#998;font-style:italic"># 设置为新核</span>
+grub2-set-default <span style="color:#099">0</span>
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>重启系统, 查看模块: modinfo sd_mod</p>
+</li>
+<li>
+<p>打开调试开关</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#0086b3">echo</span> -1 &gt; /proc/sys/dev/scsi/logging_level
+dmesg -w <span style="color:#998;font-style:italic">#监听scsi驱动日志</span>
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>Initiator连接tgt后, 格式化块设备, 触发WRITE(10), 查看initiator端和tgt端日志, 字节6均为c0</p>
+<pre><code>initiator: Write(10) 2a 00 34 c4 d4 20 c0 00 18 00
+tgt: 2023-06-20 11:32:41.008554-[INFO]-[TGT]-[pid:1215900][tid:1216396][bs_rbd.c][bs_rbd_request][line:1001]:pdu byte6:0xc0
+</code></pre></li>
+<li>
+<p>通信完成</p>
+</li>
+</ul>
+<h2 id="参考">参考</h2>
+<p>内核模块原理及编译外部模块: <a href="https://docs.kernel.org/kbuild/modules.html">https://docs.kernel.org/kbuild/modules.html</a></p>
+<p>获取源码和安装依赖: <a href="https://wiki.centos.org/HowTos/I_need_the_Kernel_Source">https://wiki.centos.org/HowTos/I_need_the_Kernel_Source</a></p>
+<p>编译RPM: <a href="https://wiki.centos.org/HowTos/Custom_Kernel">https://wiki.centos.org/HowTos/Custom_Kernel</a></p>
+<p>RPM及SPEC文件详解: <a href="https://rpm-packaging-guide.github.io/">https://rpm-packaging-guide.github.io/</a></p>
+<p>单独构建模块: <a href="https://wiki.centos.org/HowTos/BuildingKernelModules">https://wiki.centos.org/HowTos/BuildingKernelModules</a></p>
+<p>内核makfile(编译树采用递归下降): <a href="https://docs.kernel.org/kbuild/makefiles.html">https://docs.kernel.org/kbuild/makefiles.html</a></p>
+<p>内核配置文件kconfig(.config,控制模块打开和关闭): <a href="https://docs.kernel.org/kbuild/kconfig.html">https://docs.kernel.org/kbuild/kconfig.html</a></p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/linux/build_kernel_modify_iscsi_with_header/">https://logread.cn/post/linux/build_kernel_modify_iscsi_with_header/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/linux/build_kernel_modify_iscsi/">Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信</a></li>
+        
+        <li><a href="/post/linux/linux_kernel_vs_dpdk/">Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]</a></li>
+        
+        <li><a href="/post/study/summary/">常用学习网站汇总(随时更新)</a></li>
+        
+        <li><a href="/post/daos/daos_server_engine_start/">DAOS引擎启动流程-源码分析</a></li>
+        
+        <li><a href="/post/fs/gfs_paper/">谷歌文件系统</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+                <li><a href='/tags/kernel'>kernel</a></li>
+                
+                <li><a href='/tags/iscsi'>iscsi</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2023
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/linux/build_kernel_modify_iscsi/" title="Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信">Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/build_kernel_modify_iscsi_with_header/" title="Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信">Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/linux_kernel_vs_dpdk/" title="Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]">Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/study/summary/" title="常用学习网站汇总(随时更新)">常用学习网站汇总(随时更新)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_server_engine_start/" title="DAOS引擎启动流程-源码分析">DAOS引擎启动流程-源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/fs/gfs_paper/" title="谷歌文件系统">谷歌文件系统</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_spdk_bdev/" title="基于DOAS文件系统接口(DFS)暴露的SPDK块设备">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/" title="Mercury为高性能计算启用远程过程调用(RPC)">Mercury为高性能计算启用远程过程调用(RPC)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/stor/ceph/ceph_msg/" title="MSGR2 协议（MSGR2.0 和 MSGR2.1）">MSGR2 协议（MSGR2.0 和 MSGR2.1）</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/trace/linux_google_trace_dapper/" title="Linux_google_trace_dapper">Linux_google_trace_dapper</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title" style="color:red">福利派送</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a href="https://mp.weixin.qq.com/s?__biz=MzUyOTAzNTI3NA==&amp;mid=2247487635&amp;idx=1&amp;sn=3c1066ffe3243738a6cf8d2f4e20122e&amp;chksm=fa6669f6cd11e0e00a9a9f2dd33848961b626ca410a94868aa61fc4f50b9a556e80b13c054e9&amp;token=226329094&amp;lang=zh_CN#rd" title="【2023双12】ALL IN CLoud 低至1折" target="_blank" style="color:red">
+                
+                    <img src="https://img.alicdn.com/tfs/TB1_rYHo7P2gK0jSZPxXXacQpXa-690-388.jpg">
+                
+            </a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/iscsi/">iscsi (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/kernel/">kernel (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (13)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (18)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/iscsi/">iscsi</a>
+  
+  <a href="https://logread.cn/tags/kernel/">kernel</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://github.com/ssbandjl/golang-design-pattern" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

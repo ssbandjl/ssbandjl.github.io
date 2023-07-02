@@ -1,0 +1,229 @@
+---
+title: "Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信"
+date: 2023-06-20T11:51:19+08:00
+draft: true
+categories: ['stor', '存储', 'kernel','iscsi']
+tags: ['linux', 'stor', 'kernel','iscsi']
+---
+
+# Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信
+
+## 背景
+
+需求: 如何利用ISCSI协议保留字段, 在Initiator和Tgt端传递, 完成一些控制开关或其他管理功能 ?
+
+解决: 定制内核SCSI层协议, 修改用户态TGT项目来适配保留字段
+
+
+
+## 环境
+
+CentOS Linux (5.10.38-21.hl10.el7.x86_64) 7 (Core)(带有SCSI协议驱动), 客户端
+
+TGT 用户态服务端
+
+
+
+## 获取源码
+
+获取源码一般有以下途径
+
+1. 官方源码, 参考(https://wiki.centos.org/HowTos/I_need_the_Kernel_Source) 获取源码和安装编译依赖软件和打包软件(rpmbuild)及依赖
+2. 本文采用我司源码(http://10.153.3.130/h3linux/1/kernel/source/kernel-alt-5.10.38-21.hl10.el7.src.rpm),  源码列表: http://10.153.3.130/h3linux/1/kernel/source/
+
+## 安装源码
+
+- 创建非root用户, 比如useradd mockbuild
+
+- 生成RPM目录
+
+  ```bash
+   mkdir -p ~/rpmbuild/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+   echo '%_topdir %(echo $HOME)/rpmbuild' > ~/.rpmmacros
+  ```
+
+- 用rpm -ivh xxx.rpm安装源码, 安装后的目录树
+
+  ```bash
+  [mockbuild@node1 ~]$ tree -L 2 rpmbuild
+  rpmbuild
+  ├── BUILD
+  │   ├── debugfiles.list
+  │   ├── debugfiles.list.dirs.sed
+  │   ├── debuginfodebug.list
+  │   ├── debuginfokdump.list
+  │   ├── debuginfo.list
+  │   ├── debuglinks.list
+  │   ├── debugsources.list
+  │   ├── elfbins.list
+  │   ├── kernel-alt-5.10.38-21.01.el7
+  │   ├── perf-debuginfo.list
+  │   ├── python-perf-debuginfo.list
+  │   └── tools-debuginfo.list
+  ├── BUILDROOT
+  ├── RPMS
+  │   └── x86_64
+  ├── SOURCES
+  │   ├── centos-ca-secureboot.der
+  │   ├── centos-kpatch.x509
+  │   ├── centos-ldup.x509
+  │   ├── centossecureboot001.crt
+  │   ├── check-kabi
+  │   ├── cpupower.config
+  │   ├── cpupower.service
+  │   ├── H3Linux_patches
+  │   ├── H3Linux_patches.tar.gz
+  │   ├── kernel-alt-5.10.38-aarch64.config
+  │   ├── kernel-alt-5.10.38-aarch64-debug.config
+  │   ├── kernel-alt-5.10.38-x86_64.config
+  │   ├── kernel-alt-5.10.38-x86_64-debug.config
+  │   ├── linux-5.10.38
+  │   ├── linux-5.10.38.tar.xz
+  │   ├── Makefile.common
+  │   ├── Module.kabi_s390x
+  │   ├── Module.kabi_x86_64
+  │   ├── sign-modules
+  │   └── x509.genkey
+  ├── SPECS
+  │   ├── kernel-alt.spec
+  │   └── run.sh
+  └── SRPMS
+  
+  10 directories, 31 files
+  [mockbuild@node1 ~]$ 
+  ```
+
+
+
+## 修改源码WRITE10(驱动: drivers/scsi/sd.c)
+
+```c
+static blk_status_t sd_setup_rw10_cmnd(struct scsi_cmnd *cmd, bool write,
+				       sector_t lba, unsigned int nr_blocks,
+				       unsigned char flags)
+{
+	int a = 0;
+	cmd->cmd_len = 10;
+	cmd->cmnd[0] = write ? WRITE_10 : READ_10;
+	cmd->cmnd[1] = flags;
+	// cmd->cmnd[6] = 0;
+	// cmd->cmnd[6] = (unsigned char)0xc0; // RESERVED 1100 0000(GROUP_NUM)
+    
+    // 如下图, 参考协议WRITE(10), 将第7字节(INDEX=6, cmnd[6])的高第7,6位置位1, 得到该字节为0xc0(11000000)
+    a |=(1<<6);
+    a |=(1<<7);
+	cmd->cmnd[6] = a;
+	cmd->cmnd[9] = 0;
+	put_unaligned_be32(lba, &cmd->cmnd[2]);
+	put_unaligned_be16(nr_blocks, &cmd->cmnd[7]);
+
+	return BLK_STS_OK;
+}
+```
+
+![image-20230620140358140](C:\Users\s30893\AppData\Roaming\Typora\typora-user-images\image-20230620140358140.png)
+
+修改源码后,打包源码
+
+```bash
+cd ~/rpmbuild/SOURCES/ && sudo rm -rf linux-5.10.38.tar.xz  linux-5.10.38.tar linux-5.10.38.tar && tar -cvf linux-5.10.38.tar linux-5.10.38/ && xz -v -T 0 -0 linux-5.10.38.tar
+```
+
+tgt端修改源码如下:
+
+bs_rbd_.c -> bs_rbd_request
+
+![image-20230620141549239](C:\Users\s30893\AppData\Roaming\Typora\typora-user-images\image-20230620141549239.png)
+
+重新部署tgt
+
+## 编译内核为RPM
+
+参考官方编译流程(https://wiki.centos.org/HowTos/Custom_Kernel)
+
+- 只安装依赖即可(.config文件源码中已经有了, 无需拷贝和修改)
+
+- 编译成RPM包
+
+  ```bash
+  cd ~/rpmbuild/SPECS
+  sudo rpmbuild -bb --target=`uname -m` kernel-alt.spec
+  #编译后的驱动为sd_mod.ko
+  ```
+
+- 安装(初次安装直接安装即可, 后续更新, 需要先做一个内核切换)
+
+  ```bash
+  #rpm -ivh kernel-*.rpm
+  
+  # 改默认内核
+  # 查看内核列表
+  grubby --info=ALL
+  
+  # 设置内核索引号
+  grub2-set-default "CentOS Linux (5.10.38-21.hl10.el7.x86_64) 7 (Core)" # index=2, 设置为原来的, reboot后删除编译的, 然后更新编译的新核
+  # grub2-set-default 2
+  
+  # reboot
+  
+  # 查看内核
+  grub2-editenv list
+  
+  # 查看内核索引
+  grubby --default-index
+  
+  # yum remove kernel-debuginfo
+  # yum remove kernel-debug*
+  # sudo yum remove kernel-debug-devel-5.10.38-21.hl10.el7.x86_64 -y
+  
+  # 安装新内核, 带有debug字段
+  cd ~mockbuild/rpmbuild/RPMS/`uname -m`/
+  sudo yum localinstall kernel-*.rpm -y
+  
+  # 设置为新核
+  grub2-set-default 0
+  ```
+
+- 重启系统, 查看模块: modinfo sd_mod
+
+- 打开调试开关
+
+  ```bash
+  echo -1 > /proc/sys/dev/scsi/logging_level
+  dmesg -w #监听scsi驱动日志
+  ```
+
+- Initiator连接tgt后, 格式化块设备, 触发WRITE(10), 查看initiator端和tgt端日志, 字节6均为c0
+
+  ```
+  initiator: Write(10) 2a 00 34 c4 d4 20 c0 00 18 00
+  tgt: 2023-06-20 11:32:41.008554-[INFO]-[TGT]-[pid:1215900][tid:1216396][bs_rbd.c][bs_rbd_request][line:1001]:pdu byte6:0xc0
+  ```
+
+- 通信完成
+
+## 参考
+
+内核模块原理及编译外部模块: https://docs.kernel.org/kbuild/modules.html 
+
+获取源码和安装依赖: https://wiki.centos.org/HowTos/I_need_the_Kernel_Source
+
+编译RPM: https://wiki.centos.org/HowTos/Custom_Kernel
+
+RPM及SPEC文件详解: https://rpm-packaging-guide.github.io/
+
+单独构建模块: https://wiki.centos.org/HowTos/BuildingKernelModules
+
+内核makfile(编译树采用递归下降): https://docs.kernel.org/kbuild/makefiles.html
+
+内核配置文件kconfig(.config,控制模块打开和关闭): https://docs.kernel.org/kbuild/kconfig.html
+
+
+
+
+
+
+
+
+
+
