@@ -4,12 +4,97 @@
   
   <url>
     <loc>https://logread.cn/categories/</loc>
-    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
+    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/tags/linux/</loc>
-    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
+    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/</loc>
+    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/</loc>
+    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/rdma/</loc>
+    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/rdma/</loc>
+    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/roce/</loc>
+    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/roce/</loc>
+    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/stor/</loc>
+    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/stor/</loc>
+    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/</loc>
+    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</loc>
+    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/</loc>
+    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/linux/nvmf/</loc>
+    <lastmod>2023-07-14T22:09:39+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/nvmeof/</loc>
+    <lastmod>2023-07-14T22:09:39+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/nvmeof/</loc>
+    <lastmod>2023-07-14T22:09:39+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/daos/</loc>
+    <lastmod>2023-07-08T09:50:03+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/daos/</loc>
+    <lastmod>2023-07-08T09:50:03+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/daos/daos_cart_swim/</loc>
+    <lastmod>2023-07-08T09:50:03+08:00</lastmod>
   </url>
   
   <url>
@@ -23,37 +108,7 @@
   </url>
   
   <url>
-    <loc>https://logread.cn/post/</loc>
-    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/stor/</loc>
-    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/stor/</loc>
-    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/</loc>
-    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/</loc>
-    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</loc>
-    <lastmod>2023-06-30T22:46:42+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/</loc>
     <lastmod>2023-06-30T22:46:42+08:00</lastmod>
   </url>
   
@@ -90,16 +145,6 @@
   <url>
     <loc>https://logread.cn/post/study/summary/</loc>
     <lastmod>2023-06-17T22:47:44+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/daos/</loc>
-    <lastmod>2023-06-01T23:20:35+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/daos/</loc>
-    <lastmod>2023-06-01T23:20:35+08:00</lastmod>
   </url>
   
   <url>
@@ -189,16 +234,6 @@
   
   <url>
     <loc>https://logread.cn/post/ofa/ofa_librabric/</loc>
-    <lastmod>2023-05-01T18:01:44+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/rdma/</loc>
-    <lastmod>2023-05-01T18:01:44+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/rdma/</loc>
     <lastmod>2023-05-01T18:01:44+08:00</lastmod>
   </url>
   

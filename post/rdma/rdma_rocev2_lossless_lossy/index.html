@@ -1,0 +1,829 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介 | 晓兵</title>
+    <meta property="og:title" content="Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介 - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2023-07-23T13:40:11&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2023-07-23T13:40:11&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储, ceph, 分布式块存储, 云计算">
+    <meta name="description" content="Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#简介">简介</a></li>
+    <li><a href="#术语">术语</a></li>
+    <li><a href="#前置知识">前置知识</a></li>
+    <li><a href="#rdma如何工作">RDMA如何工作</a></li>
+    <li><a href="#iba通信技术栈">IBA通信技术栈</a>
+      <ul>
+        <li><a href="#rdma常见操作">RDMA常见操作</a></li>
+        <li><a href="#heading"></a></li>
+      </ul>
+    </li>
+    <li><a href="#roce与rocev2对比">RoCE与RoCEv2对比</a></li>
+    <li><a href="#如何让roce工作的更好">如何让RoCE工作的更好</a>
+      <ul>
+        <li><a href="#配置流控l2-pcp--l3-dscp">配置流控(L2 PCP / L3 DSCP)</a></li>
+        <li><a href="#拥塞管理算法dcqcn-ztr_rttcc自定义pcc算法">拥塞管理/算法(DCQCN, ZTR_RTTCC,自定义PCC算法)</a></li>
+        <li><a href="#qos保证质量">QoS保证质量</a></li>
+        <li><a href="#网卡接收缓冲区的细粒度控制">网卡接收缓冲区的细粒度控制</a></li>
+        <li><a href="#其他">其他</a></li>
+      </ul>
+    </li>
+    <li><a href="#无损缺点">无损缺点</a>
+      <ul>
+        <li><a href="#配置复杂">配置复杂</a></li>
+        <li><a href="#拥塞严重时会带来暂停发送的问题">拥塞严重时会带来暂停发送的问题</a></li>
+        <li><a href="#有损roceconnectx-56-dx系列网卡">有损RoCE(CONNECTX-5/6 DX系列网卡)</a></li>
+        <li><a href="#慢重启">慢重启</a></li>
+        <li><a href="#慢启动">慢启动</a></li>
+        <li><a href="#传输窗口">传输窗口</a></li>
+        <li><a href="#自适应重传超时">自适应重传超时</a></li>
+        <li><a href="#选择性重传">选择性重传</a></li>
+        <li><a href="#避免接收方广播">避免接收方广播</a></li>
+      </ul>
+    </li>
+    <li><a href="#配置流程">配置流程</a></li>
+    <li><a href="#排查和调试">排查和调试</a></li>
+    <li><a href="#参考">参考</a></li>
+    <li><a href="#晓兵">晓兵</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年7月23日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+            <span class="meta-category"><a href='/categories/roce'>roce</a></span>
+            
+            <span class="meta-category"><a href='/categories/rdma'>rdma</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="nvidia_mellanox_cx5和6dx系列网卡_rdma_roce_无损和有损_dcqcn拥塞控制等技术简介-一文入门rdma和roce有损无损">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介-一文入门RDMA和RoCE有损无损</h1>
+<h2 id="简介">简介</h2>
+<p>随着互联网, 人工智能等兴起, 跨机通信对带宽和时延都提出了更高的要求, RDMA技术也不断迭代演进, 如: RoCE(RDMA融合以太网)协议, 从RoCEv1 -&gt; RoCEv2, 以及IB协议, Mellanox的RDMA网卡cx4, cx5, cx6/cx6DX, cx7等, 本文主要基于CX5和CX6DX对RoCE技术进行简介, 一文入门RDMA和RoCE有损及无损关键技术</p>
+<h2 id="术语">术语</h2>
+<p>RoCE: RDMA融合以太网, 继承RDMA所有的优势</p>
+<p>WQE: 工作队列元素, 可发音(wuki)</p>
+<p>CQE: 完成队列元素, 可发音(cookie)</p>
+<p>RDMA Atomic: 原子操作, 主要用于分布式锁, Redis缓存等场景</p>
+<p>DCQCN: 数据中心量化拥塞通知</p>
+<p>ZTR(Zero Touch RoCE)</p>
+<p>PCP(Priority Code Point): 优先级代码点用于对网络流量进行分类和管理，并在第 2 层以太网中提供 QoS。 它使用 VLAN 标头中的 3 位 PCP 字段对数据包进行分类。 差分服务或 DiffServ 使用 IP 标头中 8 位 DS 字段中的 6 位 DSCP 进行数据包分类</p>
+<p>ECN: 显式拥塞通知 (Explicit Congestion Notification) 是互联网协议和传输控制协议的扩展，在 RFC 3168 (2001) 中定义。 ECN 允许在不丢失数据包的情况下进行网络拥塞的端到端通知。 ECN 是一项可选功能，当底层网络基础设施也支持时，可以在两个启用 ECN 的端点之间使用</p>
+<p>DSCP(differentiated services code point): 差分服务代码点, 差分服务或 DiffServ 是一种计算机网络体系结构，它指定了一种在现代 IP 网络上分类和管理网络流量并提供服务质量 (QoS) 的机制。 例如，DiffServ 可用于为语音或流媒体等关键网络流量提供低延迟，同时为 Web 流量或文件传输等非关键服务提供尽力而为的服务。DiffServ 在 IP 标头的 8 位差分服务字段（DS 字段）中使用 6 位差分服务代码点 (DSCP)，用于数据包分类。 DS 字段取代了过时的 IPv4 TOS 字段</p>
+<p>Cos: class of service 服务分类</p>
+<p>CX-6 DX: Datacenter系列</p>
+<p>OOS: out of sequence, 出现乱序</p>
+<p>PSN: package sequence num, 包序号, 一个包按MTU拆分成多个包, 每个包有个序号PSN</p>
+<h2 id="前置知识">前置知识</h2>
+<p>GoBackN机制</p>
+<p>RDMA基本概念</p>
+<h2 id="rdma如何工作">RDMA如何工作</h2>
+<p>
+        <img class="mx-auto" alt="image-20230723163356350" src="../how_rdma_work.png" />   
+    </p>
+<p>发送端CPU准备好发送数据后会敲一次门铃, 而接收方收到网卡数据后不会通知CPU(降低开销)</p>
+<h2 id="iba通信技术栈">IBA通信技术栈</h2>
+<p>
+        <img class="mx-auto" alt="image-20230723163142371" src="../iba_rdma_stack.png" />   
+    </p>
+<h3 id="rdma常见操作">RDMA常见操作</h3>
+<p>
+        <img class="mx-auto" alt="image-20230723163915904" src="../iba_rdma_op.png" />   
+    </p>
+<h3 id="heading"></h3>
+<h2 id="roce与rocev2对比">RoCE与RoCEv2对比</h2>
+<p>
+        <img class="mx-auto" alt="image-20230723142433572" src="../roce_vs_rocev2.png" />   
+    </p>
+<ol>
+<li>RoCEv2没有RoCE的GRH(全局路由头)</li>
+<li>L2二层以太头中可能包含了802.1Q标签(PCP或VLAN_ID)</li>
+<li>RoCEv2的IP头可能包含ECN标记, 和DSCP</li>
+<li>IP协议端口号表明该包是UDP报文</li>
+<li>UDP目的端口4791(保留端口)表明, 下一个头是IB的BTH(BasicTranspotHeader 基本传输头占用12字节)</li>
+<li>可通过抓包对比两者差异(注意IPv6与IPv4的差异), 如下图所示:</li>
+</ol>
+<p>
+        <img class="mx-auto" alt="image-20230723164029858" src="../roce_dump_pkg.png" />   
+    </p>
+<p>
+        <img class="mx-auto" alt="image-20230723164047127" src="../roce_dump_pkg_4_and6.png" />   
+    </p>
+<h2 id="如何让roce工作的更好">如何让RoCE工作的更好</h2>
+<h3 id="配置流控l2-pcp--l3-dscp">配置流控(L2 PCP / L3 DSCP)</h3>
+<p>Sender发送方  -&gt;  Receiver接收方</p>
+<p>流控为链路层协议, 在接收方的RX Buffer接收缓存区设置高和低水位, 接收方Buffer填满时, 发送暂停帧Pause给发送方, 发送方XOFF, 并暂停发包, 等接收方释放出接收Buffer后, 给发送方发送一个UN-Pause帧, 发送方XON, 重新开始发送, 该方案不会跨越交换机</p>
+<p>
+        <img class="mx-auto" alt="image-20230723164119590" src="../fcp_overview.png" />   
+    </p>
+<p>多流问题: 暂停帧不区分流, 会影响其他流</p>
+<p>
+        <img class="mx-auto" alt="image-20230723164138037" src="../multi_fc_problem.png" />   
+    </p>
+<p>解决: 无损方案, PFC优先级流控, 用8个优先级(0-7), 独立控制每个流分类服务CoS, 网卡可将Buffer切分, 比如一半启动无损, 一半保持有损</p>
+<p>
+        <img class="mx-auto" alt="image-20230723164157765" src="../pfc_overview.png" />   
+    </p>
+<p>
+        <img class="mx-auto" alt="image-20230723164226890" src="../nic_buffer.png" />   
+    </p>
+<p>802.3x PAUSE帧和PFC帧格式参考</p>
+<p>
+        <img class="mx-auto" alt="image-20230723164302335" src="../pause_and_pfc.png" />   
+    </p>
+<p>主机侧: 可通过ethtool, mlnx_qos工具查看和配置PFC流控, 交换机侧也需要做对应的配置, 如果是跨机房,也需要保持类似的配置(无损痛点之一, 有时候交换机不在咱们得控制范围, 所以这种规模的网络, 限制了无损的配置)</p>
+<p>
+        <img class="mx-auto" alt="image-20230723164402927" src="../fc_on_nic.png" />   
+    </p>
+<h3 id="拥塞管理算法dcqcn-ztr_rttcc自定义pcc算法">拥塞管理/算法(DCQCN, ZTR_RTTCC,自定义PCC算法)</h3>
+<p>拥塞问题:</p>
+<p>
+        <img class="mx-auto" alt="image-20230723164456037" src="../congestion_problem.png" />   
+    </p>
+<p>ReactionPoint 响应端(发送方网卡)  &mdash;&mdash;&mdash;&mdash;&mdash; Congestion Point 拥塞点交换机  &mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&ndash; NotificationPoint 通知发起方(接收方网卡)</p>
+<p>原理: 当交换机检测到拥塞时, 将出口包打上ECN标记, 接收端收到ECN包后, 因为有发送端的QP信息, 发送拥塞通知包CNP给发送端, 这时候假如发送端收到多个接收端发来的ECN包, 发送方需要有一个分布式拥塞控制算法(DCQCN, 由Mellanox和微软共同开发), 来降速和调度发送, 一段时间发端没有收到CNP时, 这个时候需要恢复流量, 目前是按照三个阶段来恢复, 快速恢复FR(fast recovery) -&gt; 二分递增AI(additive increase) -&gt; 更快增加HAI(hyper increase)</p>
+<p>
+        <img class="mx-auto" alt="image-20230723164534573" src="../ecn.png" />   
+    </p>
+<p>
+        <img class="mx-auto" alt="image-20230723151402503" src="../dcncp.png" />   
+    </p>
+<p>在cx6 DX网卡上可自定义拥塞控制算法, 比如阿里和google都有自己的拥塞管理算法, 算法参考:</p>
+<p>
+        <img class="mx-auto" alt="image-20230723164801070" src="../program_cc.png" />   
+    </p>
+<p>
+        <img class="mx-auto" alt="image-20230723164616397" src="../dcqcn_flow.png" />   
+    </p>
+<p>CNP帧格式:</p>
+<p>
+        <img class="mx-auto" alt="image-20230723164639796" src="../congestion_cc.png" />   
+    </p>
+<p>配置流控:</p>
+<p>
+        <img class="mx-auto" alt="image-20230723164717922" src="../congestion_on_nic.png" />   
+    </p>
+<h3 id="qos保证质量">QoS保证质量</h3>
+<p>主要是二层的PCP和三层的DSCP, 进行流分类, 保证服务质量</p>
+<p>
+        <img class="mx-auto" alt="image-20230723164834916" src="../qos_on_nic.png" />   
+    </p>
+<h3 id="网卡接收缓冲区的细粒度控制">网卡接收缓冲区的细粒度控制</h3>
+<p>将RX Buffer切片, 比如8片, 进行更细粒度的优先级队列控制</p>
+<p>
+        <img class="mx-auto" alt="image-20230723164919568" src="../rc_buffer.png" />   
+    </p>
+<h3 id="其他">其他</h3>
+<p>一键配置: 可通过脚本检测和配置, 用于管理 RoCE 部署的系统高性能网络接口配置的命令行实用程序, 参考: <a href="https://github.com/NVIDIA/doroce-linux">https://github.com/NVIDIA/doroce-linux</a></p>
+<p>
+        <img class="mx-auto" alt="image-20230723164943122" src="../one_click_script.png" />   
+    </p>
+<h2 id="无损缺点">无损缺点</h2>
+<h3 id="配置复杂">配置复杂</h3>
+<h3 id="拥塞严重时会带来暂停发送的问题">拥塞严重时会带来暂停发送的问题</h3>
+<ul>
+<li>延迟增加</li>
+<li>暂停帧风暴PauseStorm</li>
+<li>配置复杂, 每个Fabric节点需要保持一致的无损配置</li>
+<li>受限制, 比如大型网络, 或客户的网络中, 没有权限去配置无损</li>
+</ul>
+<p>为了更好的推广和使用RoCE, 有损配置解决了部分无损的配置难题</p>
+<h3 id="有损roceconnectx-56-dx系列网卡">有损RoCE(CONNECTX-5/6 DX系列网卡)</h3>
+<p>
+        <img class="mx-auto" alt="image-20230723165012214" src="../lossy.png" />   
+    </p>
+<p>CX-5</p>
+<h3 id="慢重启">慢重启</h3>
+<p>
+        <img class="mx-auto" alt="image-20230723154224221" src="../slow_restart.png" />   
+    </p>
+<p>硬件丢包时, 发送方给自己发送一个CNP, CNP计数加1</p>
+<p>接收方发送一个OOS_NACK(乱序包, 消极应答)和CNP, 发送方收到CNP后, 计数器再加1, 并降低速率</p>
+<p>cx5默认启用该功能</p>
+<h3 id="慢启动">慢启动</h3>
+<p>发生慢重启后, 其他QP启动后, 以受限速率发包, 直到拥塞解除</p>
+<h3 id="传输窗口">传输窗口</h3>
+<p>网络拥塞时, 原来的Go-BackN可能需要重传大量已经到达接收端但是被忽略的包</p>
+<p>现在以一个窗口大小, 降低重传代价</p>
+<p>
+        <img class="mx-auto" alt="image-20230723165059108" src="../translation_windows.png" />   
+    </p>
+<h3 id="自适应重传超时">自适应重传超时</h3>
+<p>发送方动态调整ACK_TIMEOUT(比如发送了3个PSN, 等接收方回复PSN3的ACK时间超时了)</p>
+<p>
+        <img class="mx-auto" alt="image-20230723165148407" src="../ad_retr_timer.png" />   
+    </p>
+<p>
+        <img class="mx-auto" alt="image-20230723165221202" src="../adapter_retry_timer.png" />   
+    </p>
+<p>CX-6 DX</p>
+<h3 id="选择性重传">选择性重传</h3>
+<p>发送方只需要重传丢失的包即可, 接收方相当于支持乱序重组</p>
+<p>
+        <img class="mx-auto" alt="image-20230723165242850" src="../select_retry.png" />   
+    </p>
+<h3 id="避免接收方广播">避免接收方广播</h3>
+<p>
+        <img class="mx-auto" alt="image-20230723165259792" src="../recv_in_cast.png" />   
+    </p>
+<h2 id="配置流程">配置流程</h2>
+<p>
+        <img class="mx-auto" alt="image-20230723165401321" src="../roce_config.png" />   
+    </p>
+<p>RC和DC服务类型:</p>
+<p>
+        <img class="mx-auto" alt="image-20230723165458508" src="../rc_and_dc.png" />   
+    </p>
+<h2 id="排查和调试">排查和调试</h2>
+<p>
+        <img class="mx-auto" alt="image-20230723165544122" src="../debug_flow.png" />   
+    </p>
+<h2 id="参考">参考</h2>
+<p>Nvidia RoCE: <a href="https://docs.nvidia.com/networking/pages/viewpage.action?pageId=12013422">https://docs.nvidia.com/networking/pages/viewpage.action?pageId=12013422</a></p>
+<p>What is RDMA 什么是RDMA</p>
+<p><a href="https://enterprise-support.nvidia.com/s/article/What-is-RDMA">https://enterprise-support.nvidia.com/s/article/What-is-RDMA</a></p>
+<p>IB规范卷1: Supplement to InfiniBandTM Architecture Specification Volume 1 Release 1.2.1 - Annex 17: RoCEv2</p>
+<p><a href="https://cw.infinibandta.org/document/dl/7781">https://cw.infinibandta.org/document/dl/7781</a></p>
+<p>RDMA/RoCE Solutions 解决方案</p>
+<p><a href="https://enterprise-support.nvidia.com/s/article/rdma-roce-solutions">https://enterprise-support.nvidia.com/s/article/rdma-roce-solutions</a></p>
+<p>Understanding QoS Configuration for RoCE 理解QoS</p>
+<p><a href="https://enterprise-support.nvidia.com/s/article/understanding-qos-configuration-for-roce">https://enterprise-support.nvidia.com/s/article/understanding-qos-configuration-for-roce</a></p>
+<p>mlnx_qos Manual</p>
+<p><a href="https://enterprise-support.nvidia.com/s/article/mlnx-qos">https://enterprise-support.nvidia.com/s/article/mlnx-qos</a></p>
+<p>Understanding RoCEv2 Congestion Management 拥塞管理</p>
+<p><a href="https://enterprise-support.nvidia.com/s/article/understanding-rocev2-congestion-management">https://enterprise-support.nvidia.com/s/article/understanding-rocev2-congestion-management</a></p>
+<p>DCQCN Congestion Control Algorithm 流控算法</p>
+<p><a href="https://enterprise-support.nvidia.com/s/article/DCQCN-CC-algorithm">https://enterprise-support.nvidia.com/s/article/DCQCN-CC-algorithm</a></p>
+<p>ECN/DCQCN parameters introduction</p>
+<p><a href="https://enterprise-support.nvidia.com/s/article/dcqcn-parameters">https://enterprise-support.nvidia.com/s/article/dcqcn-parameters</a></p>
+<p>Enable/Disable Lossy RoCE Accelerations</p>
+<p><a href="https://enterprise-support.nvidia.com/s/article/How-to-Enable-Disable-Lossy-RoCE-Accelerations">https://enterprise-support.nvidia.com/s/article/How-to-Enable-Disable-Lossy-RoCE-Accelerations</a></p>
+<p>Understanding MLX5 Ethtool Counters 理解计数器</p>
+<p><a href="https://enterprise-support.nvidia.com/s/article/understanding-mlx5-ethtool-counters">https://enterprise-support.nvidia.com/s/article/understanding-mlx5-ethtool-counters</a></p>
+<p>Understanding MLX5 Linux Counters and Status Parameters</p>
+<p><a href="https://enterprise-support.nvidia.com/s/article/understanding-mlx5-linux-counters-and-status-parameters">https://enterprise-support.nvidia.com/s/article/understanding-mlx5-linux-counters-and-status-parameters</a></p>
+<p>Dump RDMA traffic with tcpdump 抓包</p>
+<p><a href="https://enterprise-support.nvidia.com/s/article/how-to-dump-rdma-traffic-using-the-inbox-tcpdump-tool--">https://enterprise-support.nvidia.com/s/article/how-to-dump-rdma-traffic-using-the-inbox-tcpdump-tool--</a></p>
+<p>connectx-4-x</p>
+<p>RoCE Debug Flow</p>
+<p><a href="https://enterprise-support.nvidia.com/s/article/RoCE-Debug-Flow-for-Linux">https://enterprise-support.nvidia.com/s/article/RoCE-Debug-Flow-for-Linux</a></p>
+<p>RDMA Sample Code 编程示例</p>
+<p>[basic rdma pingpong] <a href="https://github.com/linux-rdma/rdma-core/tree/master/libibverbs/examples">https://github.com/linux-rdma/rdma-core/tree/master/libibverbs/examples</a></p>
+<p>[performance benchmarks] <a href="https://github.com/linux-rdma/perftest">https://github.com/linux-rdma/perftest</a></p>
+<p>[latency test] <a href="https://github.com/michaelbe2/rdma_samples/tree/master/rc_write_latency">https://github.com/michaelbe2/rdma_samples/tree/master/rc_write_latency</a></p>
+<p>[incast flow control] <a href="https://github.com/michaelbe2/rdma_fc">https://github.com/michaelbe2/rdma_fc</a></p>
+<h2 id="晓兵">晓兵</h2>
+<p>博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a> | <a href="https://cloud.tencent.com/developer/user/5060293/articles">https://cloud.tencent.com/developer/user/5060293/articles</a></p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/">https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/linux/nvmf/">NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析</a></li>
+        
+        <li><a href="/post/ofa/ofa_librabric/">OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织</a></li>
+        
+        <li><a href="/post/storage/ceph_rdma/">利用 RDMA 技术加速 Ceph 存储解决方案</a></li>
+        
+        <li><a href="/post/daos/daos_cart_swim/">DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)</a></li>
+        
+        <li><a href="/post/linux/multipath/linux_kernel_multipath_fail_path/">linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+                <li><a href='/tags/roce'>roce</a></li>
+                
+                <li><a href='/tags/rdma'>rdma</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2023
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/" title="Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/nvmf/" title="NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析">NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_cart_swim/" title="DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)">DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/multipath/linux_kernel_multipath_fail_path/" title="linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2">linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/linux_kernel_vs_dpdk/" title="Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]">Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/study/summary/" title="常用学习网站汇总(随时更新)">常用学习网站汇总(随时更新)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_server_engine_start/" title="DAOS引擎启动流程-源码分析">DAOS引擎启动流程-源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/fs/gfs_paper/" title="谷歌文件系统">谷歌文件系统</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_spdk_bdev/" title="基于DOAS文件系统接口(DFS)暴露的SPDK块设备">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/" title="Mercury为高性能计算启用远程过程调用(RPC)">Mercury为高性能计算启用远程过程调用(RPC)</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title" style="color:red">福利派送</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a href="https://mp.weixin.qq.com/s?__biz=MzUyOTAzNTI3NA==&amp;mid=2247487635&amp;idx=1&amp;sn=3c1066ffe3243738a6cf8d2f4e20122e&amp;chksm=fa6669f6cd11e0e00a9a9f2dd33848961b626ca410a94868aa61fc4f50b9a556e80b13c054e9&amp;token=226329094&amp;lang=zh_CN#rd" title="【2023双12】ALL IN CLoud 低至1折" target="_blank" style="color:red">
+                
+                    <img src="https://img.alicdn.com/tfs/TB1_rYHo7P2gK0jSZPxXXacQpXa-690-388.jpg">
+                
+            </a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/multipath/">multipath (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvmeof/">nvmeof (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/roce/">roce (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (15)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (20)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/nvmeof/">nvmeof</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/roce/">roce</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/">多路径</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://github.com/ssbandjl/golang-design-pattern" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

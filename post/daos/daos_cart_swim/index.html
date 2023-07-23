@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议) | 晓兵</title>
+    <meta property="og:title" content="DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议) - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2023-07-08T09:50:03&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2023-07-08T09:50:03&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储, ceph, 分布式块存储, 云计算">
+    <meta name="description" content="DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/daos/daos_cart_swim/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#术语">术语</a></li>
+    <li><a href="#简介">简介</a>
+      <ul>
+        <li><a href="#swim-故障检测器">SWIM 故障检测器</a></li>
+        <li><a href="#swim-传播组件">SWIM 传播组件</a></li>
+        <li><a href="#改进">改进</a></li>
+        <li><a href="#结论">结论</a></li>
+      </ul>
+    </li>
+    <li><a href="#流程图">流程图</a></li>
+    <li><a href="#源码分析">源码分析</a></li>
+    <li><a href="#参考">参考</a></li>
+    <li><a href="#晓兵">晓兵</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年7月8日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+            <span class="meta-category"><a href='/categories/daos'>daos</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="daos引擎心跳健康检测-cart_swim可扩展的弱一致性-感染式过程-组成员协议">DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性-感染式过程-组成员协议)</h1>
+<h2 id="术语">术语</h2>
+<p>swim: Scalable Weakly-consistent Infection-style process group Membership Protocol, 可扩展的弱一致性-感染式过程-组成员协议</p>
+<p>round-trip: 往返</p>
+<h2 id="简介">简介</h2>
+<p>SWIM是DAOS引擎(rank)间的网络健康检测机制, 属于通信组件cart下的代码模块, SWIM是通过Gossip实现的Membership保持协议，也就是维护分布式系统节点的状态</p>
+<p>DAOS 引擎在系统内通过称为 SWIM 的基于 gossip 的协议进行监控，该协议提供准确、高效和可扩展的故障检测。附加到每个 DAOS 目标的存储通过定期本地健康评估进行监控。每当本地存储 I/O 错误返回到 DAOS 服务器时，将自动调用内部健康检查过程。此过程将通过分析 IO 错误代码和设备 SMART/Health 数据来进行整体健康评估。如果结果是否定的，目标将被标记为有故障，并且此目标的进一步 I/O 将被拒绝并重新路由</p>
+<p>特点:</p>
+<ul>
+<li>可伸缩性</li>
+<li>弱一致性</li>
+<li>感染性</li>
+</ul>
+<p>SWIM 是一个成员协议，它帮助我们知道那些结点在集群中，帮助我们维护一个不断更新的健康结点列表</p>
+<p>它将成员问题分成两个部分：失效检测 和 信息传播</p>
+<p>失效检测 随机地向结点发送 ping 消息，并期待收到 ack 消息；如果没有收到 ack ，将向  k 个结点发送 ping-req 消息，借助他们来间接的进行探测。</p>
+<p>失效检测 的一个优化是，首先是标记结点“有嫌疑”，在超时后再标记为“挂了”。</p>
+<p>对于 信息传播 的优化是，让失效检测消息（ ping、ping-req 和 ack）捎带上 成员变化 信息，而不是使用 IP广播 机制。</p>
+<p>对于失效检测时间的优化是，采用轮流（round-robin）选择结点的方式，而不是随机选择。</p>
+<p>因此，SWIM 协议具备如下优势：</p>
+<p>可伸缩性：失效发现时间、误报率以及每个成员所需的消息收发负载与集群大小无关。成员状态变更信息的传播与集群大小呈对数关系（log n）</p>
+<p>健壮性：协议是完全区中心化的，对于结点故障或网络分区具有容错能力。</p>
+<p>易于部署和维护：新成员联络任何一个现有成员即可加入集群；而成员离开时，无需任何特别措施即可维持集群健康。</p>
+<p>实现的简单性：协议中只定义了为数不多的状态和消息类型。而且点对点的结构，无需进行初始配置或在成员变更时进行维护。</p>
+<p>成员协议, ping, ping-req, ack等捎带成员更新消息, 失效检测: 探测间隔 * 结点数</p>
+<p>几个分布式对等应用程序需要所有参与进程的进程组成员信息的弱一致知识。SWIM 是一个通用软件模块，为大型流程组提供此服务。SWIM 努力的动机是传统心跳协议的不可扩展性，这些协议要么施加随组大小二次增长的网络负载，要么在检测过程崩溃时牺牲响应时间或误报频率。本文报告了 SWIM 子系统在大型商用 PC 集群上的设计、实施和性能。与传统的心跳协议不同，SWIM 将成员协议的故障检测和成员更新分发功能分开。通过有效的对等定期随机探测协议监控流程。首次检测到每个进程故障的预期时间和每个成员的预期消息负载都不会随组大小而变化。有关成员资格更改的信息，例如进程加入、退出和失败，通过 ping 消息和确认的捎带传播。这导致了强大而快速的感染方式（也是流行或八卦方式）的传播。通过修改协议以允许组成员在将进程声明为失败之前对其进行怀疑，从而降低了 SWIM 系统中的错误故障检测率——这允许系统发现并纠正错误的故障检测。最后，该协议保证了检测故障的确定性时间限制。展示了 SWIM 原型的实验结果。我们讨论了设计在 WAN 范围内的可扩展性</p>
+<p>心跳:</p>
+<p>传统的诸如heartbeats这种membership protocols，每个node周期性地向网络中的所有其他节点发送heartbeat来表示自己是alive的，如果peer超过指定interval没有收到node的heartbeart则该node被认定为dead。这种方式适用于小型网络，其发送的heartbeart数量为O(n^2)，当网络中有成千上万的node时则会造成巨大的网络负担；SWIM采用Infection-Style dissemination感染型传播来解决这个问题</p>
+<p>假设您要求构建一个类似于<a href="http://cassandra.apache.org/">Cassandra</a>的分布式数据库。您的存储系统将存储和处理在大量商品服务器上运行的大量数据。换句话说，您的系统将依靠 100 多个节点的力量来管理数据。</p>
+<p>在这个规模上，失败将是常态，而不是例外。即使我们假设一个节点持续 1000 天（大约 3 年），在 500 个节点的集群中，每 2 天就会出现一次故障。</p>
+<p>为了处理这种情况，您需要一个故障检测服务，它除了检测故障节点外，还使所有非故障进程与处于活动状态的进程保持同步。在这篇博文中，我们将介绍一种称为 SWIM 的协议并了解其内部工作原理。</p>
+<blockquote>
+<p>swim成员协议为组中的每个进程提供了一个本地维护的列表，称为<strong>成员列表</strong>，该列表包含组中的其他非故障进程。</p>
+</blockquote>
+<p>因此，该协议执行两项重要任务 -</p>
+<ul>
+<li>检测失败，即如何识别哪个进程失败以及</li>
+<li>传播信息，即如何将这些故障通知系统中的其他进程。</li>
+</ul>
+<p>不言而喻，成员协议在检测故障方面应该是可扩展的、可靠的和快速的。成员协议的可扩展性和效率主要由以下属性决定</p>
+<ul>
+<li>完整性：每个失败的进程<strong>最终</strong>都会被检测到吗？</li>
+<li>故障检测速度：故障与非故障进程检测到的平均时间间隔是多少？</li>
+<li>准确性：流程被归类为失败的频率，实际上是非故障的（称为误报率）？</li>
+<li>消息负载：每个节点产生多少网络负载，是否均匀分布？</li>
+</ul>
+<p>理想情况下，人们会想要一个完全 100% 准确的协议，这意味着检测到每个错误的过程，<em>没有</em>误报。然而，与分布式系统中的其他权衡一样，存在一个<a href="http://www.ecommons.cornell.edu/bitstream/1813/7192/1/95-1535.pdf">不可能的结果</a>，即无法通过异步网络保证 100% 的完整性和准确性。因此，大多数成员协议（包括 SWIM）以准确性换取完整性，并试图将误报率保持在尽可能低的水平。</p>
+<h3 id="swim-故障检测器">SWIM 故障检测器</h3>
+<p>SWIM 故障检测器使用两个参数——一个协议周期<code>T</code>和一个整数<code>k</code>，它是故障检测子组的大小。</p>
+<p>
+        <img class="mx-auto" alt="img" src="../swim.png" />   
+    </p>
+<p>SWIM 故障检测</p>
+<p>上图显示了协议的工作原理。在每个<code>T</code>时间单位之后，进程 M i从其成员列表中选择一个随机进程 - 比如说 M j - 并向它发送一个<em>ping</em>。然后它等待来自 M j的<em>ack</em>。如果在预先指定的超时时间内没有收到<em>确认，M</em> i通过随机选择目标间接探测 M j并使用它们向M j发送<em>ping</em>。然后，这些目标中的每一个都代表 M i向 M j发送一个<em>ping</em> ，并在收到一个<em>ack时</em><code>k``k</code>通知 M i。如果由于某种原因，这些进程都没有收到<em>ack</em>，则 M i将 M j声明为失败并将更新移交给传播组件（如下所述）。</p>
+<p>SWIM 与其他心跳/八卦协议之间的关键区别因素是 SWIM 如何使用其他目标到达 M j以避免在 M i和 M j之间的网络路径上出现任何拥塞。</p>
+<h3 id="swim-传播组件">SWIM 传播组件</h3>
+<p>传播组件只是将故障更新多播到组的其余部分。所有收到此消息的成员都将 M j从其本地成员列表中删除。关于新成员或自愿离开的信息以类似的方式被多播成员。新加入成员或自愿离开成员的信息以类似方式多播。</p>
+<h3 id="改进">改进</h3>
+<p><strong>感染式传播</strong>——在更健壮的 SWIM 版本中，传播组件不依赖于不可靠和低效的多播，而是在故障检测器协议发送的<em>ping</em>和<em>ack消息上捎带成员资格更新。<em>这种方法被称为</em>感染式</em>（因为这类似于八卦或人群中的流行病）的传播，其优点是具有较低的数据包丢失和更好的延迟。</p>
+<p><strong>怀疑机制</strong>- 尽管 SWIM 协议通过 ping<code>k</code>节点来防止两个节点之间出现拥塞的情况，但仍然有可能完全健康的进程 M j变得缓慢（高负载）或由于周围的网络分区而暂时不可用本身，因此被协议标记为失败。</p>
+<p>每当基本 SWIM 检测到故障时，SWIM 通过运行称为 Suspicion 子协议的子协议来缓解这种情况。在该协议中，当 M i发现 M j没有响应（直接和间接）时，它将 M j标记为<em>嫌疑人</em>，而不是将其标记为失败。然后它使用传播组件将此消息 M j :发送<code>suspect</code>到其他节点（感染式）。任何后来发现 M j响应<em>ping的进程都会取消标记怀疑并用 M</em> j :<code>alive</code>消息感染系统。</p>
+<p><strong>有时间限制的完整性</strong>——基本的 SWIM 协议在平均恒定数量的协议周期内检测故障。虽然保证<em>最终</em>检测到每个故障进程，但由于目标节点的随机选择，在将 ping 发送到故障节点之前可能会有相当大的延迟。</p>
+<p>SWIM 建议的一个简单改进是通过维护一组已知成员并以循环方式选择*ping目标。*数组完全遍历后，随机打乱，继续处理。这为同一目标的连续选择之间的时间单位提供了有限的上限。</p>
+<h3 id="结论">结论</h3>
+<p>SWIM 协议已在许多分布式系统中使用。一个使用 SWIM 的流行开源系统是<a href="https://www.serfdom.io/">Serf</a>，它是<a href="https://www.hashicorp.com/">Hashicorp</a>为集群成员提供的分散式解决方案。该<a href="https://www.serfdom.io/docs/internals/gossip.html">文档</a>对底层架构进行了相当清晰的演练。Hashicorp 的好心人也在<a href="https://github.com/hashicorp/memberlist">Github</a>上开源了他们的实现。对于那些通过阅读代码可以更好地理解的人，请务必检查一下。</p>
+<p>最后，这篇博文特意保留了数学以使高级思想变得简单，但如果您有兴趣深入研究，请务必阅读<a href="http://www.cs.cornell.edu/~asdas/research/dsn02-SWIM.pdf">本文</a>以更好地了解误报率的上限、检测故障的平均时间和网络负载</p>
+<h2 id="流程图">流程图</h2>
+<p>状态机:</p>
+<p>
+        <img class="mx-auto" alt="" src="../daos_swim_state_machine.png" />   
+    </p>
+<p>源码流程图</p>
+<p>
+        <img class="mx-auto" alt="源码流程" src="../daos_swim_code_flow.png" />   
+    </p>
+<h2 id="源码分析">源码分析</h2>
+<p>版本: daos 2.0.1, 新版本对swim改动较大</p>
+<p>swim使用tag1:</p>
+<p>tag 0 is used by the metadata service handling pool and container operations.
+tag 1 is used for cross-server monitoring (SWIM).
+tags 2 to [#targets + 1] is used by DAOS targets (one tag per target].
+tags [#targets + 2] to [#targets + #helpers + 1] is used by helper service threads.</p>
+<p>源码位置:</p>
+<pre><code>src\include\cart\swim.h
+src\cart\swim\swim.c
+</code></pre><p>
+        <img class="mx-auto" alt="image-20230708103958559" src="../daos_cart_swim_code_api.png" />   
+    </p>
+<ul>
+<li>
+<p>swim初始化中(<strong>swim_init</strong>(SWIM_ID_INVALID, &amp;<strong>crt_swim_ops</strong>, NULL))添加rank成员, crt_swim_rank_add</p>
+</li>
+<li>
+<p>在处理回调函数中执行状态机处理: crt_swim_progress_cb -&gt; swim_progress, 发送PING包, 更新质疑状态, 更新PING状态等</p>
+</li>
+<li>
+<p>每秒检测一次, 如果PING不通(900毫秒), 先提出质疑(8秒), 请第三方间接PING, 最后标记为DEAD状态</p>
+</li>
+<li>
+<p>参考日志</p>
+<pre><code>swim_prot_period_len:1000,swim_suspect_timeout:8000,swim_ping_timeout:900,sc_next_tick_time:2037074
+</code></pre></li>
+</ul>
+<p>其他参考流程</p>
+<pre><code>故障流程 心跳 swim swim_progress
+c -&gt; s
+kill s
+swim ping timeout
+swim suspect
+swim suspect timeout
+swim confirm dead swim_member_dead
+notify dead swim_updates_notify -&gt; crt_swim_notify_rank_state
+group_map_update to leader
+group_map update bcast
+making Excluded
+</code></pre><h2 id="参考">参考</h2>
+<p>IEEE: <a href="https://ieeexplore.ieee.org/document/1028914">https://ieeexplore.ieee.org/document/1028914</a></p>
+<p>论文: <a href="https://github.com/ssbandjl/distributed-computing/blob/master/dsn02-swim.pdf">https://github.com/ssbandjl/distributed-computing/blob/master/dsn02-swim.pdf</a></p>
+<p>swim增加状态: <a href="https://daosio.atlassian.net/browse/DAOS-11274,">https://daosio.atlassian.net/browse/DAOS-11274,</a> <a href="https://github.com/daos-stack/daos/pull/10435">https://github.com/daos-stack/daos/pull/10435</a></p>
+<p>添加新的状态机状态 SCS_IPINGED，用于等待间接 ping 截止时间</p>
+<h2 id="晓兵">晓兵</h2>
+<p>博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a></p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/daos/daos_cart_swim/">https://logread.cn/post/daos/daos_cart_swim/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/daos/daos_server_engine_start/">DAOS引擎启动流程-源码分析</a></li>
+        
+        <li><a href="/post/daos/daos_spdk_bdev/">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</a></li>
+        
+        <li><a href="/post/linux/multipath/linux_kernel_multipath_fail_path/">linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2</a></li>
+        
+        <li><a href="/post/linux/linux_kernel_vs_dpdk/">Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]</a></li>
+        
+        <li><a href="/post/study/summary/">常用学习网站汇总(随时更新)</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+                <li><a href='/tags/daos'>daos</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2023
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/" title="Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/nvmf/" title="NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析">NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_cart_swim/" title="DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)">DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/multipath/linux_kernel_multipath_fail_path/" title="linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2">linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/linux_kernel_vs_dpdk/" title="Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]">Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/study/summary/" title="常用学习网站汇总(随时更新)">常用学习网站汇总(随时更新)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_server_engine_start/" title="DAOS引擎启动流程-源码分析">DAOS引擎启动流程-源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/fs/gfs_paper/" title="谷歌文件系统">谷歌文件系统</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_spdk_bdev/" title="基于DOAS文件系统接口(DFS)暴露的SPDK块设备">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/" title="Mercury为高性能计算启用远程过程调用(RPC)">Mercury为高性能计算启用远程过程调用(RPC)</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title" style="color:red">福利派送</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a href="https://mp.weixin.qq.com/s?__biz=MzUyOTAzNTI3NA==&amp;mid=2247487635&amp;idx=1&amp;sn=3c1066ffe3243738a6cf8d2f4e20122e&amp;chksm=fa6669f6cd11e0e00a9a9f2dd33848961b626ca410a94868aa61fc4f50b9a556e80b13c054e9&amp;token=226329094&amp;lang=zh_CN#rd" title="【2023双12】ALL IN CLoud 低至1折" target="_blank" style="color:red">
+                
+                    <img src="https://img.alicdn.com/tfs/TB1_rYHo7P2gK0jSZPxXXacQpXa-690-388.jpg">
+                
+            </a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/multipath/">multipath (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvmeof/">nvmeof (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/roce/">roce (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (15)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (20)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/nvmeof/">nvmeof</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/roce/">roce</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/">多路径</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://github.com/ssbandjl/golang-design-pattern" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

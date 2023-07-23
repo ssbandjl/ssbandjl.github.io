@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>nvmeof on 晓兵</title>
+    <link>https://logread.cn/categories/nvmeof/</link>
+    <description>Recent content in nvmeof on 晓兵</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Fri, 14 Jul 2023 22:09:39 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/nvmeof/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析</title>
+      <link>https://logread.cn/post/linux/nvmf/</link>
+      <pubDate>Fri, 14 Jul 2023 22:09:39 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/linux/nvmf/</guid>
+      <description>NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析 简介 NVMe over Fabrics (NVMe-oF) 是 NVMe 网络协议对以太网和光纤通道的扩展，可在存储和服务器之间提供更快、更高效的连接，并降低应用程序主机服务器的 CPU 利用率 NVM Express over Fabrics 定义了一个通用架构，支持</description>
+    </item>
+    
+  </channel>
+</rss>
