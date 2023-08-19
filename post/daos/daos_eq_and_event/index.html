@@ -1,0 +1,855 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7571343657358120"
+     crossorigin="anonymous"></script>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析 | 晓兵</title>
+    <meta property="og:title" content="DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析 - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2023-08-19T22:23:52&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2023-08-19T22:23:52&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储, ceph, 分布式块存储, 云计算">
+    <meta name="description" content="DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/daos/daos_eq_and_event/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#简介">简介</a></li>
+    <li><a href="#事件与事件队列及任务调度引擎流程图">事件与事件队列及任务调度引擎流程图</a></li>
+    <li><a href="#流程说明dfuse为例">流程说明(dfuse为例)</a></li>
+    <li><a href="#源码分析">源码分析</a></li>
+    <li><a href="#总结">总结</a></li>
+    <li><a href="#参考">参考</a></li>
+    <li><a href="#晓兵">晓兵</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年8月19日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+            <span class="meta-category"><a href='/categories/daos'>daos</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="daos的事件队列eventqueue与事件event和任务调度引擎tse及源码分析">DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</h1>
+<h2 id="简介">简介</h2>
+<p>事件和事件队列</p>
+<p>DAOS API 函数可以在阻塞或非阻塞模式下使用。 这是通过传递给每个 API 调用的指向 DAOS 事件的指针来确定的：如果 NULL 表示操作将被阻塞。 操作完成后会返回。 所有失败情况的错误码都将通过API函数本身的返回码返回。 如果使用有效的事件，则该操作将以非阻塞模式运行，并在内部调度程序中调度该操作以及将 RPC 提交到底层堆栈后立即返回。 如果调度成功，则操作的返回值为success，但并不表示实际操作成功。 返回时可以捕获的错误要么是无效参数，要么是调度问题。 当事件完成时，操作的实际返回代码将在事件错误代码 (event.ev_error) 中提供。 必须首先通过单独的 API 调用创建要使用的有效事件。 为了允许用户一次跟踪多个事件，可以将事件创建为事件队列的一部分，事件队列基本上是可以一起进行和轮询的事件的集合。 事件队列还在内部为所有 DAOS 任务创建一个单独的任务调度程序以及一个新的网络上下文。 在某些网络提供商上，网络上下文创建是一项昂贵的操作，因此用户应尝试限制在 DAOS 之上的应用程序或 IO 中间件库中创建的事件队列的数量。 或者，可以在没有事件队列的情况下创建事件，并单独跟踪。 在这种情况下，对于阻塞操作，将使用内部全局任务调度程序和网络上下文来代替为事件队列创建的独立任务调度程序和网络上下文。 事件完成后，它可以重新用于另一个 DAOS API 调用，以最大限度地减少 DAOS 库内事件创建和分配的需要</p>
+<p>DAOS Task API 提供了一种以非阻塞方式使用 DAOS API 的替代方法，同时在 DAOS API 操作之间构建任务依赖树。 这对于使用 DAOS 并需要构建彼此之间具有依赖关系（N-1、1-N、N-N）的 DAOS 操作计划的应用程序和中间件库非常有用</p>
+<p>要利用任务 API，用户需要创建一个调度程序，其中可以创建 DAOS 任务作为其中的一部分。 任务 API 足够通用，允许用户混合 DAOS 特定任务（通过 DAOS 任务 API）和其他用户定义的任务，并在这些任务之间添加依赖关系</p>
+<p>有关如何在客户端库中使用 TSE 的更多详细信息，请参阅 TSE 内部文档(<a href="https://github.com/ssbandjl/daos/blob/master/src/common/README.md">https://github.com/ssbandjl/daos/blob/master/src/common/README.md</a>)以获取更多详细信息</p>
+<h2 id="事件与事件队列及任务调度引擎流程图">事件与事件队列及任务调度引擎流程图</h2>
+<p>
+        <img class="mx-auto" alt="事件与事件队列及任务调度引擎流程图" src="../daos_event_eq_with_tse.png" />   
+    </p>
+<h2 id="流程说明dfuse为例">流程说明(dfuse为例)</h2>
+<p>以DAOS用户态文件系统dfuse为例</p>
+<ul>
+<li>
+<p>在初始化客户端库中初始化事件队列, 关联全局网络上下文, 设置调度器</p>
+</li>
+<li>
+<p>启动文件系统中注册了SLAB, 绑定事件队列和事件, 参考: daos_event_init</p>
+</li>
+<li>
+<p>开启轮训线程dfuse_progress_thread, 参考daos_eq_poll</p>
+</li>
+<li>
+<p>文件系统执行写</p>
+<pre><code>客户端写数据：xb/write.c -&gt; write(fd, direct_write_buf, BUF_SIZE)
+write -&gt; dfuse_cb_write 回调写 src/client/dfuse/fuse3
+</code></pre></li>
+<li>
+<p>封装ev, 并将ev传下去: dfs_write(oh-&gt;doh_dfs, oh-&gt;doh_obj, &amp;ev-&gt;de_sgl, position, &amp;ev-&gt;de_ev)</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">DAOS用户态文件系统, <span style="color:#a61717;background-color:#e3d2d2">写流程</span>
+master <span style="color:#000;font-weight:bold">-&gt;</span> src<span style="color:#000;font-weight:bold">/</span>client<span style="color:#000;font-weight:bold">/</span>dfuse<span style="color:#000;font-weight:bold">/</span>ops<span style="color:#000;font-weight:bold">/</span>write.c <span style="color:#000;font-weight:bold">-&gt;</span> dfuse_cb_write(fuse_req_t req, fuse_ino_t ino, <span style="color:#000;font-weight:bold">struct</span> fuse_bufvec <span style="color:#000;font-weight:bold">*</span>bufv, off_t position, <span style="color:#000;font-weight:bold">struct</span> fuse_file_info <span style="color:#000;font-weight:bold">*</span>fi)
+<span style="color:#000;font-weight:bold">struct</span> dfuse_projection_info <span style="color:#000;font-weight:bold">*</span>fs_handle <span style="color:#000;font-weight:bold">=</span> fuse_req_userdata(req)
+eqt_idx <span style="color:#000;font-weight:bold">=</span> atomic_fetch_add_relaxed(<span style="color:#000;font-weight:bold">&amp;</span>fs_handle<span style="color:#000;font-weight:bold">-&gt;</span>di_eqt_idx, <span style="color:#099">1</span>) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">原子递增</span>,<span style="color:#a61717;background-color:#e3d2d2">每次返回</span><span style="color:#000;font-weight:bold">+</span><span style="color:#099">1</span><span style="color:#a61717;background-color:#e3d2d2">前的值</span>, <span style="color:#a61717;background-color:#e3d2d2">比如</span><span style="color:#000;font-weight:bold">:</span> eqt_idx<span style="color:#000;font-weight:bold">=</span><span style="color:#099">7</span>
+eqt <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">&amp;</span>fs_handle<span style="color:#000;font-weight:bold">-&gt;</span>di_eqt[eqt_idx <span style="color:#000;font-weight:bold">%</span> fs_handle<span style="color:#000;font-weight:bold">-&gt;</span>di_eq_count] <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">取余打散到</span>eq
+ev <span style="color:#000;font-weight:bold">=</span> d_slab_acquire(eqt<span style="color:#000;font-weight:bold">-&gt;</span>de_write_slab) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">分配</span>EV, <span style="color:#a61717;background-color:#e3d2d2">需要提前注册</span><span style="color:#000;font-weight:bold">:</span> d_slab_register(<span style="color:#000;font-weight:bold">&amp;</span>fs_handle<span style="color:#000;font-weight:bold">-&gt;</span>di_slab, <span style="color:#000;font-weight:bold">&amp;</span>write_slab, eqt, <span style="color:#000;font-weight:bold">&amp;</span>eqt<span style="color:#000;font-weight:bold">-&gt;</span>de_write_slab)
+ev<span style="color:#000;font-weight:bold">-&gt;</span>de_complete_cb <span style="color:#000;font-weight:bold">=</span> dfuse_cb_write_complete
+dfs_write(oh<span style="color:#000;font-weight:bold">-&gt;</span>doh_dfs, oh<span style="color:#000;font-weight:bold">-&gt;</span>doh_obj, <span style="color:#000;font-weight:bold">&amp;</span>ev<span style="color:#000;font-weight:bold">-&gt;</span>de_sgl, position, <span style="color:#000;font-weight:bold">&amp;</span>ev<span style="color:#000;font-weight:bold">-&gt;</span>de_ev) <span style="color:#000;font-weight:bold">-&gt;</span> dfs_write(dfs_t <span style="color:#000;font-weight:bold">*</span>dfs, dfs_obj_t <span style="color:#000;font-weight:bold">*</span>obj, d_sg_list_t <span style="color:#000;font-weight:bold">*</span>sgl, daos_off_t off, daos_event_t <span style="color:#000;font-weight:bold">*</span>ev)
+  daos_array_write(obj<span style="color:#000;font-weight:bold">-&gt;</span>oh, DAOS_TX_NONE, <span style="color:#000;font-weight:bold">&amp;</span>iod, sgl, ev) <span style="color:#000;font-weight:bold">-&gt;</span> daos_array_write(daos_handle_t oh, daos_handle_t th, daos_array_iod_t <span style="color:#000;font-weight:bold">*</span>iod, d_sg_list_t <span style="color:#000;font-weight:bold">*</span>sgl, daos_event_t <span style="color:#000;font-weight:bold">*</span>ev)
+    dc_task_create(dc_array_write, <span style="color:#0086b3">NULL</span>, ev, <span style="color:#000;font-weight:bold">&amp;</span>task) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">关联</span>EV和task
+      sched <span style="color:#000;font-weight:bold">=</span> daos_ev2sched(ev) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">拿到调度器指针</span>, <span style="color:#a61717;background-color:#e3d2d2">初始化调度器</span>
+    <span style="color:#000;font-weight:bold">return</span> dc_task_schedule(task, <span style="color:#0086b3">true</span>)
+sem_post(<span style="color:#000;font-weight:bold">&amp;</span>eqt<span style="color:#000;font-weight:bold">-&gt;</span>de_sem) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">唤醒</span>EQ
+d_slab_restock(eqt<span style="color:#000;font-weight:bold">-&gt;</span>de_write_slab) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">重用</span>slab
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>与tse结合构造task, 调度task</p>
+</li>
+<li>
+<p>网络回复后, 在轮训线程中trigger到, 拿到ev和task, 逐层向上级执行回调函数, 最终执行业务回调</p>
+</li>
+</ul>
+<h2 id="源码分析">源码分析</h2>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#a61717;background-color:#e3d2d2">客户端</span>mount, master, gdb <span style="color:#000;font-weight:bold">--</span>args <span style="color:#000;font-weight:bold">/</span>opt<span style="color:#000;font-weight:bold">/</span>daos<span style="color:#000;font-weight:bold">/</span>bin<span style="color:#000;font-weight:bold">/</span>dfuse <span style="color:#000;font-weight:bold">--</span>mountpoint<span style="color:#000;font-weight:bold">=/</span>tmp<span style="color:#000;font-weight:bold">/</span>sxb <span style="color:#000;font-weight:bold">--</span>pool<span style="color:#000;font-weight:bold">=</span>sxb <span style="color:#000;font-weight:bold">--</span>cont<span style="color:#000;font-weight:bold">=</span>sxb <span style="color:#000;font-weight:bold">-</span>f <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">默认后台启动</span>
+dfuse <span style="color:#000;font-weight:bold">-</span>m <span style="color:#000;font-weight:bold">/</span>mnt<span style="color:#000;font-weight:bold">/</span>sxb <span style="color:#000;font-weight:bold">--</span>pool sxb <span style="color:#000;font-weight:bold">--</span>cont sxb <span style="color:#000;font-weight:bold">|</span> dfuse <span style="color:#000;font-weight:bold">--</span>mountpoint<span style="color:#000;font-weight:bold">=/</span>tmp<span style="color:#000;font-weight:bold">/</span>sxb <span style="color:#000;font-weight:bold">--</span>pool<span style="color:#000;font-weight:bold">=</span>sxb <span style="color:#000;font-weight:bold">--</span>cont<span style="color:#000;font-weight:bold">=</span>sxb
+dfuse_main.c <span style="color:#000;font-weight:bold">-&gt;</span> main
+  daos_debug_init(DAOS_LOG_DEFAULT)
+    d_log_init_adv <span style="color:#a61717;background-color:#e3d2d2">高级日志初始化</span>, <span style="color:#a61717;background-color:#e3d2d2">客户端日志文件</span>
+      log_file <span style="color:#000;font-weight:bold">=</span> getenv(D_LOG_FILE_ENV) export D_LOG_FILE<span style="color:#000;font-weight:bold">=/</span>tmp<span style="color:#000;font-weight:bold">/</span>daos_client.log
+      debug_prio_err_load_env
+      d_log_open
+        freopen(mst.log_file <span style="color:#a61717;background-color:#e3d2d2">重新关联标准输出或错误输出</span>
+        setlinebuf(stderr) <span style="color:#a61717;background-color:#e3d2d2">设置错误输出为行缓冲</span>
+    d_log_sync_mask
+  dfuse_info<span style="color:#000;font-weight:bold">-&gt;</span>di_eq_count <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">1</span>
+  daos_init <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">初始化客户端库</span>
+    daos_debug_init
+    daos_hhash_init_feats
+    dc_agent_init
+    dc_job_init
+    dc_mgmt_net_cfg
+    daos_eq_lib_init <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">初始化事件队列库</span> <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#000;font-weight:bold">static</span> tse_sched_t daos_sched_g <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">指向不属于</span> EQ <span style="color:#a61717;background-color:#e3d2d2">一部分的事件的全局调度程序的指针。</span> <span style="color:#a61717;background-color:#e3d2d2">作为</span> EQ <span style="color:#a61717;background-color:#e3d2d2">一部分初始化的事件将在该</span> EQ <span style="color:#a61717;background-color:#e3d2d2">调度程序中进行跟踪</span>
+      crt_init_opt
+      crt_context_create(<span style="color:#000;font-weight:bold">&amp;</span>daos_eq_ctx) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">全局共享网络上下文</span>, <span style="color:#a61717;background-color:#e3d2d2">所有事件队列</span>(eq)<span style="color:#a61717;background-color:#e3d2d2">共享使用这个上下文</span>
+      tse_sched_init(<span style="color:#000;font-weight:bold">&amp;</span>daos_sched_g, <span style="color:#0086b3">NULL</span>, daos_eq_ctx) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">初始化调度器</span>(<span style="color:#a61717;background-color:#e3d2d2">无事件队列</span>), <span style="color:#a61717;background-color:#e3d2d2">为无</span>eq事件设置调度器
+    dc_mgmt_net_cfg_check
+    pl_init
+    dc_mgmt_init
+    dc_pool_init
+    dc_cont_init
+    dc_obj_init
+  dfuse_fs_init(dfuse_info) <span style="color:#000;font-weight:bold">-&gt;</span> daos用户态文件信息<span style="color:#000;font-weight:bold">=</span><span style="color:#a61717;background-color:#e3d2d2">文件系统控制器</span>
+    D_ALLOC_ARRAY(fs_handle<span style="color:#000;font-weight:bold">-&gt;</span>di_eqt, fs_handle<span style="color:#000;font-weight:bold">-&gt;</span>di_eq_count) <span style="color:#000;font-weight:bold">-&gt;</span> eq数组
+    d_hash_table_create_inplace dpi_pool_table <span style="color:#a61717;background-color:#e3d2d2">打开的池表，</span> <span style="color:#a61717;background-color:#e3d2d2">创建</span>hash表 <span style="color:#a61717;background-color:#e3d2d2">大小</span><span style="color:#000;font-weight:bold">=</span>power2(n次方)<span style="color:#a61717;background-color:#e3d2d2">，</span> <span style="color:#a61717;background-color:#e3d2d2">操作方法</span>
+    dpi_iet open inodes
+    <span style="color:#000;font-weight:bold">for</span> (i <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>; i <span style="color:#000;font-weight:bold">&lt;</span> fs_handle<span style="color:#000;font-weight:bold">-&gt;</span>di_eq_count; i<span style="color:#000;font-weight:bold">++</span>)
+      <span style="color:#000;font-weight:bold">struct</span> dfuse_eq <span style="color:#000;font-weight:bold">*</span>eqt <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">&amp;</span>fs_handle<span style="color:#000;font-weight:bold">-&gt;</span>di_eqt[i] <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">根据传入的</span>EQ数量, <span style="color:#a61717;background-color:#e3d2d2">将</span>eq与文件系统句柄中的eq表绑定
+      eqt<span style="color:#000;font-weight:bold">-&gt;</span>de_handle <span style="color:#000;font-weight:bold">=</span> fs_handle <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">互存指针</span>,<span style="color:#a61717;background-color:#e3d2d2">双向绑定</span>
+    sem_init(<span style="color:#000;font-weight:bold">&amp;</span>eqt<span style="color:#000;font-weight:bold">-&gt;</span>de_sem, <span style="color:#099">0</span>, <span style="color:#099">0</span>) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">在</span> eq <span style="color:#a61717;background-color:#e3d2d2">之前创建信号量，因为无法检查</span> sem_init() <span style="color:#a61717;background-color:#e3d2d2">是否已被调用，如果没有调用</span> sem_destroy <span style="color:#a61717;background-color:#e3d2d2">也是无效的。</span> <span style="color:#a61717;background-color:#e3d2d2">这样我们就可以避免添加额外的内存来跟踪信号量的状态</span>
+    daos_eq_create(<span style="color:#000;font-weight:bold">&amp;</span>eqt<span style="color:#000;font-weight:bold">-&gt;</span>de_eq) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">一个事件队列关联一个网络上下文，</span> <span style="color:#a61717;background-color:#e3d2d2">跟踪池的多个事件</span> <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">创建事件队列。</span> <span style="color:#a61717;background-color:#e3d2d2">事件队列用于保存和池化多个事件。</span> <span style="color:#a61717;background-color:#e3d2d2">创建的每个事件队列都将创建一个与事件队列关联的网络（</span>cart<span style="color:#a61717;background-color:#e3d2d2">）上下文。</span> <span style="color:#a61717;background-color:#e3d2d2">网络上下文创建是一项昂贵的操作，并且在某些系统上网络上下文的数量可能受到限制。</span> <span style="color:#a61717;background-color:#e3d2d2">因此，建议不要在用户应用程序或中间件中创建大量事件队列</span>
+      eq <span style="color:#000;font-weight:bold">=</span> daos_eq_alloc() <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">分配</span>eq
+        D_INIT_LIST_HEAD(<span style="color:#000;font-weight:bold">&amp;</span>eq<span style="color:#000;font-weight:bold">-&gt;</span>eq_running)
+        D_INIT_LIST_HEAD(<span style="color:#000;font-weight:bold">&amp;</span>eq<span style="color:#000;font-weight:bold">-&gt;</span>eq_comp)
+        daos_hhash_hlink_init(<span style="color:#000;font-weight:bold">&amp;</span>eqx<span style="color:#000;font-weight:bold">-&gt;</span>eqx_hlink, <span style="color:#000;font-weight:bold">&amp;</span>eq_h_ops)
+        <span style="color:#000;font-weight:bold">return</span> eq
+      crt_context_create(<span style="color:#000;font-weight:bold">&amp;</span>eqx<span style="color:#000;font-weight:bold">-&gt;</span>eqx_ctx)
+        crt_contpext_provider_create
+          crt_context_init
+      daos_eq_insert(eqx)
+        daos_hhash_link_insert(<span style="color:#000;font-weight:bold">&amp;</span>eqx<span style="color:#000;font-weight:bold">-&gt;</span>eqx_hlink, DAOS_HTYPE_EQ) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">插入全局</span>hash表(<span style="color:#000;font-weight:bold">struct</span> daos_hhash_table	daos_ht)
+      daos_eq_handle(eqx, eqh)
+        daos_hhash_link_key(<span style="color:#000;font-weight:bold">&amp;</span>eqx<span style="color:#000;font-weight:bold">-&gt;</span>eqx_hlink, <span style="color:#000;font-weight:bold">&amp;</span>h<span style="color:#000;font-weight:bold">-&gt;</span>cookie) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">关联</span>key
+      tse_sched_init(<span style="color:#000;font-weight:bold">&amp;</span>eqx<span style="color:#000;font-weight:bold">-&gt;</span>eqx_sched, <span style="color:#0086b3">NULL</span>, eqx<span style="color:#000;font-weight:bold">-&gt;</span>eqx_ctx) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">初始化调度器</span> <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#000;font-weight:bold">struct</span> tse_sched_private <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">调度器及队列</span>,<span style="color:#a61717;background-color:#e3d2d2">属性等</span>
+        <span style="color:#000;font-weight:bold">struct</span> tse_sched_private	<span style="color:#000;font-weight:bold">*</span>dsp <span style="color:#000;font-weight:bold">=</span> tse_sched2priv(sched) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">设置调度器私有指针</span>dsp
+        D_INIT_LIST_HEAD(<span style="color:#000;font-weight:bold">&amp;</span>dsp<span style="color:#000;font-weight:bold">-&gt;</span>dsp_init_list); <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">初始队列</span>
+        D_INIT_LIST_HEAD(<span style="color:#000;font-weight:bold">&amp;</span>dsp<span style="color:#000;font-weight:bold">-&gt;</span>dsp_running_list); <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">运行队列</span>
+        D_INIT_LIST_HEAD(<span style="color:#000;font-weight:bold">&amp;</span>dsp<span style="color:#000;font-weight:bold">-&gt;</span>dsp_complete_list) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">完成队列</span>
+        D_INIT_LIST_HEAD(<span style="color:#000;font-weight:bold">&amp;</span>dsp<span style="color:#000;font-weight:bold">-&gt;</span>dsp_sleeping_list) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">睡眠队列</span>
+        D_INIT_LIST_HEAD(<span style="color:#000;font-weight:bold">&amp;</span>dsp<span style="color:#000;font-weight:bold">-&gt;</span>dsp_comp_cb_list); <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">完成回调队列</span>
+        tse_sched_register_comp_cb(sched, comp_cb, udata) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">初始回调为空</span>
+          dsc<span style="color:#000;font-weight:bold">-&gt;</span>dsc_comp_cb <span style="color:#000;font-weight:bold">=</span> comp_cb <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">设置调度器的完成回调和回调参数</span>(udata)
+          d_list_add(<span style="color:#000;font-weight:bold">&amp;</span>dsc<span style="color:#000;font-weight:bold">-&gt;</span>dsc_list, <span style="color:#000;font-weight:bold">&amp;</span>dsp<span style="color:#000;font-weight:bold">-&gt;</span>dsp_comp_cb_list) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">将调度器的完成回调</span> <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">调度器的完成回调队列</span>
+        sched<span style="color:#000;font-weight:bold">-&gt;</span>ds_udata <span style="color:#000;font-weight:bold">=</span> udata <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">将网络上下文</span> daos_eq_ctx <span style="color:#a61717;background-color:#e3d2d2">设置到调度器的用户数据指针上</span>(<span style="color:#a61717;background-color:#e3d2d2">也可以是回调数据等</span>)
+      daos_eq_putref(eqx) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">减一次引用计数</span>(ch_rec_decref)
+  duns_resolve_path
+  dfuse_pool_connect
+  dfuse_cont_open
+  dfuse_fs_start <span style="color:#a61717;background-color:#e3d2d2">启动文件系统</span>
+    d_hash_rec_insert(<span style="color:#000;font-weight:bold">&amp;</span>fs_handle<span style="color:#000;font-weight:bold">-&gt;</span>dpi_iet <span style="color:#a61717;background-color:#e3d2d2">将根插入</span>hash表, <span style="color:#a61717;background-color:#e3d2d2">在</span> dfuse_reply_entry <span style="color:#a61717;background-color:#e3d2d2">中也会插入</span><span style="color:#000;font-weight:bold">:</span> d_hash_rec_find_insert(<span style="color:#000;font-weight:bold">&amp;</span>fs_handle<span style="color:#000;font-weight:bold">-&gt;</span>dpi_iet
+    d_slab_init(<span style="color:#000;font-weight:bold">&amp;</span>fs_handle<span style="color:#000;font-weight:bold">-&gt;</span>di_slab, fs_handle)
+    <span style="color:#000;font-weight:bold">for</span> (i <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>; i <span style="color:#000;font-weight:bold">&lt;</span> fs_handle<span style="color:#000;font-weight:bold">-&gt;</span>di_eq_count; i<span style="color:#000;font-weight:bold">++</span>)
+      d_slab_register(<span style="color:#000;font-weight:bold">&amp;</span>fs_handle<span style="color:#000;font-weight:bold">-&gt;</span>di_slab, <span style="color:#000;font-weight:bold">&amp;</span>read_slab, eqt, <span style="color:#000;font-weight:bold">&amp;</span>eqt<span style="color:#000;font-weight:bold">-&gt;</span>de_read_slab)
+        create_many(type)
+          ptr   <span style="color:#000;font-weight:bold">=</span> create(type) <span style="color:#000;font-weight:bold">-&gt;</span> create(<span style="color:#000;font-weight:bold">struct</span> d_slab_type <span style="color:#000;font-weight:bold">*</span>type)
+            type<span style="color:#000;font-weight:bold">-&gt;</span>st_reg.sr_init(ptr, type<span style="color:#000;font-weight:bold">-&gt;</span>st_arg) <span style="color:#000;font-weight:bold">-&gt;</span> dfuse_event_init <span style="color:#000;font-weight:bold">-&gt;</span> ev<span style="color:#000;font-weight:bold">-&gt;</span>de_eqt <span style="color:#000;font-weight:bold">=</span> handle <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">为</span>ev绑定daos_event_t
+            <span style="color:#000;font-weight:bold">if</span> (<span style="color:#000;font-weight:bold">!</span>type<span style="color:#000;font-weight:bold">-&gt;</span>st_reg.sr_reset(ptr)) <span style="color:#000;font-weight:bold">-&gt;</span> dfuse_read_event_reset(<span style="color:#458;font-weight:bold">void</span> <span style="color:#000;font-weight:bold">*</span>arg) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">重置读事件</span>ev
+              D_ALLOC(ev<span style="color:#000;font-weight:bold">-&gt;</span>de_iov.iov_buf, DFUSE_MAX_READ) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">读最大</span><span style="color:#099">1</span>MB
+              ev<span style="color:#000;font-weight:bold">-&gt;</span>de_sgl.sg_nr       <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">1</span>
+              daos_event_init(<span style="color:#000;font-weight:bold">&amp;</span>ev<span style="color:#000;font-weight:bold">-&gt;</span>de_ev, ev<span style="color:#000;font-weight:bold">-&gt;</span>de_eqt<span style="color:#000;font-weight:bold">-&gt;</span>de_eq, <span style="color:#0086b3">NULL</span>) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">父事件为空</span>, <span style="color:#a61717;background-color:#e3d2d2">也支持父事件</span>, <span style="color:#a61717;background-color:#e3d2d2">如</span><span style="color:#000;font-weight:bold">:</span> daos_event_init(child_events[i], DAOS_HDL_INVAL, <span style="color:#000;font-weight:bold">&amp;</span>event)
+                evx<span style="color:#000;font-weight:bold">-&gt;</span>evx_status	<span style="color:#000;font-weight:bold">=</span> DAOS_EVS_READY
+                <span style="color:#000;font-weight:bold">if</span> (daos_handle_is_valid(eqh)) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">句柄有效</span>
+                  eqx <span style="color:#000;font-weight:bold">=</span> daos_eq_lookup(eqh)
+                  evx<span style="color:#000;font-weight:bold">-&gt;</span>evx_ctx <span style="color:#000;font-weight:bold">=</span> eqx<span style="color:#000;font-weight:bold">-&gt;</span>eqx_ctx
+                  evx<span style="color:#000;font-weight:bold">-&gt;</span>evx_sched <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">&amp;</span>eqx<span style="color:#000;font-weight:bold">-&gt;</span>eqx_sched <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">继承</span>EQ的网络和调度器
+          entry <span style="color:#000;font-weight:bold">=</span> ptr <span style="color:#000;font-weight:bold">+</span> type<span style="color:#000;font-weight:bold">-&gt;</span>st_reg.sr_offset
+          d_list_add_tail(entry, <span style="color:#000;font-weight:bold">&amp;</span>type<span style="color:#000;font-weight:bold">-&gt;</span>st_free_list) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">将对象加入空闲列表</span>,<span style="color:#a61717;background-color:#e3d2d2">计数器</span><span style="color:#000;font-weight:bold">+</span><span style="color:#099">1</span>
+          type<span style="color:#000;font-weight:bold">-&gt;</span>st_free_count<span style="color:#000;font-weight:bold">++</span>
+        d_list_add_tail(<span style="color:#000;font-weight:bold">&amp;</span>type<span style="color:#000;font-weight:bold">-&gt;</span>st_type_list, <span style="color:#000;font-weight:bold">&amp;</span>slab<span style="color:#000;font-weight:bold">-&gt;</span>slab_list) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">将</span>slab放入列表备用
+    <span style="color:#000;font-weight:bold">for</span> (i <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>; i <span style="color:#000;font-weight:bold">&lt;</span> fs_handle<span style="color:#000;font-weight:bold">-&gt;</span>di_eq_count; i<span style="color:#000;font-weight:bold">++</span>) 
+    dfuse_progress_thread pthread_create(<span style="color:#000;font-weight:bold">&amp;</span>fs_handle<span style="color:#000;font-weight:bold">-&gt;</span>dpi_thread, <span style="color:#0086b3">NULL</span>, dfuse_progress_thread, fs_handle) <span style="color:#a61717;background-color:#e3d2d2">异步进度线程，该线程在启动时使用事件队列启动，并阻塞在信号量上，直到创建异步事件，此时线程唤醒并在</span> daos_eq_poll() <span style="color:#a61717;background-color:#e3d2d2">中忙于轮询直到完成</span>
+      sem_wait
+      daos_eq_poll  <span style="color:#a61717;background-color:#e3d2d2">从</span> EQ <span style="color:#a61717;background-color:#e3d2d2">中检索完成事件</span>
+        daos_eq_lookup <span style="color:#a61717;background-color:#e3d2d2">查找私有事件队列</span>
+          daos_hhash_link_lookup
+        crt_progress_cond(epa.eqx<span style="color:#000;font-weight:bold">-&gt;</span>eqx_ctx, timeout, eq_progress_cb, <span style="color:#000;font-weight:bold">&amp;</span>epa)
+          eq_progress_cb
+        dfuse_launch_fuse(fs_handle, <span style="color:#000;font-weight:bold">&amp;</span>args) <span style="color:#a61717;background-color:#e3d2d2">创建</span>fuse文件系统
+          fuse_session_new(args, <span style="color:#000;font-weight:bold">&amp;</span>dfuse_ops, <span style="color:#000;font-weight:bold">sizeof</span>(dfuse_ops), fs_handle)
+          fuse_session_mount
+          dfuse_send_to_fg
+          dfuse_loop
+  dfuse_fs_fini
+                                                                                                       
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="总结">总结</h2>
+<ul>
+<li>DAOS的任务调度引擎结合事件队列和事件, 与网络上下文绑定完成抽象封装, 可作为项目第三方组件引入, 结合业务, 完成同步和异步任务调度(依赖任务处理,如多副本写, EC), 事件, 事件队列, 任务, 调度器, HASH表, SLAB, 各种运行队列, 完成队列, 完成回调队列, 延迟队列&hellip;, 可应对复杂的业务调度和管理需求</li>
+<li>一个文件系统绑定多个事件队列, IO打散到每个事件队列, 负载均衡</li>
+<li>全局HASH表结合cookie作为key, 快速捞回事件队列</li>
+</ul>
+<h2 id="参考">参考</h2>
+<p>DAOS客户端API_事件和事件队列及任务调度引擎: <a href="https://github.com/ssbandjl/daos/tree/master/src/client/api">https://github.com/ssbandjl/daos/tree/master/src/client/api</a></p>
+<h2 id="晓兵">晓兵</h2>
+<p>博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a> | <a href="https://cloud.tencent.com/developer/user/5060293/articles">https://cloud.tencent.com/developer/user/5060293/articles</a></p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/daos/daos_eq_and_event/">https://logread.cn/post/daos/daos_eq_and_event/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/daos/daos_tse/">DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</a></li>
+        
+        <li><a href="/post/daos/daos_cart_swim/">DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)</a></li>
+        
+        <li><a href="/post/daos/daos_server_engine_start/">DAOS引擎启动流程-源码分析</a></li>
+        
+        <li><a href="/post/daos/daos_spdk_bdev/">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</a></li>
+        
+        <li><a href="/post/rdma/rdma_rocev2_lossless_lossy/">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+                <li><a href='/tags/daos'>daos</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2023
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_eq_and_event/" title="DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析">DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_tse/" title="DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析">DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/" title="Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/nvmf/" title="NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析">NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_cart_swim/" title="DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)">DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/multipath/linux_kernel_multipath_fail_path/" title="linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2">linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/linux_kernel_vs_dpdk/" title="Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]">Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/study/summary/" title="常用学习网站汇总(随时更新)">常用学习网站汇总(随时更新)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_server_engine_start/" title="DAOS引擎启动流程-源码分析">DAOS引擎启动流程-源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/fs/gfs_paper/" title="谷歌文件系统">谷歌文件系统</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/multipath/">multipath (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvmeof/">nvmeof (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/roce/">roce (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (17)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (22)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/nvmeof/">nvmeof</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/roce/">roce</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/">多路径</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://github.com/ssbandjl/golang-design-pattern" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

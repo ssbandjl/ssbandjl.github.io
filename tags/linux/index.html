@@ -85,6 +85,60 @@
     <article class="post">
         <header>
             <h1 class="post-title">
+                <a href="https://logread.cn/post/daos/daos_eq_and_event/">DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年8月19日
+        </date>
+        
+        <div class="post-meta meta-category">
+            |
+            
+            <a href='/categories/stor'>stor</a>
+            
+            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
+            
+            <a href='/categories/daos'>daos</a>
+            
+        </div>
+        
+        <div class="post-content">
+            DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析 简介 事件和事件队列 DAOS API 函数可以在阻塞或非阻塞模式下使用。 这是通过传递给每个 API 调用的指向 DAOS 事件的指针来确定的：如果 NULL 表示操作将被阻塞。 操作完成后会返回。 所有失败情况的错误码都将通过API……
+            <p class="readmore"><a href="https://logread.cn/post/daos/daos_eq_and_event/">阅读全文</a></p>
+        </div>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://logread.cn/post/daos/daos_tse/">DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年8月8日
+        </date>
+        
+        <div class="post-meta meta-category">
+            |
+            
+            <a href='/categories/stor'>stor</a>
+            
+            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
+            
+            <a href='/categories/daos'>daos</a>
+            
+        </div>
+        
+        <div class="post-content">
+            DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析 简介 TSE 是一个通用库，用于创建具有函数回调的通用任务，可选地添加这些任务之间的依赖关系，并将它们安排在一个引擎中，该引擎按照插入它们的依赖关系图确定的顺序执行这些任务。任务依赖图是调度程序的组成部分……
+            <p class="readmore"><a href="https://logread.cn/post/daos/daos_tse/">阅读全文</a></p>
+        </div>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
                 <a href="https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</a>
             </h1>
         </header>
@@ -245,7 +299,7 @@
         </div>
         
         <div class="post-content">
-            性能 P99 CONF 大会(P99分位数, 极致)是面向工程师和由工程师举办的跨行业虚拟活动，以低延迟、高性能设计为中心, 突出低延迟、高性能分布式计算所需的工程挑战和创造性解决方案 P99大会: https://www.p99conf.io/on-demand/ HPC高性能计算 Mochi 项目是阿贡国家实验室、洛斯阿拉莫斯国家实验室、卡内基梅隆大学和 HDF 集团之间的合作。 该项……
+            本文链接 https://logread.cn/post/study/summary/ 性能 P99 CONF 大会(P99分位数, 极致)是面向工程师和由工程师举办的跨行业虚拟活动，以低延迟、高性能设计为中心, 突出低延迟、高性能分布式计算所需的工程挑战和创造性解决方案 P99大会: https://www.p99conf.io/on-demand/ HPC高性能计算 Mochi 项目是阿贡国家实验室、洛斯阿拉莫斯国家实验室、卡内基梅隆大学和 HDF 集团之间的……
             <p class="readmore"><a href="https://logread.cn/post/study/summary/">阅读全文</a></p>
         </div>
     </article>
@@ -299,62 +353,6 @@
         <div class="post-content">
             Google File System 谷歌文件系统 论文[译] The Google File System Sanjay Ghemawat, Howard Gobioff, and Shun Tak Leung Google 我们设计并实现了 Google 文件系统，这是一种可扩展的分布式文件系统，适用于大型分布式数据密集型应用程序。 它在廉价的商品硬件上运行时提供容错，并为大量客户端提供高聚合性能。虽然与以前的分布式文件系统有许多相同的目标，但我们的设计是由对我……
             <p class="readmore"><a href="https://logread.cn/post/fs/gfs_paper/">阅读全文</a></p>
-        </div>
-    </article>
-    
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://logread.cn/post/daos/daos_spdk_bdev/">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2023年5月20日
-        </date>
-        
-        <div class="post-meta meta-category">
-            |
-            
-            <a href='/categories/stor'>stor</a>
-            
-            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
-            
-        </div>
-        
-        <div class="post-content">
-            基于DOAS文件系统(DFS后端)暴露的SPDK块设备 整体架构 步骤 编译daos, 记录daos安装目录, 比如/opt/daos, 启动daos_agent, daos_engine, daos_server 编译spdk git clone https://github.com/spdk/spdk.git git submodule update &ndash;init ./configure &ndash;with-daos #指定daos include目录和lib目录 make -j 16 启动spdk nvmf_tgt sudo HUGE_EVEN_ALLOC=yes scripts/setup.sh sudo ./build/bin/nvmf_tgt -m [21,22,23,24] 创建传输层 sudo ./scripts/rpc.py nvmf_create_transport……
-            <p class="readmore"><a href="https://logread.cn/post/daos/daos_spdk_bdev/">阅读全文</a></p>
-        </div>
-    </article>
-    
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/">Mercury为高性能计算启用远程过程调用(RPC)</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2023年5月13日
-        </date>
-        
-        <div class="post-meta meta-category">
-            |
-            
-            <a href='/categories/stor'>stor</a>
-            
-            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
-            
-            <a href='/categories/%E7%BD%91%E7%BB%9C'>网络</a>
-            
-            <a href='/categories/rpc'>rpc</a>
-            
-            <a href='/categories/hpc'>hpc</a>
-            
-        </div>
-        
-        <div class="post-content">
-            Mercury为高性能计算启用远程过程调用(RPC) 摘要 ​ 远程过程调用（RPC）是分布式服务广泛使用的一种技术。 这种技术现在越来越多地用于高性能计算 (HPC) 的上下文中，它允许将例程的执行委托给远程节点，这些节点可以留出并专用于特定任务。 然而，现有的 RPC 框架采用基于套接字的网络接口（通常在……
-            <p class="readmore"><a href="https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/">阅读全文</a></p>
         </div>
     </article>
     
@@ -460,6 +458,14 @@
 <ul class="widget-list">
     
     <li>
+        <a href="https://logread.cn/post/daos/daos_eq_and_event/" title="DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析">DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_tse/" title="DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析">DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</a>
+    </li>
+    
+    <li>
         <a href="https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/" title="Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</a>
     </li>
     
@@ -491,14 +497,6 @@
         <a href="https://logread.cn/post/fs/gfs_paper/" title="谷歌文件系统">谷歌文件系统</a>
     </li>
     
-    <li>
-        <a href="https://logread.cn/post/daos/daos_spdk_bdev/" title="基于DOAS文件系统接口(DFS)暴露的SPDK块设备">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</a>
-    </li>
-    
-    <li>
-        <a href="https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/" title="Mercury为高性能计算启用远程过程调用(RPC)">Mercury为高性能计算启用远程过程调用(RPC)</a>
-    </li>
-    
 </ul>
     </section>
 
@@ -514,7 +512,7 @@
     
     <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
     
-    <li><a href="https://logread.cn/categories/daos/">daos (3)</a></li>
+    <li><a href="https://logread.cn/categories/daos/">daos (5)</a></li>
     
     <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
     
@@ -538,9 +536,9 @@
     
     <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
     
-    <li><a href="https://logread.cn/categories/stor/">stor (15)</a></li>
+    <li><a href="https://logread.cn/categories/stor/">stor (17)</a></li>
     
-    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (20)</a></li>
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (22)</a></li>
     
     <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
     

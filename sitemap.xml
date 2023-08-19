@@ -4,21 +4,66 @@
   
   <url>
     <loc>https://logread.cn/categories/</loc>
-    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
+    <lastmod>2023-08-19T22:23:52+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/daos/</loc>
+    <lastmod>2023-08-19T22:23:52+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/daos/</loc>
+    <lastmod>2023-08-19T22:23:52+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/daos/daos_eq_and_event/</loc>
+    <lastmod>2023-08-19T22:23:52+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/tags/linux/</loc>
-    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/</loc>
-    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
+    <lastmod>2023-08-19T22:23:52+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/post/</loc>
+    <lastmod>2023-08-19T22:23:52+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/stor/</loc>
+    <lastmod>2023-08-19T22:23:52+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/stor/</loc>
+    <lastmod>2023-08-19T22:23:52+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/</loc>
+    <lastmod>2023-08-19T22:23:52+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</loc>
+    <lastmod>2023-08-19T22:23:52+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/</loc>
+    <lastmod>2023-08-19T22:23:52+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/daos/daos_tse/</loc>
+    <lastmod>2023-08-08T22:48:22+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/</loc>
     <lastmod>2023-07-23T13:40:11+08:00</lastmod>
   </url>
   
@@ -43,31 +88,6 @@
   </url>
   
   <url>
-    <loc>https://logread.cn/tags/stor/</loc>
-    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/stor/</loc>
-    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/</loc>
-    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</loc>
-    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/</loc>
-    <lastmod>2023-07-23T13:40:11+08:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://logread.cn/post/linux/nvmf/</loc>
     <lastmod>2023-07-14T22:09:39+08:00</lastmod>
   </url>
@@ -80,16 +100,6 @@
   <url>
     <loc>https://logread.cn/categories/nvmeof/</loc>
     <lastmod>2023-07-14T22:09:39+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/daos/</loc>
-    <lastmod>2023-07-08T09:50:03+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/daos/</loc>
-    <lastmod>2023-07-08T09:50:03+08:00</lastmod>
   </url>
   
   <url>

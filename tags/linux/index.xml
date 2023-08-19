@@ -6,7 +6,25 @@
     <description>Recent content in linux on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 23 Jul 2023 13:40:11 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/linux/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 19 Aug 2023 22:23:52 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/linux/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</title>
+      <link>https://logread.cn/post/daos/daos_eq_and_event/</link>
+      <pubDate>Sat, 19 Aug 2023 22:23:52 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/daos/daos_eq_and_event/</guid>
+      <description>DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析 简介 事件和事件队列 DAOS API 函数可以在阻塞或非阻塞模式下使用。 这是通过传递给每个 API 调用的指向 DAOS 事件的指针来确定的：如果 NULL 表示操作将被阻塞。 操作完成后会返回。 所有失败情况的错误码都将通过API</description>
+    </item>
+    
+    <item>
+      <title>DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</title>
+      <link>https://logread.cn/post/daos/daos_tse/</link>
+      <pubDate>Tue, 08 Aug 2023 22:48:22 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/daos/daos_tse/</guid>
+      <description>DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析 简介 TSE 是一个通用库，用于创建具有函数回调的通用任务，可选地添加这些任务之间的依赖关系，并将它们安排在一个引擎中，该引擎按照插入它们的依赖关系图确定的顺序执行这些任务。任务依赖图是调度程序的组成部分</description>
+    </item>
+    
     <item>
       <title>Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</title>
       <link>https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/</link>
@@ -58,7 +76,7 @@
       <pubDate>Sat, 17 Jun 2023 22:47:44 +0800</pubDate>
       
       <guid>https://logread.cn/post/study/summary/</guid>
-      <description>性能 P99 CONF 大会(P99分位数, 极致)是面向工程师和由工程师举办的跨行业虚拟活动，以低延迟、高性能设计为中心, 突出低延迟、高性能分布式计算所需的工程挑战和创造性解决方案 P99大会: https://www.p99conf.io/on-demand/ HPC高性能计算 Mochi 项目是阿贡国家实验室、洛斯阿拉莫斯国家实验室、卡内基梅隆大学和 HDF 集团之间的合作。 该项</description>
+      <description>本文链接 https://logread.cn/post/study/summary/ 性能 P99 CONF 大会(P99分位数, 极致)是面向工程师和由工程师举办的跨行业虚拟活动，以低延迟、高性能设计为中心, 突出低延迟、高性能分布式计算所需的工程挑战和创造性解决方案 P99大会: https://www.p99conf.io/on-demand/ HPC高性能计算 Mochi 项目是阿贡国家实验室、洛斯阿拉莫斯国家实验室、卡内基梅隆大学和 HDF 集团之间的</description>
     </item>
     
     <item>

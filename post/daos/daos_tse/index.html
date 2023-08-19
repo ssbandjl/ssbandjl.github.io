@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7571343657358120"
+     crossorigin="anonymous"></script>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析 | 晓兵</title>
+    <meta property="og:title" content="DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析 - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2023-08-08T22:48:22&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2023-08-08T22:48:22&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储, ceph, 分布式块存储, 云计算">
+    <meta name="description" content="DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/daos/daos_tse/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#简介">简介</a>
+      <ul>
+        <li><a href="#调度程序-api">调度程序 API</a></li>
+        <li><a href="#任务-api">任务 API</a></li>
+      </ul>
+    </li>
+    <li><a href="#流程图">流程图</a></li>
+    <li><a href="#源码分析">源码分析</a></li>
+    <li><a href="#总结">总结</a></li>
+    <li><a href="#参考">参考</a></li>
+    <li><a href="#晓兵">晓兵</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年8月8日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+            <span class="meta-category"><a href='/categories/daos'>daos</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="daos_tsetaskschedulerengine任务调度引擎流程及源码分析">DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</h1>
+<h2 id="简介">简介</h2>
+<p>TSE 是一个通用库，用于创建具有函数回调的通用任务，可选地添加这些任务之间的依赖关系，并将它们安排在一个引擎中，该引擎按照插入它们的依赖关系图确定的顺序执行这些任务。任务依赖图是调度程序的组成部分，允许用户创建多个任务并以非阻塞方式进行。</p>
+<p>TSE 不是 DAOS 特定的，但曾经是 DAOS 核心的一部分，后来作为独立 API 被提取到 common src 中。API 是通用的，允许在没有任何 DAOS 特定功能的引擎中创建任务。DAOS 库确实提供了一个构建在 TSE 之上的任务 API。有关这方面的更多信息，请参见<a href="https://github.com/daos-stack/daos/blob/master/src/client/api/README.md">此处</a>(<a href="https://github.com/ssbandjl/daos/blob/master/src/client/api/README.md">https://github.com/ssbandjl/daos/blob/master/src/client/api/README.md</a>)。此外，DAOS 在内部使用 TSE 来跟踪和处理与 API 事件关联的所有 API 任务，并且在某些情况下，调度与单个 API 任务相对应的多个飞行中的“子”任务，并添加对该任务的依赖以进行跟踪所有那些飞行中的“子”任务。DAOS 库中的 Array API 和具有多个副本的对象更新就是一个例子。</p>
+<h3 id="调度程序-api">调度程序 API</h3>
+<p>调度程序 API 允许用户创建通用调度程序并向其添加任务。在创建调度器时，用户可以注册一个完成回调，以便在调度器完成时调用。</p>
+<p>添加到调度程序的任务不会自行进行。必须在调度程序上显式调用进度函数 (daos_sched_progress) 才能在引擎中的任务上取得进展。用户可以在他们的程序中偶尔调用这个进度函数，或者可以派生一个重复调用进度函数的线程。</p>
+<h3 id="任务-api">任务 API</h3>
+<p>任务 API 允许创建具有通用主体功能的任务并将它们添加到调度程序。一旦在调度程序中创建了一个任务，如果没有用户对任务调度函数的显式调用，它就不会被实际调度运行，除非它是任务依赖关系图的一部分，在这种情况下，显式调度调用只需要图中的第一个任务。创建任务后，用户可以为任务注册任意数量的依赖项，这些依赖项需要在计划运行之前完成。此外，用户将能够在任务上注册准备和完成回调：</p>
+<ul>
+<li>准备回调在任务准备好运行但尚未执行时执行，这意味着创建任务的依赖关系已完成并且调度程序已准备好调度任务。当要调度的任务需要在创建任务时不可用但在任务的依赖关系完成后可用的信息时，这很有用；例如为任务主体功能设置一些输入参数。</li>
+<li>完成回调在任务完成执行时执行，并且当发生这种情况时用户需要做更多的工作或处理。这很有用的一个示例是设置在 TSE 之上构建的更高级别的事件或请求的完成，或者跟踪依赖项列表中多个任务的错误状态。</li>
+</ul>
+<p>任务 API 上的其他几个功能可以支持：</p>
+<ul>
+<li>在任务本身上设置一些可以查询的私有数据。</li>
+<li>在没有数据复制的情况下向/从任务堆栈空间推送和弹出数据</li>
+<li>通用任务列表</li>
+</ul>
+<p>有关该功能的更多详细信息，请参见<a href="https://github.com/daos-stack/daos/blob/master/src/include/daos/tse.h">此处</a>DAOS 代码中的 TSE 头文件(<a href="https://github.com/ssbandjl/daos/blob/master/src/include/daos/tse.h">https://github.com/ssbandjl/daos/blob/master/src/include/daos/tse.h</a>)</p>
+<h2 id="流程图">流程图</h2>
+<p>
+        <img class="mx-auto" alt="daos_tse" src="../daos_tse.png" />   
+    </p>
+<h2 id="源码分析">源码分析</h2>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">102
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">103
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">104
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">105
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">106
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">107
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">108
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">109
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">110
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">111
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">112
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">113
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">114
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">115
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">116
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">117
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">118
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">119
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">120
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">121
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">122
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#a61717;background-color:#e3d2d2">创建任务</span><span style="color:#000;font-weight:bold">:</span>
+dc_task_create
+  sched <span style="color:#000;font-weight:bold">=</span> daos_ev2sched(ev) <span style="color:#a61717;background-color:#e3d2d2">事件转调度器</span>
+  tse_task_create(func, sched, <span style="color:#0086b3">NULL</span>, <span style="color:#000;font-weight:bold">&amp;</span>task) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">初始化</span> tse_task<span style="color:#a61717;background-color:#e3d2d2">。</span> <span style="color:#a61717;background-color:#e3d2d2">该任务</span>(task)<span style="color:#a61717;background-color:#e3d2d2">会被添加到调度器</span>(sched)<span style="color:#a61717;background-color:#e3d2d2">任务列表中，稍后被调度，如果提供了依赖任务，则该任务将被添加到依赖任务的</span>dep列表中<span style="color:#a61717;background-color:#e3d2d2">，一旦依赖任务完成，则添加该任务到调度程序列表</span>(<span style="color:#a61717;background-color:#e3d2d2">先完成依赖任务</span>, <span style="color:#a61717;background-color:#e3d2d2">然后添加主任务</span>)
+  task_ptr2args <span style="color:#a61717;background-color:#e3d2d2">指针转参数</span>
+    D_INIT_LIST_HEAD(<span style="color:#000;font-weight:bold">&amp;</span>dtp<span style="color:#000;font-weight:bold">-&gt;</span>dtp_list) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">初始化任务链表</span>, <span style="color:#a61717;background-color:#e3d2d2">调度时插入到调度器的初始化队列</span>(dsp_init_list) <span style="color:#000;font-weight:bold">-&gt;</span> d_list_add_tail(<span style="color:#000;font-weight:bold">&amp;</span>dtp<span style="color:#000;font-weight:bold">-&gt;</span>dtp_list, <span style="color:#000;font-weight:bold">&amp;</span>dsp<span style="color:#000;font-weight:bold">-&gt;</span>dsp_init_list)
+    D_INIT_LIST_HEAD(<span style="color:#000;font-weight:bold">&amp;</span>dtp<span style="color:#000;font-weight:bold">-&gt;</span>dtp_task_list)
+  	D_INIT_LIST_HEAD(<span style="color:#000;font-weight:bold">&amp;</span>dtp<span style="color:#000;font-weight:bold">-&gt;</span>dtp_dep_list)
+	D_INIT_LIST_HEAD(<span style="color:#000;font-weight:bold">&amp;</span>dtp<span style="color:#000;font-weight:bold">-&gt;</span>dtp_comp_cb_list)
+	D_INIT_LIST_HEAD(<span style="color:#000;font-weight:bold">&amp;</span>dtp<span style="color:#000;font-weight:bold">-&gt;</span>dtp_prep_cb_list)
+    ...
+    dtp<span style="color:#000;font-weight:bold">-&gt;</span>dtp_func	  <span style="color:#000;font-weight:bold">=</span> task_func
+    ...
+    tse_task_buf_embedded <span style="color:#a61717;background-color:#e3d2d2">获取任务的嵌入式缓冲区，用户可以使用它来携带功能参数。</span> <span style="color:#a61717;background-color:#e3d2d2">任务的嵌入式缓冲区有大小限制，如果</span> buf_size <span style="color:#a61717;background-color:#e3d2d2">大于限制，此函数将返回</span> <span style="color:#0086b3">NULL</span><span style="color:#a61717;background-color:#e3d2d2">。</span> <span style="color:#a61717;background-color:#e3d2d2">用户应通过</span> tse_task_set_priv() <span style="color:#a61717;background-color:#e3d2d2">使用私有数据来传递大参数。</span> MSC <span style="color:#000;font-weight:bold">-</span> <span style="color:#a61717;background-color:#e3d2d2">我将其更改为只是一个缓冲区，而不是像以前那样</span>, <span style="color:#a61717;background-color:#e3d2d2">不断给一个额外的指针指向大的预涂层缓冲区。</span> <span style="color:#a61717;background-color:#e3d2d2">以前的方式不适用于公共用途。我们现在应该使它更简单，更通用，如下面的评论</span>
+      tse_task_buf_size
+        <span style="color:#000;font-weight:bold">return</span> (size <span style="color:#000;font-weight:bold">+</span> <span style="color:#099">7</span>) <span style="color:#000;font-weight:bold">&amp;</span> <span style="color:#000;font-weight:bold">~</span><span style="color:#099">0x7</span>
+  args<span style="color:#000;font-weight:bold">-&gt;</span>ta_magic <span style="color:#000;font-weight:bold">=</span> DAOS_TASK_MAGIC
+  tse_task_register_comp_cb(task, task_comp_event, <span style="color:#0086b3">NULL</span>, <span style="color:#099">0</span>) <span style="color:#000;font-weight:bold">-&gt;</span> dtc<span style="color:#000;font-weight:bold">-&gt;</span>dtc_cb <span style="color:#000;font-weight:bold">=</span> cb task_comp_event <span style="color:#a61717;background-color:#e3d2d2">注册完成回调</span>
+    register_cb(task, <span style="color:#0086b3">true</span>, comp_cb, arg, arg_size)
+      d_list_add(<span style="color:#000;font-weight:bold">&amp;</span>dtc<span style="color:#000;font-weight:bold">-&gt;</span>dtc_list, <span style="color:#000;font-weight:bold">&amp;</span>dtp<span style="color:#000;font-weight:bold">-&gt;</span>dtp_comp_cb_list) <span style="color:#a61717;background-color:#e3d2d2">插入到列表开始处</span>
+  failed <span style="color:#000;font-weight:bold">-&gt;</span> tse_task_decref(task) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">如果失败则判断引用计数</span>
+    
+
+<span style="color:#a61717;background-color:#e3d2d2">以</span>dfuse用户态文件系统为例    
+dfuse_do_work
+  dfuse_do_work
+    dfuse_cb_read dfuse_cb_read
+    dfs_read
+    dfs_read_int dfs_read_int
+      dc_task_create(dc_array_read, <span style="color:#0086b3">NULL</span>, ev, <span style="color:#000;font-weight:bold">&amp;</span>task) <span style="color:#a61717;background-color:#e3d2d2">创建任务</span>
+      tse_task_register_cbs(task, <span style="color:#0086b3">NULL</span>, <span style="color:#0086b3">NULL</span>, <span style="color:#099">0</span>, read_cb, <span style="color:#0086b3">NULL</span>, <span style="color:#099">0</span>)
+      dc_task_schedule(task, <span style="color:#0086b3">true</span>) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">立即调度任务</span>
+        tse_task_schedule
+          tse_task_schedule_with_delay
+    dc_array_read DAOS_OPC_ARRAY_READ <span style="color:#000;font-weight:bold">-&gt;</span> dc_array_io   task1
+      daos_task_create(DAOS_OPC_ARRAY_GET_SIZE, tse_task2sched(task)
+        dc_task_create(dc_funcs[opc].task_func, sched, <span style="color:#0086b3">NULL</span>, <span style="color:#000;font-weight:bold">&amp;</span>task)
+        dc_task_depend(task, num_deps, dep_tasks)
+      
+      ...
+    tse_sched_progress  task2
+    tse_sched_run
+      processed <span style="color:#000;font-weight:bold">+=</span> tse_sched_process_init(dsp) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">处理调度程序的初始化列表和休眠列表。</span> <span style="color:#a61717;background-color:#e3d2d2">这首先将所有现在应该醒来的任务从睡眠列表移动到初始化列表的尾部，然后执行调度程序初始化列表中没有依赖项的所有任务的所有主体函数</span>, <span style="color:#a61717;background-color:#e3d2d2">调度器主函数</span>, <span style="color:#a61717;background-color:#e3d2d2">在队列间移动任务</span>
+      processed <span style="color:#000;font-weight:bold">+=</span> tse_sched_process_complete(dsp)
+        d_list_splice_init(<span style="color:#000;font-weight:bold">&amp;</span>dsp<span style="color:#000;font-weight:bold">-&gt;</span>dsp_complete_list, <span style="color:#000;font-weight:bold">&amp;</span>comp_list) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">连接两个列表并重新初始化空列表。</span> <span style="color:#a61717;background-color:#e3d2d2">列表的内容添加到头部的开头。</span> <span style="color:#a61717;background-color:#e3d2d2">返回时列表为初始化为空</span>(<span style="color:#a61717;background-color:#e3d2d2">可理解为从一个队列移动到新的队列</span>)
+        d_list_for_each_entry_safe(dtp, tmp, <span style="color:#000;font-weight:bold">&amp;</span>comp_list, dtp_list) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">遍历新的完成队列</span>
+        d_list_del_init(<span style="color:#000;font-weight:bold">&amp;</span>dtp<span style="color:#000;font-weight:bold">-&gt;</span>dtp_list)
+        tse_task_post_process(task) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">检查完成列表中的任务、依赖任务状态检查、调度状态更新等。此后任务将移至完成列表</span>
+          <span style="color:#000;font-weight:bold">while</span> (<span style="color:#000;font-weight:bold">!</span>d_list_empty(<span style="color:#000;font-weight:bold">&amp;</span>dtp<span style="color:#000;font-weight:bold">-&gt;</span>dtp_dep_list))  <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">任务依赖队列不为空</span>(<span style="color:#a61717;background-color:#e3d2d2">还有依赖任务</span>)
+            ...
+      completed <span style="color:#000;font-weight:bold">=</span> tse_sched_check_complete(sched) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">检查调度器是否是完成状态</span>, <span style="color:#a61717;background-color:#e3d2d2">即</span><span style="color:#000;font-weight:bold">:</span> <span style="color:#a61717;background-color:#e3d2d2">初始队列和睡眠队列都为空</span>, <span style="color:#a61717;background-color:#e3d2d2">且无飞行的任务</span>
+    tse_task_prep_callback
+    check_short_read_cb
+    tse_task_complete    
+    
+                       
+<span style="color:#a61717;background-color:#e3d2d2">查找</span>
+df_ll_lookup
+cb_lookup
+lookupx
+lookup_rel_int
+array_get_size
+  dc_task_create(dc_array_get_size, <span style="color:#0086b3">NULL</span>, ev, <span style="color:#000;font-weight:bold">&amp;</span>task)
+  dc_task_schedule
+    daos_event_priv_wait <span style="color:#a61717;background-color:#e3d2d2">如果关联事件是私有事件，这个函数会等到完成，否则它立即返回</span>
+      ev_progress_cb
+        tse_sched_progress
+          dtp_func <span style="color:#000;font-weight:bold">-&gt;</span> dc_obj_query_key
+                       
+                       
+<span style="color:#a61717;background-color:#e3d2d2">任务完成回调参考堆栈</span><span style="color:#000;font-weight:bold">:</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#0  dc_rw_cb (task=0x7f9198004530, arg=&lt;optimized out&gt;) at src/object/cli_shard.c:952
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>...
+<span style="color:#999;font-weight:bold;font-style:italic">#0  tse_task_complete_callback (task=task@entry=0x7f68ec004d20) at src/common/tse.c:515
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>...
+<span style="color:#999;font-weight:bold;font-style:italic">#0  tse_task_complete (task=0x7f68ec004d20, ret=0) at src/common/tse.c:858
+</span><span style="color:#999;font-weight:bold;font-style:italic">#1  0x00007f693ce7cf48 in daos_rpc_cb (cb_info=&lt;optimized out&gt;) at src/client/api/rpc.c:24
+</span><span style="color:#999;font-weight:bold;font-style:italic">#2  0x00007f693b13bd8a in crt_hg_req_send_cb (hg_cbinfo=&lt;optimized out&gt;) at src/cart/crt_hg.c:1364
+</span><span style="color:#999;font-weight:bold;font-style:italic">#3  0x00007f693a2e34ce in hg_core_forward_cb (callback_info=&lt;optimized out&gt;) at /home/xb/project/stor/daos/main/daos/build/external/debug/mercury/src/mercury.c:990
+</span><span style="color:#999;font-weight:bold;font-style:italic">#4  0x00007f693a2f3034 in hg_core_trigger_entry (hg_core_handle=0x5608ec45c780) at /home/xb/project/stor/daos/main/daos/build/external/debug/mercury/src/mercury_core.c:5406
+</span><span style="color:#999;font-weight:bold;font-style:italic">#5  hg_core_trigger (context=0x5608ec2c9500, timeout_ms=timeout_ms@entry=0, max_count=max_count@entry=256, actual_count_p=actual_count_p@entry=0x7f68f3ffda54) at /home/xb/project/stor/daos/main/daos/build/external/debug/mercury/src/mercury_core.c:5267
+</span><span style="color:#999;font-weight:bold;font-style:italic">#6  0x00007f693a2fbdbb in HG_Core_trigger (context=&lt;optimized out&gt;, timeout=timeout@entry=0, max_count=max_count@entry=256, actual_count_p=actual_count_p@entry=0x7f68f3ffda54)
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>    at <span style="color:#000;font-weight:bold">/</span>home<span style="color:#000;font-weight:bold">/</span>xb<span style="color:#000;font-weight:bold">/</span>project<span style="color:#000;font-weight:bold">/</span>stor<span style="color:#000;font-weight:bold">/</span>daos<span style="color:#000;font-weight:bold">/</span>main<span style="color:#000;font-weight:bold">/</span>daos<span style="color:#000;font-weight:bold">/</span>build<span style="color:#000;font-weight:bold">/</span>external<span style="color:#000;font-weight:bold">/</span>debug<span style="color:#000;font-weight:bold">/</span>mercury<span style="color:#000;font-weight:bold">/</span>src<span style="color:#000;font-weight:bold">/</span>mercury_core.<span style="color:#900;font-weight:bold">c</span>:<span style="color:#099">6419</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#7  0x00007f693a2e748e in HG_Trigger (context=context@entry=0x5608ec266b70, timeout=timeout@entry=0, max_count=max_count@entry=256, actual_count_p=actual_count_p@entry=0x7f68f3ffda54)
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>    at <span style="color:#000;font-weight:bold">/</span>home<span style="color:#000;font-weight:bold">/</span>xb<span style="color:#000;font-weight:bold">/</span>project<span style="color:#000;font-weight:bold">/</span>stor<span style="color:#000;font-weight:bold">/</span>daos<span style="color:#000;font-weight:bold">/</span>main<span style="color:#000;font-weight:bold">/</span>daos<span style="color:#000;font-weight:bold">/</span>build<span style="color:#000;font-weight:bold">/</span>external<span style="color:#000;font-weight:bold">/</span>debug<span style="color:#000;font-weight:bold">/</span>mercury<span style="color:#000;font-weight:bold">/</span>src<span style="color:#000;font-weight:bold">/</span>mercury.<span style="color:#900;font-weight:bold">c</span>:<span style="color:#099">2197</span> <span style="color:#000;font-weight:bold">-&gt;</span> ibv_poll_cq
+<span style="color:#999;font-weight:bold;font-style:italic">#8  0x00007f693b1490e9 in crt_hg_progress (hg_ctx=hg_ctx@entry=0x5608ec253b18, timeout=timeout@entry=0) at src/cart/crt_hg.c:1540
+</span><span style="color:#999;font-weight:bold;font-style:italic">#9  0x00007f693b0f9eea in crt_progress_cond (crt_ctx=0x5608ec253b00, timeout=timeout@entry=0, cond_cb=cond_cb@entry=0x7f693ce6732b &lt;ev_progress_cb&gt;, arg=arg@entry=0x7f68f3ffdb00) at src/cart/crt_context.c:1668
+</span><span style="color:#999;font-weight:bold;font-style:italic">#10 0x00007f693ce712f3 in daos_event_priv_wait () at src/client/api/event.c:1276 -&gt;  废弃 -&gt; dc_task_new + dc_task_schedule, DAOS-6958 事件：出现进度错误时正确的事件处理 (#4911)crt_progress 有时会返回非超时的错误。 这些在同步 IO 调用中没有得到正确处理，导致私有事件对于后续 IO 处于不可用状态。此 PR 检查购物车中的错误，并在返回错误时重新初始化私有事件，以便可以重新使用它，而不是返回给用户
+</span><span style="color:#999;font-weight:bold;font-style:italic">#11 0x00007f693ce7e93c in dc_task_schedule (task=&lt;optimized out&gt;, instant=instant@entry=true) at src/client/api/task.c:124  -&gt; 执行任务主体函数: dc_obj_fetch_task -&gt; 请求扇出 -&gt; 走网络send接口, 发送完成后, 通过trigger调发送回调: daos_rpc_cb
+</span><span style="color:#999;font-weight:bold;font-style:italic"># dc_obj_fetch_task_create -&gt; dc_task_create(dc_obj_fetch_task, tse, ev, task)
+</span><span style="color:#999;font-weight:bold;font-style:italic">#12 0x00007f693ce77e72 in daos_obj_fetch (oh=..., oh@entry=..., th=..., th@entry=..., flags=flags@entry=8, dkey=dkey@entry=0x7f68f3ffdc30, nr=nr@entry=1, iods=&lt;optimized out&gt;, sgls=0x7f68f3ffdc10, maps=0x0, ev=0x0) at src/client/api/object.c:170
+</span><span style="color:#999;font-weight:bold;font-style:italic">#13 0x00007f693c7377b7 in fetch_entry (ver=&lt;optimized out&gt;, oh=..., th=..., th@entry=..., name=&lt;optimized out&gt;, name@entry=0x7f68ec0045c0 &#34;write_test_file&#34;, len=len@entry=15, fetch_sym=fetch_sym@entry=false, exists=0x7f68f3ffde47, entry=0x7f68f3ffde60, 
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>    xnr<span style="color:#000;font-weight:bold">=</span><span style="color:#099">0</span>, xnames<span style="color:#000;font-weight:bold">=</span><span style="color:#099">0x0</span>, xvals<span style="color:#000;font-weight:bold">=</span><span style="color:#099">0x0</span>, xsizes<span style="color:#000;font-weight:bold">=</span><span style="color:#099">0x0</span>) at src<span style="color:#000;font-weight:bold">/</span>client<span style="color:#000;font-weight:bold">/</span>dfs<span style="color:#000;font-weight:bold">/</span>dfs.<span style="color:#900;font-weight:bold">c</span>:<span style="color:#099">658</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#14 0x00007f693c73d5a2 in entry_stat (dfs=dfs@entry=0x5608ec71f9e0, th=th@entry=..., oh=..., name=name@entry=0x7f68ec0045c0 &#34;write_test_file&#34;, len=len@entry=15, obj=obj@entry=0x7f68ec004590, get_size=&lt;optimized out&gt;, stbuf=&lt;optimized out&gt;, 
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>    obj_hlc<span style="color:#000;font-weight:bold">=&lt;</span>optimized out<span style="color:#000;font-weight:bold">&gt;</span>) at src<span style="color:#000;font-weight:bold">/</span>client<span style="color:#000;font-weight:bold">/</span>dfs<span style="color:#000;font-weight:bold">/</span>dfs.<span style="color:#900;font-weight:bold">c</span>:<span style="color:#099">1000</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#15 0x00007f693c75440e in dfs_osetattr (dfs=0x5608ec71f9e0, obj=0x7f68ec004590, stbuf=stbuf@entry=0x7f68f3ffe2f0, flags=flags@entry=4) at src/client/dfs/dfs.c:5344
+</span><span style="color:#999;font-weight:bold;font-style:italic">#16 0x00005608ea254967 in dfuse_cb_setattr (req=0x7f68ec0042f0, ie=0x7f68ec003830, attr=0x7f68f3ffe2f0, to_set=0) at src/client/dfuse/ops/setattr.c:108
+</span><span style="color:#999;font-weight:bold;font-style:italic">#17 0x00005608ea221ba7 in df_ll_setattr (req=0x7f68ec0042f0, ino=&lt;optimized out&gt;, attr=0x7f68f3ffe2f0, to_set=1056, fi=&lt;optimized out&gt;) at src/client/dfuse/dfuse_fuseops.c:245
+</span><span style="color:#999;font-weight:bold;font-style:italic">#18 0x00007f693c09ef6a in do_setattr () from /lib64/libfuse3.so.3
+</span><span style="color:#999;font-weight:bold;font-style:italic">#19 0x00007f693c0a0dba in fuse_session_process_buf_int () from /lib64/libfuse3.so.3
+</span><span style="color:#999;font-weight:bold;font-style:italic">#20 0x00005608ea22599a in dfuse_do_work (arg=0x5608ec70e470) at src/client/dfuse/dfuse_thread.c:60
+</span><span style="color:#999;font-weight:bold;font-style:italic">#21 0x00007f693d2361ca in start_thread () from /lib64/libpthread.so.0
+</span><span style="color:#999;font-weight:bold;font-style:italic">#22 0x00007f693ba9de73 in clone () from /lib64/libc.so.6
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>        
+
+<span style="color:#a61717;background-color:#e3d2d2">任务调度执行堆栈</span><span style="color:#000;font-weight:bold">:</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#0  tse_sched_run (sched=sched@entry=0x7f91aedd6ba0 &lt;daos_sched_g&gt;) at src/common/tse.c:755
+</span><span style="color:#999;font-weight:bold;font-style:italic">#1  0x00007f91ae789065 in tse_sched_progress (sched=0x7f91aedd6ba0 &lt;daos_sched_g&gt;) at src/common/tse.c:791
+</span><span style="color:#999;font-weight:bold;font-style:italic">#2  0x00007f91aea1033f in ev_progress_cb (arg=arg@entry=0x7f919fffe180) at src/client/api/event.c:516
+</span><span style="color:#999;font-weight:bold;font-style:italic">#3  0x00007f91acca2eb2 in crt_progress_cond (crt_ctx=0x5602ff224b00, timeout=timeout@entry=0, cond_cb=cond_cb@entry=0x7f91aea1032b &lt;ev_progress_cb&gt;, arg=arg@entry=0x7f919fffe180) at src/cart/crt_context.c:1648
+</span><span style="color:#999;font-weight:bold;font-style:italic">#4  0x00007f91aea1a2f3 in daos_event_priv_wait () at src/client/api/event.c:1276
+</span><span style="color:#999;font-weight:bold;font-style:italic">#5  0x00007f91aea2793c in dc_task_schedule (task=&lt;optimized out&gt;, instant=instant@entry=true) at src/client/api/task.c:124
+</span><span style="color:#999;font-weight:bold;font-style:italic">#6  0x00007f91aea209c1 in daos_obj_open (coh=..., oid=..., mode=mode@entry=2, oh=oh@entry=0x7f919fffe200, ev=ev@entry=0x0) at src/client/api/object.c:49
+</span><span style="color:#999;font-weight:bold;font-style:italic">#7  0x00007f91ae2faeb5 in dfs_ostat (dfs=0x5602ff6f09e0, obj=0x5602ff6efb80, stbuf=stbuf@entry=0x7f919fffe250) at src/client/dfs/dfs.c:4928
+</span><span style="color:#999;font-weight:bold;font-style:italic">#8  0x00005602fd14ed99 in dfuse_cb_getattr (req=0x7f9198000c10, ie=0x5602ff6ef960) at src/client/dfuse/ops/fgetattr.c:22
+</span><span style="color:#999;font-weight:bold;font-style:italic">#9  0x00005602fd1429fc in df_ll_getattr (req=0x7f9198000c10, ino=&lt;optimized out&gt;, fi=&lt;optimized out&gt;) at src/client/dfuse/dfuse_fuseops.c:204
+</span><span style="color:#999;font-weight:bold;font-style:italic">#10 0x00007f91adc48009 in do_getattr () from /lib64/libfuse3.so.3
+</span><span style="color:#999;font-weight:bold;font-style:italic">#11 0x00007f91adc49dba in fuse_session_process_buf_int () from /lib64/libfuse3.so.3
+</span><span style="color:#999;font-weight:bold;font-style:italic">#12 0x00005602fd14599a in dfuse_do_work (arg=0x5602ff6f0090) at src/client/dfuse/dfuse_thread.c:60
+</span><span style="color:#999;font-weight:bold;font-style:italic">#13 0x00007f91aeddf1ca in start_thread () from /lib64/libpthread.so.0
+</span><span style="color:#999;font-weight:bold;font-style:italic">#14 0x00007f91ad646e73 in clone () from /lib64/libc.so.6
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>        
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="总结">总结</h2>
+<ul>
+<li>核心对象是任务与调度器, 以及流程图中任务和调度器下的那几个队列</li>
+<li>为了实现延迟调用, 服务终止等业务, 在运行队列与休眠队列间移动任务</li>
+<li>为了实现主任务依赖多个子任务的业务, 用完成队列对依赖任务进行管理</li>
+<li>该TSE任务调度引擎可以独立于DAOS项目作为第三方组件适配和使用</li>
+</ul>
+<h2 id="参考">参考</h2>
+<p>DAOS公共模块: <a href="https://github.com/ssbandjl/daos/tree/master/src/common">https://github.com/ssbandjl/daos/tree/master/src/common</a></p>
+<p>DAOS内部组件: <a href="https://github.com/ssbandjl/daos/blob/xb/docs_xb/DAOS%E5%86%85%E9%83%A8%E7%BB%93%E6%9E%84.md">https://github.com/ssbandjl/daos/blob/xb/docs_xb/DAOS%E5%86%85%E9%83%A8%E7%BB%93%E6%9E%84.md</a></p>
+<h2 id="晓兵">晓兵</h2>
+<p>博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a> | <a href="https://cloud.tencent.com/developer/user/5060293/articles">https://cloud.tencent.com/developer/user/5060293/articles</a></p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/daos/daos_tse/">https://logread.cn/post/daos/daos_tse/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/daos/daos_cart_swim/">DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)</a></li>
+        
+        <li><a href="/post/daos/daos_server_engine_start/">DAOS引擎启动流程-源码分析</a></li>
+        
+        <li><a href="/post/daos/daos_spdk_bdev/">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</a></li>
+        
+        <li><a href="/post/rdma/rdma_rocev2_lossless_lossy/">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</a></li>
+        
+        <li><a href="/post/linux/nvmf/">NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+                <li><a href='/tags/daos'>daos</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2023
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_eq_and_event/" title="DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析">DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_tse/" title="DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析">DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/" title="Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/nvmf/" title="NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析">NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_cart_swim/" title="DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)">DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/multipath/linux_kernel_multipath_fail_path/" title="linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2">linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/linux_kernel_vs_dpdk/" title="Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]">Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/study/summary/" title="常用学习网站汇总(随时更新)">常用学习网站汇总(随时更新)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_server_engine_start/" title="DAOS引擎启动流程-源码分析">DAOS引擎启动流程-源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/fs/gfs_paper/" title="谷歌文件系统">谷歌文件系统</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/multipath/">multipath (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvmeof/">nvmeof (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/roce/">roce (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (17)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (22)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/nvmeof/">nvmeof</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/roce/">roce</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/">多路径</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://github.com/ssbandjl/golang-design-pattern" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
