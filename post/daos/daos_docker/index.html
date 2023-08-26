@@ -1,0 +1,910 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>DAOS-在docker中搭建daos开发调试环境 | 晓兵</title>
+    <meta property="og:title" content="DAOS-在docker中搭建daos开发调试环境 - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2023-08-26T08:55:26&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2023-08-26T08:55:26&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储,ceph,分布式块存储,云计算,daos,rdma,spdk,nvmeof,linux,kernel,内核,分布式存储,dpdk,rpc">
+    <meta name="description" content="DAOS-在docker中搭建daos开发调试环境">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/daos/daos_docker/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#简介">简介</a></li>
+    <li><a href="#步骤">步骤</a></li>
+    <li><a href="#参考">参考</a></li>
+    <li><a href="#晓兵">晓兵</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">DAOS-在docker中搭建daos开发调试环境</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年8月26日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="daos-在docker中搭建daos开发调试环境">DAOS-在docker中搭建daos开发调试环境</h1>
+<h2 id="简介">简介</h2>
+<p>本节介绍如何在 Docker 容器中构建和运行 DAOS 服务。 至少需要 4GB DRAM 和 16GB 磁盘空间。 在 Mac 上，请确保“Preferences/{Disk, Memory}”下的 Docker 设置已进行相应配置</p>
+<h2 id="步骤">步骤</h2>
+<p>拉取项目</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">git clone https://github.com/ssbandjl/daos.git
+</code></pre></td></tr></table>
+</div>
+</div><p>下载依赖包(缓存cache)</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#0086b3">cd</span> daos; wget http://rz2fg6ogr.hn-bkt.clouddn.com/cache_tgz
+</code></pre></td></tr></table>
+</div>
+</div><p>编译镜像或下载我这边已经编好的镜像</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">编译镜像: docker build  . -f utils/docker/Dockerfile.el.8 -t daos
+<span style="color:#998;font-style:italic"># 已编好的镜像: wget http://rz2fg6ogr.hn-bkt.clouddn.com/daos_main.tgz; docker load -i daos_main.tgz</span>
+</code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">查看docker镜像:
+<span style="color:#000;font-weight:bold">[</span>root@node3 daos<span style="color:#000;font-weight:bold">]</span><span style="color:#998;font-style:italic"># docker images</span>
+REPOSITORY   TAG       IMAGE ID       CREATED       SIZE
+daos         latest    8a64df225def   <span style="color:#099">2</span> weeks ago   3.16GB
+
+给宿主机配置大页<span style="color:#000;font-weight:bold">(</span>如8GB<span style="color:#000;font-weight:bold">)</span>:
+永久生效
+tee<span style="color:#d14">&lt;&lt;EOF&gt;&gt;/etc/sysctl.conf
+</span><span style="color:#d14">vm.nr_hugepages = 4096
+</span><span style="color:#d14">EOF</span>
+sysctl -p
+
+启动docker镜像:
+docker run -it -d --privileged --cap-add<span style="color:#000;font-weight:bold">=</span>ALL --name daos_main1 -v /home/xb/project/stor/daos/main/daos:/home/xb/project/stor/daos/main/daos -v /dev:/dev -v /dev/hugepages:/dev/hugepages -v /sys/fs/cgroup:/sys/fs/cgroup:ro daos:latest
+
+进入镜像: docker <span style="color:#0086b3">exec</span> -u root -it daos_main1 bash -c <span style="color:#d14">&#39;cd /home/xb/project/stor/daos/main/daos;exec &#34;${SHELL:-sh}&#34;&#39;</span>
+
+重新编译并安装DAOS:
+./build.sh 或
+scons --jobs <span style="color:#099">1</span> install <span style="color:#008080">PREFIX</span><span style="color:#000;font-weight:bold">=</span>/opt/daos <span style="color:#008080">BUILD_TYPE</span><span style="color:#000;font-weight:bold">=</span>debug <span style="color:#008080">TARGET_TYPE</span><span style="color:#000;font-weight:bold">=</span>debug --build-deps<span style="color:#000;font-weight:bold">=</span>yes
+
+which dmg
+
+拷贝证书和配置<span style="color:#000;font-weight:bold">(</span>启动时根据提示修改权限<span style="color:#000;font-weight:bold">)</span>:
+cp -r daosCA/certs /etc/daos/
+</code></pre></td></tr></table>
+</div>
+</div><p>参考配置文件: daos_server_docker_main.yml</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#998;font-style:italic"># For a single-server system</span><span style="color:#bbb">
+</span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#000080">name</span>:<span style="color:#bbb"> </span>daos_server<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#000080">access_points</span>:<span style="color:#bbb"> </span>[<span style="color:#d14">&#39;172.17.0.2&#39;</span>]<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#000080">provider</span>:<span style="color:#bbb"> </span>ofi+sockets<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#000080">control_log_mask</span>:<span style="color:#bbb"> </span>DEBUG<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#000080">control_log_file</span>:<span style="color:#bbb"> </span>/tmp/daos_server.log<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#000080">transport_config</span>:<span style="color:#bbb">
+</span><span style="color:#bbb">   </span><span style="color:#000080">allow_insecure</span>:<span style="color:#bbb"> </span><span style="color:#000;font-weight:bold">false</span><span style="color:#bbb">
+</span><span style="color:#bbb">   </span><span style="color:#000080">client_cert_dir</span>:<span style="color:#bbb"> </span>/etc/daos/certs/clients<span style="color:#bbb">
+</span><span style="color:#bbb">   </span><span style="color:#000080">ca_cert</span>:<span style="color:#bbb"> </span>/etc/daos/certs/daosCA.crt<span style="color:#bbb">
+</span><span style="color:#bbb">   </span><span style="color:#000080">cert</span>:<span style="color:#bbb"> </span>/etc/daos/certs/server.crt<span style="color:#bbb">
+</span><span style="color:#bbb">   </span><span style="color:#000080">key</span>:<span style="color:#bbb"> </span>/etc/daos/certs/server.key<span style="color:#bbb">
+</span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#000080">engines</span>:<span style="color:#bbb">
+</span><span style="color:#bbb"></span>-<span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#000080">targets</span>:<span style="color:#bbb"> </span><span style="color:#099">1</span><span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#000080">first_core</span>:<span style="color:#bbb"> </span><span style="color:#099">0</span><span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#000080">nr_xs_helpers</span>:<span style="color:#bbb"> </span><span style="color:#099">0</span><span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#000080">fabric_iface</span>:<span style="color:#bbb"> </span>eth0<span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#000080">fabric_iface_port</span>:<span style="color:#bbb"> </span><span style="color:#099">31416</span><span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#000080">log_mask</span>:<span style="color:#bbb"> </span>debug<span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#000080">log_file</span>:<span style="color:#bbb"> </span>/tmp/daos_engine.0.log<span style="color:#bbb">
+</span><span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#000080">env_vars</span>:<span style="color:#bbb">
+</span><span style="color:#bbb">  </span>- FI_LOG_LEVEL=warn<span style="color:#bbb">
+</span><span style="color:#bbb">  </span>- FI_SOCKETS_MAX_CONN_RETRY=1<span style="color:#bbb">
+</span><span style="color:#bbb">  </span>- FI_SOCKETS_CONN_TIMEOUT=2000<span style="color:#bbb">
+</span><span style="color:#bbb">  </span>- D_LOG_MASK=DEBUG<span style="color:#bbb">
+</span><span style="color:#bbb">  </span>- DD_SUBSYS=all<span style="color:#bbb">
+</span><span style="color:#bbb">  </span>- DD_MASK=all<span style="color:#bbb">
+</span><span style="color:#bbb">  </span>- HG_LOG_LEVEL=debug<span style="color:#bbb">
+</span><span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#998;font-style:italic"># Storage definitions</span><span style="color:#bbb">
+</span><span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#998;font-style:italic"># When scm_class is set to ram, tmpfs will be used to emulate SCM.</span><span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#998;font-style:italic"># The size of ram is specified by scm_size in GB units.</span><span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#000080">scm_mount</span>:<span style="color:#bbb"> </span>/mnt/daos <span style="color:#bbb"> </span><span style="color:#998;font-style:italic"># map to -s /mnt/daos</span><span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#000080">scm_class</span>:<span style="color:#bbb"> </span>ram<span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#000080">scm_size</span>:<span style="color:#bbb"> </span><span style="color:#099">4</span><span style="color:#bbb">  </span><span style="color:#998;font-style:italic">#内存模拟scm</span><span style="color:#bbb">
+</span><span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#998;font-style:italic"># When bdev_class is set to file, Linux AIO will be used to emulate NVMe.</span><span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#998;font-style:italic"># The size of file that will be created is specified by bdev_size in GB units.</span><span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#998;font-style:italic"># The location of the files that will be created is specified in bdev_list.</span><span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#000080">bdev_class</span>:<span style="color:#bbb"> </span>file<span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#000080">bdev_size</span>:<span style="color:#bbb"> </span><span style="color:#099">16</span><span style="color:#bbb">   </span><span style="color:#998;font-style:italic">#文件模拟nvme</span><span style="color:#bbb">
+</span><span style="color:#bbb">  </span><span style="color:#000080">bdev_list</span>:<span style="color:#bbb"> </span>[/tmp/daos-bdev]<span style="color:#bbb">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>启动集群</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">启动集群:
+./start.sh
+或参考:
+<span style="color:#0086b3">echo</span> -e <span style="color:#d14">&#34;start&#34;</span>
+
+<span style="color:#998;font-style:italic"># source /root/.bashrc</span>
+<span style="color:#998;font-style:italic"># run_all &#34;pkill daos_agent;pkill daos_server&#34;</span>
+
+<span style="color:#0086b3">source</span> /root/.bashrc
+pkill daos_agent 
+pkill daos_server
+rm -f /tmp/daos*.log
+rm -f /tmp/.daos_engine.0.log.swp
+rm -f /tmp/daos_engine*
+umount /mnt/daos
+
+<span style="color:#998;font-style:italic">#export FI_LOG_LEVEL=debug</span>
+<span style="color:#998;font-style:italic">#export FI_LOG_LEVEL=warn</span>
+
+<span style="color:#998;font-style:italic">#export HG_LOG_LEVEL=debug</span>
+<span style="color:#998;font-style:italic">#export HG_LOG_LEVEL=warn</span>
+
+daos_agent &amp;
+<span style="color:#998;font-style:italic"># echo -e &#34;dmg storage format&#34;</span>
+daos_server start &amp;
+
+<span style="color:#998;font-style:italic"># count=0</span>
+<span style="color:#998;font-style:italic"># while true;do</span>
+<span style="color:#998;font-style:italic">#     joined_num=`dmg sys query -v|grep Joined|wc -l`</span>
+<span style="color:#998;font-style:italic">#     if [[ $joined_num -eq 3 ]];then</span>
+<span style="color:#998;font-style:italic">#         break</span>
+<span style="color:#998;font-style:italic">#     fi</span>
+<span style="color:#998;font-style:italic">#     echo -e &#34;wait all rank join, $count times&#34;</span>
+<span style="color:#998;font-style:italic">#     count=$((count+1))</span>
+<span style="color:#998;font-style:italic">#     sleep 1</span>
+<span style="color:#998;font-style:italic"># done</span>
+
+sleep <span style="color:#099">5</span>
+dmg storage format
+
+
+创建池,容器, 挂载daos文件系统:
+参考文件: daos_create_pool_cont_mount_dfuse
+dmg pool create sxb -z 4g; dmg pool list --verbose
+daos container create sxb --type POSIX sxb; daos container query sxb sxb --verbose; daos cont get-prop sxb sxb
+mkdir -p /tmp/sxb; dfuse --mountpoint<span style="color:#000;font-weight:bold">=</span>/tmp/sxb --pool<span style="color:#000;font-weight:bold">=</span>sxb --cont<span style="color:#000;font-weight:bold">=</span>sxb; df -h
+<span style="color:#998;font-style:italic">#cd /tmp/sxb</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>最终效果:</p>
+<pre><code>[root@8b90fa1190f1 daos]# dmg pool list --verbose
+Label UUID                                 State SvcReps SCM Size SCM Used SCM Imbalance NVME Size NVME Used NVME Imbalance Disabled UpgradeNeeded? 
+----- ----                                 ----- ------- -------- -------- ------------- --------- --------- -------------- -------- -------------- 
+sxb   9b4157a8-7bab-493c-aa4d-5145144d92b3 Ready 0       240 MB   213 kB   0%            3.8 GB    52 MB     0%             0/1      None           
+
+[root@8b90fa1190f1 daos]# daos container query sxb sxb --verbose; daos cont get-prop sxb sxb
+  Container UUID              : ccc2f4f7-1e46-4709-8f28-09282a9f82ed                       
+  Container Label             : sxb                                                        
+  Container Type              : POSIX                                                      
+  Pool UUID                   : 9b4157a8-7bab-493c-aa4d-5145144d92b3                       
+  Container redundancy factor : 0                                                          
+  Number of open handles      : 2                                                          
+  Latest open time            : 0x126c7703f0840000 (2023-08-19 08:02:08.06070272 +0000 UTC)
+  Latest close/modify time    : 0x126c76d527b80000 (2023-08-19 08:01:55.50212096 +0000 UTC)
+  Number of snapshots         : 0                                                          
+  Object Class                : UNKNOWN                                                    
+  Dir Object Class            : UNKNOWN                                                    
+  File Object Class           : UNKNOWN                                                    
+  Chunk Size                  : 1.0 MiB                                                    
+
+Properties for container sxb
+Name                                             Value                               
+----                                             -----                               
+Highest Allocated OID (alloc_oid)                11                                  
+Checksum (cksum)                                 off                                 
+Checksum Chunk Size (cksum_size)                 32 KiB                              
+Compression (compression)                        off                                 
+Deduplication (dedup)                            off                                 
+Dedupe Threshold (dedup_threshold)               4.0 KiB                             
+EC Cell Size (ec_cell_sz)                        64 KiB                              
+Performance domain affinity level of EC (ec_pda) 1                                   
+Encryption (encryption)                          off                                 
+Global Version (global_version)                  3                                   
+Group (group)                                    root@                               
+Label (label)                                    sxb                                 
+Layout Type (layout_type)                        POSIX (1)                           
+Layout Version (layout_version)                  1                                   
+Max Snapshot (max_snapshot)                      0                                   
+Object Version (obj_version)                     1                                   
+Owner (owner)                                    root@                               
+Performance domain level (perf_domain)           root (255)                          
+Redundancy Factor (rd_fac)                       rd_fac0                             
+Redundancy Level (rd_lvl)                        node (2)                            
+Performance domain affinity level of RP (rp_pda) 4294967295                          
+Server Checksumming (srv_cksum)                  off                                 
+Health (status)                                  HEALTHY                             
+Access Control List (acl)                        A::OWNER@:rwdtTaAo, A:G:GROUP@:rwtT 
+[root@8b90fa1190f1 daos]# df -h
+Filesystem                  Size  Used Avail Use% Mounted on
+overlay                      50G   25G   26G  50% /
+devtmpfs                     63G     0   63G   0% /dev
+tmpfs                        63G     0   63G   0% /dev/shm
+/dev/mapper/xxx-var    50G   25G   26G  50% /etc/hosts
+tmpfs                        63G     0   63G   0% /sys/fs/cgroup
+/dev/mapper/xxx-root  120G   56G   65G  47% /home/xb/project/stor/daos/main/daos
+tmpfs                       4.0G  500M  3.6G  13% /mnt/daos
+dfuse                       3.8G   51M  3.7G   2% /tmp/sxb
+[root@8b90fa1190f1 daos]# 
+</code></pre><h2 id="参考">参考</h2>
+<p>在docker中搭建开发环境: <a href="https://docs.daos.io/v2.0/dev/development/#daos-development-in-docker">https://docs.daos.io/v2.0/dev/development/#daos-development-in-docker</a></p>
+<h2 id="晓兵">晓兵</h2>
+<p>博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a> | <a href="https://cloud.tencent.com/developer/user/5060293/articles">https://cloud.tencent.com/developer/user/5060293/articles</a></p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/daos/daos_docker/">https://logread.cn/post/daos/daos_docker/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/daos/daos_eq_and_event/">DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</a></li>
+        
+        <li><a href="/post/daos/daos_tse/">DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</a></li>
+        
+        <li><a href="/post/rdma/rdma_rocev2_lossless_lossy/">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</a></li>
+        
+        <li><a href="/post/linux/nvmf/">NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析</a></li>
+        
+        <li><a href="/post/daos/daos_cart_swim/">DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2023
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_docker/" title="DAOS-在docker中搭建daos开发调试环境">DAOS-在docker中搭建daos开发调试环境</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_eq_and_event/" title="DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析">DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_tse/" title="DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析">DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/" title="Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/nvmf/" title="NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析">NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_cart_swim/" title="DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)">DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/multipath/linux_kernel_multipath_fail_path/" title="linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2">linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/linux_kernel_vs_dpdk/" title="Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]">Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/study/summary/" title="常用学习网站汇总(随时更新)">常用学习网站汇总(随时更新)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_server_engine_start/" title="DAOS引擎启动流程-源码分析">DAOS引擎启动流程-源码分析</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/multipath/">multipath (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvmeof/">nvmeof (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/roce/">roce (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (18)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (23)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/nvmeof/">nvmeof</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/roce/">roce</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/">多路径</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://github.com/ssbandjl/golang-design-pattern" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

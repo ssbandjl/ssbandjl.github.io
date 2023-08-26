@@ -6,7 +6,16 @@
     <description>Recent content in stor on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 19 Aug 2023 22:23:52 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/stor/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 26 Aug 2023 08:55:26 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/stor/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>DAOS-在docker中搭建daos开发调试环境</title>
+      <link>https://logread.cn/post/daos/daos_docker/</link>
+      <pubDate>Sat, 26 Aug 2023 08:55:26 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/daos/daos_docker/</guid>
+      <description>DAOS-在docker中搭建daos开发调试环境 简介 本节介绍如何在 Docker 容器中构建和运行 DAOS 服务。 至少需要 4GB DRAM 和 16GB 磁盘空间。 在 Mac 上，请确保“Preferences/{Disk, Memory}”下的 Docker 设置已进行相应配置 步骤 拉取项目 1 git clone https://github.com/ssbandjl/daos.git 下载依赖包(缓存cache) 1 cd daos; wget http://rz2fg6ogr.hn-bkt.clouddn.com/cache_tgz 编译镜像或</description>
+    </item>
+    
     <item>
       <title>DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</title>
       <link>https://logread.cn/post/daos/daos_eq_and_event/</link>
