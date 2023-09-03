@@ -6,7 +6,16 @@
     <description>Recent content in Posts on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 26 Aug 2023 08:55:26 +0800</lastBuildDate><atom:link href="https://logread.cn/post/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 03 Sep 2023 14:42:07 +0800</lastBuildDate><atom:link href="https://logread.cn/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>DAOS用户态文件系统IO路径(dfuse io全路径)</title>
+      <link>https://logread.cn/post/daos/daos_dfuse_fs_io_path/</link>
+      <pubDate>Sun, 03 Sep 2023 14:42:07 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/daos/daos_dfuse_fs_io_path/</guid>
+      <description>DAOS用户态文件系统IO路径(dfuse io全路径) 简介 分布式异步对象存储（DAOS，Distributed Asynchronous Object Storage）是一个开源的可扩展存储系统，从根本上设计用于在用户空间支持SCM和NVMe存储。DAOS在IO500基准测试中展现出领先的性能 DAOS从头开始设计，以</description>
+    </item>
+    
     <item>
       <title>DAOS-在docker中搭建daos开发调试环境</title>
       <link>https://logread.cn/post/daos/daos_docker/</link>
