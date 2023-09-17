@@ -6,7 +6,16 @@
     <description>Recent content in hpc on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 13 May 2023 10:06:46 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/hpc/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 17 Sep 2023 10:44:13 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/hpc/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</title>
+      <link>https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/</link>
+      <pubDate>Sun, 17 Sep 2023 10:44:13 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/</guid>
+      <description>OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)-[译] 2015 IEEE 第 23 届高性能互连年度研讨会 摘要 OpenFabrics Interfaces (OFI) 是一个新的应用程序接口系列，它向中间件和应用程序公开通信服务。 Libfabric 是 OFI 的第一个成员，是在 OpenFabrics 联盟的支持下，由行业、学术界和国家实验室合作伙伴组成的广泛联盟在过去两年中</description>
+    </item>
+    
     <item>
       <title>Mercury为高性能计算启用远程过程调用(RPC)</title>
       <link>https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/</link>

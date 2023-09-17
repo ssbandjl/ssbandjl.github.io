@@ -6,20 +6,56 @@
     <description>Recent content in Tags on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 03 Sep 2023 14:42:07 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 17 Sep 2023 10:44:13 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>hpc</title>
+      <link>https://logread.cn/tags/hpc/</link>
+      <pubDate>Sun, 17 Sep 2023 10:44:13 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/hpc/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>libfabric</title>
+      <link>https://logread.cn/tags/libfabric/</link>
+      <pubDate>Sun, 17 Sep 2023 10:44:13 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/libfabric/</guid>
+      <description></description>
+    </item>
+    
     <item>
       <title>linux</title>
       <link>https://logread.cn/tags/linux/</link>
-      <pubDate>Sun, 03 Sep 2023 14:42:07 +0800</pubDate>
+      <pubDate>Sun, 17 Sep 2023 10:44:13 +0800</pubDate>
       
       <guid>https://logread.cn/tags/linux/</guid>
       <description></description>
     </item>
     
     <item>
+      <title>net</title>
+      <link>https://logread.cn/tags/net/</link>
+      <pubDate>Sun, 17 Sep 2023 10:44:13 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/net/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>rdma</title>
+      <link>https://logread.cn/tags/rdma/</link>
+      <pubDate>Sun, 17 Sep 2023 10:44:13 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/rdma/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>stor</title>
       <link>https://logread.cn/tags/stor/</link>
-      <pubDate>Sun, 03 Sep 2023 14:42:07 +0800</pubDate>
+      <pubDate>Sun, 17 Sep 2023 10:44:13 +0800</pubDate>
       
       <guid>https://logread.cn/tags/stor/</guid>
       <description></description>
@@ -31,15 +67,6 @@
       <pubDate>Sat, 19 Aug 2023 22:23:52 +0800</pubDate>
       
       <guid>https://logread.cn/tags/daos/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>rdma</title>
-      <link>https://logread.cn/tags/rdma/</link>
-      <pubDate>Sun, 23 Jul 2023 13:40:11 +0800</pubDate>
-      
-      <guid>https://logread.cn/tags/rdma/</guid>
       <description></description>
     </item>
     
@@ -103,24 +130,6 @@
       <pubDate>Sat, 20 May 2023 11:17:30 +0800</pubDate>
       
       <guid>https://logread.cn/tags/spdk/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>hpc</title>
-      <link>https://logread.cn/tags/hpc/</link>
-      <pubDate>Sat, 13 May 2023 10:06:46 +0800</pubDate>
-      
-      <guid>https://logread.cn/tags/hpc/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>net</title>
-      <link>https://logread.cn/tags/net/</link>
-      <pubDate>Sat, 13 May 2023 10:06:46 +0800</pubDate>
-      
-      <guid>https://logread.cn/tags/net/</guid>
       <description></description>
     </item>
     
