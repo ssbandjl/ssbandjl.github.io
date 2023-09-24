@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>network on 晓兵</title>
+    <link>https://logread.cn/tags/network/</link>
+    <description>Recent content in network on 晓兵</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Sun, 24 Sep 2023 17:32:26 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/network/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda</title>
+      <link>https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/</link>
+      <pubDate>Sun, 24 Sep 2023 17:32:26 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/</guid>
+      <description>Intel Open Fabrics Interfaces Libfabric Tutorial 英特尔开放结构接口 Libfabric 教程 rdma verbs network gpu panda hpc ai 简介 本文介绍了libfabric的基本教程, 以及常见代码示例, 包含tcp_socket, libfabric, gpu, dma等代码和示例, 内容基于intel专家的的视频和个人理解, 欢迎一起交流高性能存储, 分布式存储, 网络, rdma等技术 HOTI 热门互联网络技术 视</description>
+    </item>
+    
+  </channel>
+</rss>

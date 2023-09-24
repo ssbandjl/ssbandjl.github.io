@@ -1,0 +1,2203 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7571343657358120"
+     crossorigin="anonymous"></script>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda | 晓兵</title>
+    <meta property="og:title" content="英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2023-09-24T17:32:26&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2023-09-24T17:32:26&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储,ceph,分布式块存储,云计算,daos,rdma,spdk,nvmeof,linux,kernel,内核,分布式存储,dpdk,rpc">
+    <meta name="description" content="英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#简介">简介</a></li>
+    <li><a href="#封面-hoti---热门互连研讨会">封面-HOTI - 热门互连研讨会</a>
+      <ul>
+        <li><a href="#关键词-intel17年工作经验-中间件开发-libfabric项目-nvme-赛门铁克-惠普">关键词 intel17年工作经验 中间件开发 libfabric项目 nvme 赛门铁克 惠普</a></li>
+      </ul>
+    </li>
+    <li><a href="#agenda-目录议题">Agenda 目录/议题</a></li>
+    <li><a href="#编译通信软件">编译通信软件</a></li>
+    <li><a href="#学校教给咱们的tcp-socket编程示例">学校教给咱们的tcp socket编程示例</a></li>
+    <li><a href="#软硬件复杂性带来的挑战">软硬件复杂性带来的挑战</a></li>
+    <li><a href="#libfabric来解决上面的问题">libfabric来解决上面的问题</a></li>
+    <li><a href="#为什么需要libfabric">为什么需要libfabric</a></li>
+    <li><a href="#socket编程与libfabric编程对比">socket编程与libfabric编程对比</a></li>
+    <li><a href="#支持gpu通信">支持GPU通信</a></li>
+    <li><a href="#架构与四种服务">架构与四种服务</a></li>
+    <li><a href="#libfabric-api分组">libfabric API分组</a></li>
+    <li><a href="#在线示例socket-libfabric-gpu-talk-is-cheap-show-you-the-code-光说不练-上才艺">在线示例(socket, libfabric, gpu) talk is cheap, show you the code, 光说不练, 上才艺!</a>
+      <ul>
+        <li><a href="#tcp-socket-代码截图">tcp socket 代码截图</a></li>
+        <li><a href="#socket收发数据示例">socket收发数据示例</a></li>
+        <li><a href="#example_socketc-源码">example_socket.c 源码</a></li>
+        <li><a href="#libfabric收发数据示例截图">libfabric收发数据示例截图</a></li>
+        <li><a href="#参考代码">参考代码</a></li>
+      </ul>
+    </li>
+    <li><a href="#socket-vs-libfabric消息类型示意图两者都可完成建连和消息收发">socket vs libfabric消息类型示意图(两者都可完成建连和消息收发)</a></li>
+    <li><a href="#gpu数据传输示例">GPU数据传输示例</a>
+      <ul>
+        <li><a href="#左边是内存直接访问dma-ibv-verbs示例-右边是dma-libfabric统一api的语义的示例">左边是内存直接访问DMA ibv verbs示例, 右边是DMA libfabric统一API的语义的示例</a></li>
+        <li><a href="#主机对主机gpu-libfabric-内存直接访问dma示例">主机对主机GPU libfabric 内存直接访问DMA示例</a></li>
+        <li><a href="#主机发给gpu设备-内存直接访问dma-libfabric示例">主机发给GPU设备 内存直接访问DMA libfabric示例</a></li>
+      </ul>
+    </li>
+    <li><a href="#更多libfabric参考链接信息">更多libfabric参考链接信息</a></li>
+    <li><a href="#end-谢谢">END, 谢谢</a></li>
+    <li><a href="#附录">附录</a></li>
+    <li><a href="#hpc高性能计算大牛-dhabaleswar-k-dk-panda-熊猫博士">HPC高性能计算大牛: Dhabaleswar K. (DK) Panda 熊猫博士</a></li>
+    <li><a href="#研究兴趣">研究兴趣</a></li>
+    <li><a href="#简介-1">简介</a></li>
+    <li><a href="#主要研究项目和软件分发">主要研究项目和软件分发</a></li>
+    <li><a href="#教学">教学</a></li>
+    <li><a href="#参考">参考</a></li>
+    <li><a href="#晓兵">晓兵</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年9月24日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+            <span class="meta-category"><a href='/categories/rdma'>rdma</a></span>
+            
+            <span class="meta-category"><a href='/categories/ofa'>ofa</a></span>
+            
+            <span class="meta-category"><a href='/categories/network'>network</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="intel-open-fabrics-interfaces-libfabric-tutorial-英特尔开放结构接口-libfabric-教程-rdma-verbs-network-gpu-panda-hpc-ai">Intel Open Fabrics Interfaces Libfabric Tutorial 英特尔开放结构接口 Libfabric 教程 rdma verbs network gpu panda hpc ai</h1>
+<h2 id="简介">简介</h2>
+<p>本文介绍了libfabric的基本教程, 以及常见代码示例, 包含tcp_socket, libfabric, gpu, dma等代码和示例, 内容基于intel专家的的视频和个人理解, 欢迎一起交流高性能存储, 分布式存储, 网络, rdma等技术</p>
+<p><strong>HOTI 热门互联网络技术</strong> 视频链接: <a href="https://www.youtube.com/watch?v=b-ri1mMLbZ0,">https://www.youtube.com/watch?v=b-ri1mMLbZ0,</a> 见附录</p>
+<h2 id="封面-hoti---热门互连研讨会">封面-HOTI - 热门互连研讨会</h2>
+<h3 id="关键词-intel17年工作经验-中间件开发-libfabric项目-nvme-赛门铁克-惠普">关键词 intel17年工作经验 中间件开发 libfabric项目 nvme 赛门铁克 惠普</h3>
+<p>
+        <img class="mx-auto" alt="image-20230924152651859" src="../image-20230924152651859.png" />   
+    </p>
+<h2 id="agenda-目录议题">Agenda 目录/议题</h2>
+<ul>
+<li>编译通信软件</li>
+<li>硬件和软件带来的挑战</li>
+<li>为什么需要libfabric</li>
+<li>libfabric架构</li>
+<li>API分组</li>
+<li>socket应用 VS libfabric应用区别</li>
+<li>GPU数据传输示例</li>
+</ul>
+<p>![image-20230924153303307](/Users/xb/Library/Application Support/typora-user-images/image-20230924153303307.png)</p>
+<h2 id="编译通信软件">编译通信软件</h2>
+<p>
+        <img class="mx-auto" alt="image-20230924153932054" src="../image-20230924153932054.png" />   
+    </p>
+<ul>
+<li>Panda 熊猫博士-附录 <a href="https://web.cse.ohio-state.edu/~panda.2/">https://web.cse.ohio-state.edu/~panda.2/</a></li>
+<li>可靠面向连接的TCP和无连接的数据报UDP协议</li>
+<li>高性能计算HPC或人工智能AI</li>
+</ul>
+<h2 id="学校教给咱们的tcp-socket编程示例">学校教给咱们的tcp socket编程示例</h2>
+<p>
+        <img class="mx-auto" alt="image-20230924155022708" src="../image-20230924155022708.png" />   
+    </p>
+<h2 id="软硬件复杂性带来的挑战">软硬件复杂性带来的挑战</h2>
+<p>
+        <img class="mx-auto" alt="image-20230924155238745" src="../image-20230924155238745.png" />   
+    </p>
+<ul>
+<li>上千个节点的集群, 不同的网络类型(以太网, IB, 光纤等), 熊猫博士提到的CPU/GPU/XPU/IPU等等</li>
+<li>xelink, nvlink, gpu</li>
+<li>软件库, 如nccl,intel mpi等</li>
+<li>所以咱们需要一个通用的通信库来桥接这些复杂的软硬件资源</li>
+</ul>
+<h2 id="libfabric来解决上面的问题">libfabric来解决上面的问题</h2>
+<p>
+        <img class="mx-auto" alt="image-20230924155759377" src="../image-20230924155759377.png" />   
+    </p>
+<ul>
+<li>统一API, 让程序员更轻松</li>
+<li>高性能和高可扩展性</li>
+<li>核心组件: 众多网卡提供者的库, 核心服务, 测试程序等</li>
+</ul>
+<h2 id="为什么需要libfabric">为什么需要libfabric</h2>
+<p>
+        <img class="mx-auto" alt="image-20230924160449908" src="../image-20230924160449908.png" />   
+    </p>
+<ul>
+<li>承上启下, 桥接底层复杂多样的网络(socket, rdma, gpu, 共享内存等)和上层MPI, CCL, 共享内存等应用</li>
+</ul>
+<h2 id="socket编程与libfabric编程对比">socket编程与libfabric编程对比</h2>
+<p>
+        <img class="mx-auto" alt="image-20230924160747489" src="../image-20230924160747489.png" />   
+    </p>
+<ul>
+<li>语义类似, 如获取信息, bind, connect等, 但是libfabric底层支持多种网络类型</li>
+</ul>
+<h2 id="支持gpu通信">支持GPU通信</h2>
+<p>
+        <img class="mx-auto" alt="image-20230924161027067" src="../image-20230924161027067.png" />   
+    </p>
+<ul>
+<li>gpu通信示例, 支持intel gpu, dpu, 或者其他供应商</li>
+</ul>
+<h2 id="架构与四种服务">架构与四种服务</h2>
+<p>
+        <img class="mx-auto" alt="image-20230924161305739" src="../image-20230924161305739.png" />   
+    </p>
+<ul>
+<li>控制类: 发现底层设备, 属性, 能力等</li>
+<li>通信接口: 建立连接, 初始资源等</li>
+<li>数据传输: 发送和接收数据</li>
+<li>完成服务: 报告发送或接收状态</li>
+</ul>
+<h2 id="libfabric-api分组">libfabric API分组</h2>
+<p>
+        <img class="mx-auto" alt="image-20230924161643135" src="../image-20230924161643135.png" />   
+    </p>
+<ul>
+<li>整合底层提供者和上层开发者使用统一的API编程, 就像熊猫博士说的那样, 方便了提供者更方便的提供插件, 也方便了上层应用开发者</li>
+</ul>
+<h2 id="在线示例socket-libfabric-gpu-talk-is-cheap-show-you-the-code-光说不练-上才艺">在线示例(socket, libfabric, gpu) talk is cheap, show you the code, 光说不练, 上才艺!</h2>
+<h3 id="tcp-socket-代码截图">tcp socket 代码截图</h3>
+<p>
+        <img class="mx-auto" alt="image-20230924162132187" src="../image-20230924162132187.png" />   
+    </p>
+<h3 id="socket收发数据示例">socket收发数据示例</h3>
+<p>
+        <img class="mx-auto" alt="image-20230924162114662" src="../image-20230924162114662.png" />   
+    </p>
+<pre><code>server端启动:
+./example_socket
+
+客户端连接和发送:
+./example_socket 192.168.5.6
+Hello server this is client.
+</code></pre><h3 id="example_socketc-源码">example_socket.c 源码</h3>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">102
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">103
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">104
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">105
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">106
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">107
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;stdio.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;string.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;sys/socket.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;arpa/inet.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>
+<span style="color:#458;font-weight:bold">char</span> <span style="color:#000;font-weight:bold">*</span>dst_addr <span style="color:#000;font-weight:bold">=</span> <span style="color:#0086b3">NULL</span>;
+
+<span style="color:#458;font-weight:bold">int</span> <span style="color:#900;font-weight:bold">main</span>(<span style="color:#458;font-weight:bold">int</span> argc, <span style="color:#458;font-weight:bold">char</span> <span style="color:#000;font-weight:bold">*</span>argv[])
+{
+    <span style="color:#458;font-weight:bold">int</span> socket_desc, client_sock, client_size;
+    <span style="color:#000;font-weight:bold">struct</span> sockaddr_in server_addr, client_addr;
+    <span style="color:#458;font-weight:bold">char</span> server_message[<span style="color:#099">2000</span>], client_message[<span style="color:#099">2000</span>];
+
+    dst_addr <span style="color:#000;font-weight:bold">=</span> inet_addr(argv[<span style="color:#099">1</span>]);
+    
+    <span style="color:#998;font-style:italic">// Clean buffers:
+</span><span style="color:#998;font-style:italic"></span>    memset(server_message, <span style="color:#d14">&#39;\0&#39;</span>, <span style="color:#000;font-weight:bold">sizeof</span>(server_message));
+    memset(client_message, <span style="color:#d14">&#39;\0&#39;</span>, <span style="color:#000;font-weight:bold">sizeof</span>(client_message));
+    
+    <span style="color:#998;font-style:italic">// Create socket:
+</span><span style="color:#998;font-style:italic"></span>    socket_desc <span style="color:#000;font-weight:bold">=</span> socket(AF_INET, SOCK_STREAM, <span style="color:#099">0</span>);
+    
+    <span style="color:#000;font-weight:bold">if</span>(socket_desc <span style="color:#000;font-weight:bold">&lt;</span> <span style="color:#099">0</span>){
+        printf(<span style="color:#d14">&#34;Error while creating socket</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>);
+        <span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>;
+    }
+    printf(<span style="color:#d14">&#34;Socket created successfully</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>);
+    
+    <span style="color:#998;font-style:italic">// Set port and IP:
+</span><span style="color:#998;font-style:italic"></span>    server_addr.sin_family <span style="color:#000;font-weight:bold">=</span> AF_INET;
+    server_addr.sin_port <span style="color:#000;font-weight:bold">=</span> <span style="color:#d14">&#34;43192&#34;</span>;
+    server_addr.sin_addr.s_addr <span style="color:#000;font-weight:bold">=</span> inet_addr(<span style="color:#d14">&#34;127.0.0.1&#34;</span>);
+    <span style="color:#000;font-weight:bold">if</span> (<span style="color:#000;font-weight:bold">!</span>dst_addr) {
+    	<span style="color:#998;font-style:italic">// Bind to the set port and IP:
+</span><span style="color:#998;font-style:italic"></span>    	<span style="color:#000;font-weight:bold">if</span>(bind(socket_desc, (<span style="color:#000;font-weight:bold">struct</span> sockaddr<span style="color:#000;font-weight:bold">*</span>)<span style="color:#000;font-weight:bold">&amp;</span>server_addr, <span style="color:#000;font-weight:bold">sizeof</span>(server_addr))<span style="color:#000;font-weight:bold">&lt;</span><span style="color:#099">0</span>){
+    		printf(<span style="color:#d14">&#34;Couldn&#39;t bind to the port</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>);
+    		<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>;
+    	}
+    	printf(<span style="color:#d14">&#34;Binding complete</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>);
+    
+    	<span style="color:#998;font-style:italic">// Listen for clients:
+</span><span style="color:#998;font-style:italic"></span>    	<span style="color:#000;font-weight:bold">if</span>(listen(socket_desc, <span style="color:#099">1</span>) <span style="color:#000;font-weight:bold">&lt;</span> <span style="color:#099">0</span>){
+        	printf(<span style="color:#d14">&#34;Error while listening</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>);
+        	<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>;
+    	}
+    	printf(<span style="color:#d14">&#34;Listening for incoming connections...</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>);
+    
+    	<span style="color:#998;font-style:italic">// Accept an incoming connection:
+</span><span style="color:#998;font-style:italic"></span>    	client_size <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">sizeof</span>(client_addr);
+    	client_sock <span style="color:#000;font-weight:bold">=</span> accept(socket_desc, (<span style="color:#000;font-weight:bold">struct</span> sockaddr<span style="color:#000;font-weight:bold">*</span>)<span style="color:#000;font-weight:bold">&amp;</span>client_addr, <span style="color:#000;font-weight:bold">&amp;</span>client_size);
+    
+    	<span style="color:#000;font-weight:bold">if</span> (client_sock <span style="color:#000;font-weight:bold">&lt;</span> <span style="color:#099">0</span>){
+        	printf(<span style="color:#d14">&#34;Can&#39;t accept</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>);
+        	<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>;
+    	}
+    	printf(<span style="color:#d14">&#34;Client connected at IP: %s and port: %i</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+    
+    	<span style="color:#998;font-style:italic">// Receive client&#39;s message:
+</span><span style="color:#998;font-style:italic"></span>    	<span style="color:#000;font-weight:bold">if</span> (recv(client_sock, client_message, <span style="color:#000;font-weight:bold">sizeof</span>(client_message), <span style="color:#099">0</span>) <span style="color:#000;font-weight:bold">&lt;</span> <span style="color:#099">0</span>){
+        	printf(<span style="color:#d14">&#34;Couldn&#39;t receive</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>);
+        	<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>;
+    	}
+    	printf(<span style="color:#d14">&#34;Msg from client: %s</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, client_message);
+    
+    	<span style="color:#998;font-style:italic">// Respond to client:
+</span><span style="color:#998;font-style:italic"></span>    	strcpy(server_message, <span style="color:#d14">&#34;This is the server&#39;s message.&#34;</span>);
+    
+    	<span style="color:#000;font-weight:bold">if</span> (send(client_sock, server_message, strlen(server_message), <span style="color:#099">0</span>) <span style="color:#000;font-weight:bold">&lt;</span> <span style="color:#099">0</span>){
+        	printf(<span style="color:#d14">&#34;Can&#39;t send</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>);
+        	<span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>;
+    	}
+    }
+    
+    <span style="color:#000;font-weight:bold">if</span> (dst_addr) {
+       <span style="color:#998;font-style:italic">// Send connection request to server:
+</span><span style="color:#998;font-style:italic"></span>       <span style="color:#000;font-weight:bold">if</span>(connect(socket_desc, (<span style="color:#000;font-weight:bold">struct</span> sockaddr<span style="color:#000;font-weight:bold">*</span>)<span style="color:#000;font-weight:bold">&amp;</span>server_addr, <span style="color:#000;font-weight:bold">sizeof</span>(server_addr)) <span style="color:#000;font-weight:bold">&lt;</span> <span style="color:#099">0</span>){
+	       printf(<span style="color:#d14">&#34;Unable to connect</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>);
+	       <span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>;
+       }
+       printf(<span style="color:#d14">&#34;Connected with server successfully</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>);
+
+       <span style="color:#998;font-style:italic">// Get input from the user:
+</span><span style="color:#998;font-style:italic"></span>       printf(<span style="color:#d14">&#34;Enter message: &#34;</span>);
+       gets(client_message);
+
+       <span style="color:#998;font-style:italic">// Send the message to server:
+</span><span style="color:#998;font-style:italic"></span>       <span style="color:#000;font-weight:bold">if</span>(send(socket_desc, client_message, strlen(client_message), <span style="color:#099">0</span>) <span style="color:#000;font-weight:bold">&lt;</span> <span style="color:#099">0</span>){
+	       printf(<span style="color:#d14">&#34;Unable to send message</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>);
+	       <span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>;
+       }
+
+       <span style="color:#998;font-style:italic">// Receive the server&#39;s response:
+</span><span style="color:#998;font-style:italic"></span>       <span style="color:#000;font-weight:bold">if</span>(recv(socket_desc, server_message, <span style="color:#000;font-weight:bold">sizeof</span>(server_message), <span style="color:#099">0</span>) <span style="color:#000;font-weight:bold">&lt;</span> <span style="color:#099">0</span>){
+	       printf(<span style="color:#d14">&#34;Error while receiving server&#39;s msg</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>);
+	       <span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>;
+       }
+       printf(<span style="color:#d14">&#34;Server&#39;s response: %s</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>,server_message);
+    }
+    
+    <span style="color:#998;font-style:italic">// Close the client socket:
+</span><span style="color:#998;font-style:italic"></span>    close(client_sock);
+    <span style="color:#998;font-style:italic">// Closing the server socket:
+</span><span style="color:#998;font-style:italic"></span>    close(socket_desc);
+
+    <span style="color:#000;font-weight:bold">return</span> <span style="color:#099">0</span>;
+}
+
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="libfabric收发数据示例截图">libfabric收发数据示例截图</h3>
+<p>
+        <img class="mx-auto" alt="image-20230924170314340" src="../image-20230924170314340.png" />   
+    </p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#a61717;background-color:#e3d2d2">服务端启动</span><span style="color:#000;font-weight:bold">:</span> .<span style="color:#000;font-weight:bold">/</span>example_msg
+<span style="color:#a61717;background-color:#e3d2d2">客户端连接发送数据</span><span style="color:#000;font-weight:bold">:</span> .<span style="color:#000;font-weight:bold">/</span>example_msg <span style="color:#099">192.168.5.6</span>
+
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="参考代码">参考代码</h3>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">102
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">103
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">104
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">105
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">106
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">107
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">108
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">109
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">110
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">111
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">112
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">113
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">114
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">115
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">116
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">117
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">118
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">119
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">120
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">121
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">122
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">123
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">124
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">125
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">126
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">127
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">128
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">129
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">130
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">131
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">132
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">133
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">134
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">135
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">136
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">137
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">138
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">139
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">140
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">141
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">142
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">143
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">144
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">145
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">146
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">147
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">148
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">149
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">150
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">151
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">152
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">153
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">154
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">155
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">156
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">157
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">158
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">159
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">160
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">161
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">162
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">163
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">164
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">165
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">166
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">167
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">168
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">169
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">170
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">171
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">172
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">173
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">174
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">175
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">176
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">177
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">178
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">179
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">180
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">181
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">182
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">183
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">184
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">185
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">186
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">187
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">188
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">189
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">190
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">191
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">192
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">193
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">194
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">195
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">196
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">197
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">198
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">199
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">200
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">201
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">202
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">203
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">204
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">205
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">206
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">207
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">208
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">209
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">210
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">211
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">212
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">213
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">214
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">215
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">216
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">217
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">218
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">219
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">220
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">221
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">222
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">223
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">224
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">225
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">226
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">227
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">228
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">229
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">230
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">231
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">232
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">233
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">234
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">235
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">236
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">237
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">238
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">239
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">240
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">241
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">242
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">243
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">244
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">245
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">246
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">247
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">248
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">249
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">250
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">251
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">252
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">253
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">254
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">255
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">256
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">257
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">258
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">259
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">260
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">261
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">262
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">263
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">264
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">265
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">266
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">267
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">268
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">269
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">270
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">271
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">272
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">273
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">274
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">275
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">276
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">277
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">278
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">279
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">280
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">281
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">282
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">283
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">284
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">285
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">286
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">287
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">288
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">289
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">290
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">291
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">292
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">293
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">294
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">295
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">296
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">297
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">298
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">299
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">300
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">301
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">302
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">303
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">304
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">305
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">306
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">307
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">308
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">309
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">310
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">311
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">312
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">313
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">314
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">315
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">316
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">317
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">318
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">319
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">320
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">321
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">322
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">323
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">324
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">325
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">326
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">327
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">328
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">329
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">330
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">331
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">332
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">333
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">334
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">335
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">336
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">337
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">338
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">339
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">340
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">341
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">342
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">343
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">344
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">345
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">346
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">347
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">348
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">349
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">350
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">351
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">352
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">353
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">354
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">355
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">356
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">357
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">358
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">359
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">360
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">361
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">362
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">363
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">364
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">365
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">366
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">367
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">368
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">369
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">370
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">371
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">372
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">373
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">374
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">375
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">376
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">377
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">378
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">379
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">380
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">381
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">382
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">383
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">384
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">385
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">386
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">387
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">388
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">389
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">390
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">391
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">392
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">393
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">394
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">395
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">396
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">397
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">398
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">399
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">400
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">401
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">402
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">403
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">404
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">405
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">406
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">407
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">408
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">409
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">410
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">411
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">412
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">413
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">414
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">415
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">416
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">417
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">418
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">419
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">420
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">421
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">422
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">423
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">424
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">425
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">426
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">427
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">428
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">429
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">430
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">431
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">432
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">433
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">434
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">435
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">436
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">437
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">438
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">439
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">440
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">441
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">442
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">443
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">444
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">445
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">446
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">447
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">448
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">449
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">450
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">451
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">452
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">453
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">454
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">455
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">456
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">457
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">458
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">459
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">460
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">461
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">462
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">463
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">464
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">465
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">466
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">467
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">468
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">469
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">470
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">471
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">472
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">473
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">474
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">475
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">476
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">477
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">478
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">479
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">480
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">481
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">482
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">483
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">484
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">485
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">486
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">487
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">488
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">489
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">490
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">491
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">492
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">493
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">494
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">495
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">496
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">497
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">498
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">499
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">500
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">501
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">502
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">503
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">504
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">505
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">506
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">507
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">508
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">509
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">510
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">511
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">512
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">513
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">514
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">515
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">516
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">517
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">518
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">519
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">520
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">521
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">522
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">523
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">524
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">525
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">526
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#900;font-weight:bold">https</span>:<span style="color:#998;font-style:italic">//github.com/ssbandjl/libfabric/blob/main/fabtests/functional/example_msg.c
+</span><span style="color:#998;font-style:italic"></span><span style="color:#998;font-style:italic">/*
+</span><span style="color:#998;font-style:italic"> *
+</span><span style="color:#998;font-style:italic"> * This software is available to you under the BSD license
+</span><span style="color:#998;font-style:italic"> * below:
+</span><span style="color:#998;font-style:italic"> *
+</span><span style="color:#998;font-style:italic"> *     Redistribution and use in source and binary forms, with or
+</span><span style="color:#998;font-style:italic"> *     without modification, are permitted provided that the following
+</span><span style="color:#998;font-style:italic"> *     conditions are met:
+</span><span style="color:#998;font-style:italic"> *
+</span><span style="color:#998;font-style:italic"> *      - Redistributions of source code must retain the above
+</span><span style="color:#998;font-style:italic"> *        copyright notice, this list of conditions and the following
+</span><span style="color:#998;font-style:italic"> *        disclaimer.
+</span><span style="color:#998;font-style:italic"> *
+</span><span style="color:#998;font-style:italic"> *      - Redistributions in binary form must reproduce the above
+</span><span style="color:#998;font-style:italic"> *        copyright notice, this list of conditions and the following
+</span><span style="color:#998;font-style:italic"> *        disclaimer in the documentation and/or other materials
+</span><span style="color:#998;font-style:italic"> *        provided with the distribution.
+</span><span style="color:#998;font-style:italic"> *
+</span><span style="color:#998;font-style:italic"> * THE SOFTWARE IS PROVIDED &#34;AS IS&#34;, WITHOUT WARRANTY OF ANY KIND,
+</span><span style="color:#998;font-style:italic"> * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+</span><span style="color:#998;font-style:italic"> * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+</span><span style="color:#998;font-style:italic"> * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+</span><span style="color:#998;font-style:italic"> * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+</span><span style="color:#998;font-style:italic"> * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+</span><span style="color:#998;font-style:italic"> * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+</span><span style="color:#998;font-style:italic"> * SOFTWARE.
+</span><span style="color:#998;font-style:italic"> */</span>
+
+<span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;stdio.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;stdlib.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;getopt.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;netinet/in.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;arpa/inet.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;netdb.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;rdma/fabric.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;rdma/fi_domain.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;rdma/fi_endpoint.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;rdma/fi_cm.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#include</span> <span style="color:#999;font-weight:bold;font-style:italic">&lt;shared.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>
+<span style="color:#998;font-style:italic">//Build with
+</span><span style="color:#998;font-style:italic">//gcc -o example_msg example_msg.c -L&lt;path to libfabric lib&gt; -I&lt;path to libfabric include&gt; -lfabric
+</span><span style="color:#998;font-style:italic">//gcc -o example_msg example_msg.c -L/home/xb/project/libfabric/libfabric/build/lib -I/home/xb/project/libfabric/libfabric/build/include -I/home/xb/project/libfabric/libfabric/build/include -lfabric
+</span><span style="color:#998;font-style:italic"></span>
+<span style="color:#999;font-weight:bold;font-style:italic">#define BUF_SIZE 64
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>
+<span style="color:#458;font-weight:bold">char</span> <span style="color:#000;font-weight:bold">*</span>dst_addr <span style="color:#000;font-weight:bold">=</span> <span style="color:#0086b3">NULL</span>;
+<span style="color:#458;font-weight:bold">char</span> <span style="color:#000;font-weight:bold">*</span>port <span style="color:#000;font-weight:bold">=</span> <span style="color:#d14">&#34;9228&#34;</span>;
+<span style="color:#000;font-weight:bold">struct</span> fi_info <span style="color:#000;font-weight:bold">*</span>hints, <span style="color:#000;font-weight:bold">*</span>info, <span style="color:#000;font-weight:bold">*</span>fi_pep;
+<span style="color:#000;font-weight:bold">struct</span> fid_fabric <span style="color:#000;font-weight:bold">*</span>fabric <span style="color:#000;font-weight:bold">=</span> <span style="color:#0086b3">NULL</span>;
+<span style="color:#000;font-weight:bold">struct</span> fid_domain <span style="color:#000;font-weight:bold">*</span>domain <span style="color:#000;font-weight:bold">=</span> <span style="color:#0086b3">NULL</span>;
+<span style="color:#000;font-weight:bold">struct</span> fid_ep <span style="color:#000;font-weight:bold">*</span>ep <span style="color:#000;font-weight:bold">=</span> <span style="color:#0086b3">NULL</span>;
+<span style="color:#000;font-weight:bold">struct</span> fid_pep <span style="color:#000;font-weight:bold">*</span>pep <span style="color:#000;font-weight:bold">=</span> <span style="color:#0086b3">NULL</span>;
+<span style="color:#000;font-weight:bold">struct</span> fid_cq <span style="color:#000;font-weight:bold">*</span>cq <span style="color:#000;font-weight:bold">=</span> <span style="color:#0086b3">NULL</span>;
+<span style="color:#000;font-weight:bold">struct</span> fid_eq <span style="color:#000;font-weight:bold">*</span>eq <span style="color:#000;font-weight:bold">=</span> <span style="color:#0086b3">NULL</span>;
+<span style="color:#000;font-weight:bold">struct</span> fi_cq_attr cq_attr <span style="color:#000;font-weight:bold">=</span> {<span style="color:#099">0</span>};
+<span style="color:#000;font-weight:bold">struct</span> fi_eq_attr eq_attr <span style="color:#000;font-weight:bold">=</span> {
+	.wait_obj <span style="color:#000;font-weight:bold">=</span> FI_WAIT_UNSPEC
+};
+<span style="color:#998;font-style:italic">//const struct sockaddr_in *sin;
+</span><span style="color:#998;font-style:italic"></span><span style="color:#458;font-weight:bold">char</span> str_addr[INET_ADDRSTRLEN];
+<span style="color:#458;font-weight:bold">int</span> ret;
+<span style="color:#458;font-weight:bold">char</span> buffer[BUF_SIZE];
+fi_addr_t fi_addr <span style="color:#000;font-weight:bold">=</span> FI_ADDR_UNSPEC;
+<span style="color:#000;font-weight:bold">struct</span> fi_eq_cm_entry entry;
+uint32_t event;
+ssize_t rd;
+
+<span style="color:#998;font-style:italic">/* Initializes all basic OFI resources to allow for a server/client to exchange a message */</span>
+<span style="color:#000;font-weight:bold">static</span> <span style="color:#458;font-weight:bold">int</span> <span style="color:#900;font-weight:bold">start_client</span>(<span style="color:#458;font-weight:bold">void</span>)
+{
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_getinfo(FI_VERSION(<span style="color:#099">1</span>,<span style="color:#099">9</span>), dst_addr, port, dst_addr <span style="color:#000;font-weight:bold">?</span> <span style="color:#099">0</span> <span style="color:#000;font-weight:bold">:</span> FI_SOURCE,
+			hints, <span style="color:#000;font-weight:bold">&amp;</span>info);
+	<span style="color:#000;font-weight:bold">if</span> (ret) {
+	        printf(<span style="color:#d14">&#34;fi_getinfo: %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+	        <span style="color:#000;font-weight:bold">return</span> ret;
+	}
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_fabric(info<span style="color:#000;font-weight:bold">-&gt;</span>fabric_attr, <span style="color:#000;font-weight:bold">&amp;</span>fabric, <span style="color:#0086b3">NULL</span>);
+	<span style="color:#000;font-weight:bold">if</span> (ret) {
+		printf(<span style="color:#d14">&#34;fi_fabric: %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+        	<span style="color:#000;font-weight:bold">return</span> ret;
+	}
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_eq_open(fabric, <span style="color:#000;font-weight:bold">&amp;</span>eq_attr, <span style="color:#000;font-weight:bold">&amp;</span>eq, <span style="color:#0086b3">NULL</span>);
+	<span style="color:#000;font-weight:bold">if</span> (ret) {
+	        printf(<span style="color:#d14">&#34;fi_eq_open: %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+	        <span style="color:#000;font-weight:bold">return</span> ret;
+	}
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_domain(fabric, info, <span style="color:#000;font-weight:bold">&amp;</span>domain, <span style="color:#0086b3">NULL</span>);
+	<span style="color:#000;font-weight:bold">if</span> (ret) {
+        	printf(<span style="color:#d14">&#34;fi_domain: %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+        	<span style="color:#000;font-weight:bold">return</span> ret;
+        }
+
+	<span style="color:#998;font-style:italic">/* Initialize our completion queue. Completion queues are used to report events associated
+</span><span style="color:#998;font-style:italic">	 * with data transfers. In this example, we use one CQ that tracks sends and receives, but
+</span><span style="color:#998;font-style:italic">	 * often times there will be separate CQs for sends and receives.
+</span><span style="color:#998;font-style:italic">	 */</span>
+	cq_attr.size <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">128</span>;
+	cq_attr.format <span style="color:#000;font-weight:bold">=</span> FI_CQ_FORMAT_MSG;
+	ret <span style="color:#000;font-weight:bold">=</span> fi_cq_open(domain, <span style="color:#000;font-weight:bold">&amp;</span>cq_attr, <span style="color:#000;font-weight:bold">&amp;</span>cq, <span style="color:#0086b3">NULL</span>);
+	<span style="color:#000;font-weight:bold">if</span> (ret) {
+		printf(<span style="color:#d14">&#34;fi_cq_open error (%d)</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+		<span style="color:#000;font-weight:bold">return</span> ret;
+	}
+
+	<span style="color:#998;font-style:italic">/* Bind our CQ to our endpoint to track any sends and receives that come in or out on that endpoint.
+</span><span style="color:#998;font-style:italic">	 * A CQ can be bound to multiple endpoints but one EP can only have one send CQ and one receive CQ
+</span><span style="color:#998;font-style:italic">	 * (which can be the same CQ).
+</span><span style="color:#998;font-style:italic">	 */</span>
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_endpoint(domain, info, <span style="color:#000;font-weight:bold">&amp;</span>ep, <span style="color:#0086b3">NULL</span>);
+	<span style="color:#000;font-weight:bold">if</span> (ret) {
+	        printf(<span style="color:#d14">&#34;fi_endpoint: %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+	        <span style="color:#000;font-weight:bold">return</span> ret;
+	}
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_ep_bind(ep, <span style="color:#000;font-weight:bold">&amp;</span>cq<span style="color:#000;font-weight:bold">-&gt;</span>fid, FI_SEND <span style="color:#000;font-weight:bold">|</span> FI_RECV);
+        <span style="color:#000;font-weight:bold">if</span> (ret) {
+            printf(<span style="color:#d14">&#34;fi_ep_bind cq error (%d)</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+            <span style="color:#000;font-weight:bold">return</span> ret;
+        }
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_ep_bind((ep), <span style="color:#000;font-weight:bold">&amp;</span>(eq)<span style="color:#000;font-weight:bold">-&gt;</span>fid, <span style="color:#099">0</span>);
+	<span style="color:#000;font-weight:bold">if</span> (ret) {
+		printf(<span style="color:#d14">&#34;fi_ep_bind: %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+		<span style="color:#000;font-weight:bold">return</span> ret;
+	}
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_enable(ep);
+        <span style="color:#000;font-weight:bold">if</span> (ret) {
+		printf(<span style="color:#d14">&#34;fi_enable: %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+	        <span style="color:#000;font-weight:bold">return</span> ret;
+	}
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_connect(ep, info<span style="color:#000;font-weight:bold">-&gt;</span>dest_addr, <span style="color:#0086b3">NULL</span>, <span style="color:#099">0</span>);
+	<span style="color:#000;font-weight:bold">if</span> (ret) {
+ 	        printf(<span style="color:#d14">&#34;fi_connect: %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+ 	        <span style="color:#000;font-weight:bold">return</span> ret;
+	}
+
+    rd <span style="color:#000;font-weight:bold">=</span> fi_eq_sread(eq, <span style="color:#000;font-weight:bold">&amp;</span>event, <span style="color:#000;font-weight:bold">&amp;</span>entry, <span style="color:#000;font-weight:bold">sizeof</span>(entry), <span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>, <span style="color:#099">0</span>);
+    <span style="color:#000;font-weight:bold">if</span> (rd <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">sizeof</span>(entry)) {
+        ret <span style="color:#000;font-weight:bold">=</span> (<span style="color:#458;font-weight:bold">int</span>) rd;
+        printf(<span style="color:#d14">&#34;fi_eq_sread: %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+        <span style="color:#000;font-weight:bold">return</span> ret;
+	}
+
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#099">0</span>;
+}
+
+<span style="color:#000;font-weight:bold">static</span> <span style="color:#458;font-weight:bold">int</span> <span style="color:#900;font-weight:bold">start_server</span>(<span style="color:#458;font-weight:bold">void</span>)
+{
+	<span style="color:#000;font-weight:bold">const</span> <span style="color:#000;font-weight:bold">struct</span> sockaddr_in <span style="color:#000;font-weight:bold">*</span>sin;
+
+	<span style="color:#998;font-style:italic">/* The first OFI call to happen for initialization is fi_getinfo which queries libfabric
+</span><span style="color:#998;font-style:italic">	 * and returns any appropriate providers that fulfill the hints requirements. Any applicable
+</span><span style="color:#998;font-style:italic">	 * providers will be returned as a list of fi_info structs (&amp;info). Any info can be selected.
+</span><span style="color:#998;font-style:italic">	 * In this test we select the first fi_info struct. Assuming all hints were set appropriately,
+</span><span style="color:#998;font-style:italic">	 * the first fi_info should be most appropriate.
+</span><span style="color:#998;font-style:italic">	 * The flag FI_SOURCE is set for the server to indicate that the address/port refer to source
+</span><span style="color:#998;font-style:italic">	 * information. This is not set for the client because the fields refer to the server, not
+</span><span style="color:#998;font-style:italic">	 * the caller (client). */</span>
+	<span style="color:#998;font-style:italic">/* 初始化时发生的第一个 OFI 调用是 fi_getinfo，它查询 libfabric 并返回满足提示要求的任何适当的提供程序。 任何适用的提供程序都将作为 fi_info 结构 (&amp;info) 列表返回。 可以选择任何信息。 在此测试中，我们选择第一个 fi_info 结构。 假设所有提示均已正确设置，第一个 fi_info 应该是最合适的。 为服务器设置标志FI_SOURCE以指示地址/端口引用源信息。 这不是为客户端设置的，因为这些字段引用服务器，而不是调用者（客户端） */</span>
+	ret <span style="color:#000;font-weight:bold">=</span> fi_getinfo(FI_VERSION(<span style="color:#099">1</span>,<span style="color:#099">9</span>), dst_addr, port, dst_addr <span style="color:#000;font-weight:bold">?</span> <span style="color:#099">0</span> <span style="color:#000;font-weight:bold">:</span> FI_SOURCE,
+			 		hints, <span style="color:#000;font-weight:bold">&amp;</span>fi_pep);
+	<span style="color:#000;font-weight:bold">if</span> (ret) {
+		printf(<span style="color:#d14">&#34;fi_getinfo error (%d)</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+		<span style="color:#000;font-weight:bold">return</span> ret;
+	}
+
+	<span style="color:#998;font-style:italic">/* Initialize our fabric. The fabric network represents a collection of hardware and software
+</span><span style="color:#998;font-style:italic">	 * resources that access a single physical or virtual network. All network ports on a system
+</span><span style="color:#998;font-style:italic">	 * that can communicate with each other through their attached networks belong to the same fabric.
+</span><span style="color:#998;font-style:italic">	 */</span>
+	ret <span style="color:#000;font-weight:bold">=</span> fi_fabric(fi_pep<span style="color:#000;font-weight:bold">-&gt;</span>fabric_attr, <span style="color:#000;font-weight:bold">&amp;</span>fabric, <span style="color:#0086b3">NULL</span>); <span style="color:#998;font-style:italic">// 打开fabric, 初始化任何资源前需要打开fabric
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">if</span> (ret) {
+		printf(<span style="color:#d14">&#34;fi_fabric error (%d)</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+		<span style="color:#000;font-weight:bold">return</span> ret;
+	}
+
+	<span style="color:#998;font-style:italic">/* Initialize our endpoint. Endpoints are transport level communication portals which are used to
+</span><span style="color:#998;font-style:italic">	 * initiate and drive communication. There are three main types of endpoints:
+</span><span style="color:#998;font-style:italic">	 * FI_EP_MSG - connected, reliable
+</span><span style="color:#998;font-style:italic">	 * FI_EP_RDM - unconnected, reliable
+</span><span style="color:#998;font-style:italic">	 * FI_EP_DGRAM - unconnected, unreliable
+</span><span style="color:#998;font-style:italic">	 * The type of endpoint will be requested in hints/fi_getinfo. Different providers support different
+</span><span style="color:#998;font-style:italic">	 * types of endpoints. TCP supports only FI_EP_MSG but when used with RxM, can support FI_EP_RDM.
+</span><span style="color:#998;font-style:italic">	 * In this application, we requested TCP and FI_EP_MSG.
+</span><span style="color:#998;font-style:italic">	 */</span>
+
+    ret <span style="color:#000;font-weight:bold">=</span> fi_eq_open(fabric, <span style="color:#000;font-weight:bold">&amp;</span>eq_attr, <span style="color:#000;font-weight:bold">&amp;</span>eq, <span style="color:#0086b3">NULL</span>); <span style="color:#998;font-style:italic">// 打开事件队列EQ, 一般用于建连, 收发数据产生的事件
+</span><span style="color:#998;font-style:italic"></span>    <span style="color:#000;font-weight:bold">if</span> (ret) {
+            printf(<span style="color:#d14">&#34;fi_eq_open: %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+            <span style="color:#000;font-weight:bold">return</span> ret;
+    }
+
+    ret <span style="color:#000;font-weight:bold">=</span> fi_passive_ep(fabric, fi_pep, <span style="color:#000;font-weight:bold">&amp;</span>pep, <span style="color:#0086b3">NULL</span>); <span style="color:#998;font-style:italic">// 打开被动端点, 常用与服务端监听端口, 支持多个客户端domain连接进来
+</span><span style="color:#998;font-style:italic"></span>    <span style="color:#000;font-weight:bold">if</span> (ret) {
+        printf(<span style="color:#d14">&#34;fi_passive_ep: %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+        <span style="color:#000;font-weight:bold">return</span> ret;
+    }
+
+    ret <span style="color:#000;font-weight:bold">=</span> fi_pep_bind(pep, <span style="color:#000;font-weight:bold">&amp;</span>eq<span style="color:#000;font-weight:bold">-&gt;</span>fid, <span style="color:#099">0</span>); <span style="color:#998;font-style:italic">// 为端点绑定事件队列
+</span><span style="color:#998;font-style:italic"></span>    <span style="color:#000;font-weight:bold">if</span> (ret) {
+        printf(<span style="color:#d14">&#34;fi_pep_bind %d&#34;</span>, ret);
+        <span style="color:#000;font-weight:bold">return</span> ret;
+    }
+
+    ret <span style="color:#000;font-weight:bold">=</span> fi_listen(pep); <span style="color:#998;font-style:italic">// 监听端点, 等待客户端连接请求
+</span><span style="color:#998;font-style:italic"></span>    <span style="color:#000;font-weight:bold">if</span> (ret) {
+        printf(<span style="color:#d14">&#34;fi_listen %d&#34;</span>, ret);
+        <span style="color:#000;font-weight:bold">return</span> ret;
+    }
+
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#099">0</span>;
+}
+
+<span style="color:#000;font-weight:bold">static</span> <span style="color:#458;font-weight:bold">int</span> <span style="color:#900;font-weight:bold">complete_connection</span>(<span style="color:#458;font-weight:bold">void</span>)
+{
+
+	rd <span style="color:#000;font-weight:bold">=</span> fi_eq_sread(eq, <span style="color:#000;font-weight:bold">&amp;</span>event, <span style="color:#000;font-weight:bold">&amp;</span>entry, <span style="color:#000;font-weight:bold">sizeof</span>(entry), <span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>, <span style="color:#099">0</span>); <span style="color:#998;font-style:italic">// 等待读取客户端触发的服务端事件, 读取事件, 推动进展(驱动程序运转)
+</span><span style="color:#998;font-style:italic"></span>    <span style="color:#000;font-weight:bold">if</span> (rd <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">sizeof</span> entry) {
+	ret <span style="color:#000;font-weight:bold">=</span> (<span style="color:#458;font-weight:bold">int</span>) rd;
+            printf(<span style="color:#d14">&#34;fi_eq_sread: %d&#34;</span>, ret);
+		<span style="color:#000;font-weight:bold">if</span> (ret)
+			<span style="color:#000;font-weight:bold">goto</span> err;
+    }
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_domain(fabric, info, <span style="color:#000;font-weight:bold">&amp;</span>domain, <span style="color:#0086b3">NULL</span>); <span style="color:#998;font-style:italic">// domain域用于将资源分组, 可基于域来做管理
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">if</span> (ret) {
+		printf(<span style="color:#d14">&#34;fi_domain: %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+	        <span style="color:#000;font-weight:bold">return</span> ret;
+        }
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_domain_bind(domain, <span style="color:#000;font-weight:bold">&amp;</span>eq<span style="color:#000;font-weight:bold">-&gt;</span>fid, <span style="color:#099">0</span>);
+	<span style="color:#000;font-weight:bold">if</span> (ret) {
+	        printf(<span style="color:#d14">&#34;fi_domain_bind: %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+	        <span style="color:#000;font-weight:bold">return</span> ret;
+	}
+
+	<span style="color:#998;font-style:italic">/* 
+</span><span style="color:#998;font-style:italic">	 * Initialize our completion queue. Completion queues are used to report events associated
+</span><span style="color:#998;font-style:italic">         * with data transfers. In this example, we use one CQ that tracks sends and receives, but
+</span><span style="color:#998;font-style:italic">         * often times there will be separate CQs for sends and receives.
+</span><span style="color:#998;font-style:italic">	 */</span>
+    cq_attr.size <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">128</span>;
+    cq_attr.format <span style="color:#000;font-weight:bold">=</span> FI_CQ_FORMAT_MSG;
+    ret <span style="color:#000;font-weight:bold">=</span> fi_cq_open(domain, <span style="color:#000;font-weight:bold">&amp;</span>cq_attr, <span style="color:#000;font-weight:bold">&amp;</span>cq, <span style="color:#0086b3">NULL</span>);
+    <span style="color:#000;font-weight:bold">if</span> (ret) {
+        printf(<span style="color:#d14">&#34;fi_cq_open error (%d)</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+        <span style="color:#000;font-weight:bold">return</span> ret;
+    }
+
+    <span style="color:#998;font-style:italic">/* Bind our CQ to our endpoint to track any sends and receives that 
+</span><span style="color:#998;font-style:italic">	 * come in or out on that endpoint. A CQ can be bound to multiple
+</span><span style="color:#998;font-style:italic">	 * endpoints but one EP can only have one send CQ and one receive CQ
+</span><span style="color:#998;font-style:italic">     * (which can be the same CQ).
+</span><span style="color:#998;font-style:italic">	*/</span>
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_endpoint(domain, info, <span style="color:#000;font-weight:bold">&amp;</span>ep, <span style="color:#0086b3">NULL</span>); <span style="color:#998;font-style:italic">// 用于客户端, 主动端点, 发起建连
+</span><span style="color:#998;font-style:italic"></span>        <span style="color:#000;font-weight:bold">if</span> (ret) {
+                printf(<span style="color:#d14">&#34;fi_endpoint: %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+                <span style="color:#000;font-weight:bold">return</span> ret;
+        }
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_ep_bind(ep, <span style="color:#000;font-weight:bold">&amp;</span>cq<span style="color:#000;font-weight:bold">-&gt;</span>fid, FI_SEND <span style="color:#000;font-weight:bold">|</span> FI_RECV);
+        <span style="color:#000;font-weight:bold">if</span> (ret) {
+                printf(<span style="color:#d14">&#34;fi_ep_bind cq error (%d)</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+                <span style="color:#000;font-weight:bold">return</span> ret;
+        }
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_ep_bind((ep), <span style="color:#000;font-weight:bold">&amp;</span>(eq)<span style="color:#000;font-weight:bold">-&gt;</span>fid, <span style="color:#099">0</span>);
+        <span style="color:#000;font-weight:bold">if</span> (ret) {
+                printf(<span style="color:#d14">&#34;fi_ep_bind: %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+                <span style="color:#000;font-weight:bold">return</span> ret;
+        }
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_enable(ep);
+        <span style="color:#000;font-weight:bold">if</span> (ret) {
+			printf(<span style="color:#d14">&#34;fi_enable: %d&#34;</span>, ret);
+            <span style="color:#000;font-weight:bold">return</span> ret;
+		}
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_accept(ep, <span style="color:#0086b3">NULL</span>, <span style="color:#099">0</span>);
+	<span style="color:#000;font-weight:bold">if</span> (ret) {
+	        printf(<span style="color:#d14">&#34;fi_accept: %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+	        <span style="color:#000;font-weight:bold">return</span> ret;
+	}
+
+	rd <span style="color:#000;font-weight:bold">=</span> fi_eq_sread(eq, <span style="color:#000;font-weight:bold">&amp;</span>event, <span style="color:#000;font-weight:bold">&amp;</span>entry, <span style="color:#000;font-weight:bold">sizeof</span>(entry), <span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>, <span style="color:#099">0</span>);
+	<span style="color:#000;font-weight:bold">if</span> (rd <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">sizeof</span>(entry)) {
+		ret <span style="color:#000;font-weight:bold">=</span> (<span style="color:#458;font-weight:bold">int</span>) rd;
+		printf(<span style="color:#d14">&#34;fi_eq_read: %d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+		<span style="color:#000;font-weight:bold">return</span> ret;
+	}
+    <span style="color:#000;font-weight:bold">return</span> <span style="color:#099">0</span>;
+
+<span style="color:#900;font-weight:bold">err</span>:
+    <span style="color:#000;font-weight:bold">if</span> (info)
+    	fi_reject(pep, info<span style="color:#000;font-weight:bold">-&gt;</span>handle, <span style="color:#0086b3">NULL</span>, <span style="color:#099">0</span>);
+    <span style="color:#000;font-weight:bold">return</span> ret;
+
+}
+
+<span style="color:#000;font-weight:bold">static</span> <span style="color:#458;font-weight:bold">void</span> <span style="color:#900;font-weight:bold">cleanup</span>(<span style="color:#458;font-weight:bold">void</span>)
+{
+	<span style="color:#458;font-weight:bold">int</span> ret;
+	
+	<span style="color:#998;font-style:italic">/* All OFI resources are cleaned up using the same fi_close(fid) call. */</span>
+	<span style="color:#000;font-weight:bold">if</span> (ep) {
+		ret <span style="color:#000;font-weight:bold">=</span> fi_close(<span style="color:#000;font-weight:bold">&amp;</span>ep<span style="color:#000;font-weight:bold">-&gt;</span>fid);
+		<span style="color:#000;font-weight:bold">if</span> (ret)
+			printf(<span style="color:#d14">&#34;warning: error closing EP (%d)</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+	}
+	<span style="color:#000;font-weight:bold">if</span> (pep) {
+		ret <span style="color:#000;font-weight:bold">=</span> fi_close(<span style="color:#000;font-weight:bold">&amp;</span>pep<span style="color:#000;font-weight:bold">-&gt;</span>fid);
+		<span style="color:#000;font-weight:bold">if</span> (ret)
+			printf(<span style="color:#d14">&#34;warning: error closing PEP (%d)</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+	}
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_close(<span style="color:#000;font-weight:bold">&amp;</span>cq<span style="color:#000;font-weight:bold">-&gt;</span>fid);
+	<span style="color:#000;font-weight:bold">if</span> (ret)
+		printf(<span style="color:#d14">&#34;warning: error closing CQ (%d)</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+	
+	ret <span style="color:#000;font-weight:bold">=</span> fi_close(<span style="color:#000;font-weight:bold">&amp;</span>domain<span style="color:#000;font-weight:bold">-&gt;</span>fid);
+	<span style="color:#000;font-weight:bold">if</span> (ret)
+		printf(<span style="color:#d14">&#34;warning: error closing domain (%d)</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_close(<span style="color:#000;font-weight:bold">&amp;</span>eq<span style="color:#000;font-weight:bold">-&gt;</span>fid);
+        <span style="color:#000;font-weight:bold">if</span> (ret)
+            printf(<span style="color:#d14">&#34;warning: error closing EQ (%d)</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+
+	ret <span style="color:#000;font-weight:bold">=</span> fi_close(<span style="color:#000;font-weight:bold">&amp;</span>fabric<span style="color:#000;font-weight:bold">-&gt;</span>fid);
+        <span style="color:#000;font-weight:bold">if</span> (ret)
+            printf(<span style="color:#d14">&#34;warning: error closing fabric (%d)</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+
+	<span style="color:#000;font-weight:bold">if</span> (info)
+		fi_freeinfo(info);
+
+	<span style="color:#000;font-weight:bold">if</span> (fi_pep)
+        fi_freeinfo(fi_pep);
+}
+
+<span style="color:#998;font-style:italic">/* Post a receive buffer. This call does not ensure a message has been received, just
+</span><span style="color:#998;font-style:italic"> * that a buffer has been passed to OFI for the next message the provider receives.
+</span><span style="color:#998;font-style:italic"> * Receives may be directed or undirected using the address parameter. Here, we
+</span><span style="color:#998;font-style:italic"> * pass in the fi_addr but note that the server has not inserted the client&#39;s
+</span><span style="color:#998;font-style:italic"> * address into its AV, so the address is still FI_ADDR_UNSPEC, indicating that
+</span><span style="color:#998;font-style:italic"> * this buffer may receive incoming data from any address. An application may
+</span><span style="color:#998;font-style:italic"> * set this to a real fi_addr if the buffer should only receive data from a certain
+</span><span style="color:#998;font-style:italic"> * peer.
+</span><span style="color:#998;font-style:italic"> * When posting a buffer, if the provider is not ready to process messages (because
+</span><span style="color:#998;font-style:italic"> * of connection initialization for example), it may return -FI_EAGAIN. This does
+</span><span style="color:#998;font-style:italic"> * not indicate an error, but rather that the application should try again later.
+</span><span style="color:#998;font-style:italic"> * This is why we almost always wrap sends and receives in a do/while. Some providers
+</span><span style="color:#998;font-style:italic"> * may need the application to drive progress in order to get out of the -FI_EAGAIN
+</span><span style="color:#998;font-style:italic"> * loop. To drive progress, the application needs to call fi_cq_read (not necessarily
+</span><span style="color:#998;font-style:italic"> * reading any completion entries).
+</span><span style="color:#998;font-style:italic"> */</span>
+<span style="color:#000;font-weight:bold">static</span> <span style="color:#458;font-weight:bold">int</span> <span style="color:#900;font-weight:bold">post_recv</span>(<span style="color:#458;font-weight:bold">void</span>)
+{
+	<span style="color:#458;font-weight:bold">int</span> ret;
+
+	<span style="color:#000;font-weight:bold">do</span> {
+		ret <span style="color:#000;font-weight:bold">=</span> fi_recv(ep, buffer, BUF_SIZE, <span style="color:#0086b3">NULL</span>, fi_addr, <span style="color:#0086b3">NULL</span>);
+		<span style="color:#000;font-weight:bold">if</span> (ret <span style="color:#000;font-weight:bold">&amp;&amp;</span> ret <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">-</span>FI_EAGAIN) {
+			printf(<span style="color:#d14">&#34;error posting recv buffer (%d</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+			<span style="color:#000;font-weight:bold">return</span> ret;
+		}
+		<span style="color:#000;font-weight:bold">if</span> (ret <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">-</span>FI_EAGAIN)
+			(<span style="color:#458;font-weight:bold">void</span>) fi_cq_read(cq, <span style="color:#0086b3">NULL</span>, <span style="color:#099">0</span>);
+	} <span style="color:#000;font-weight:bold">while</span> (ret);
+
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#099">0</span>;
+}
+
+<span style="color:#998;font-style:italic">/* Post a send buffer. This call does not ensure a message has been sent, just that
+</span><span style="color:#998;font-style:italic"> * a buffer has been submitted to OFI to be sent. Unlike a receive buffer, a send
+</span><span style="color:#998;font-style:italic"> * needs a valid fi_addr as input to tell the provider where to send the message.
+</span><span style="color:#998;font-style:italic"> * Similar to the receive buffer posting porcess, when posting a send buffer, if the
+</span><span style="color:#998;font-style:italic"> * provider is not ready to process messages, it may return -FI_EAGAIN. This does not
+</span><span style="color:#998;font-style:italic"> * indicate an error, but rather that the application should try again later. Just like
+</span><span style="color:#998;font-style:italic"> * the receive, we drive progress with fi_cq_read if this is the case.
+</span><span style="color:#998;font-style:italic"> */</span>
+<span style="color:#000;font-weight:bold">static</span> <span style="color:#458;font-weight:bold">int</span> <span style="color:#900;font-weight:bold">post_send</span>(<span style="color:#458;font-weight:bold">void</span>)
+{
+	<span style="color:#458;font-weight:bold">char</span> <span style="color:#000;font-weight:bold">*</span>msg <span style="color:#000;font-weight:bold">=</span> <span style="color:#d14">&#34;Hello, server! I am the client you&#39;ve been waiting for!</span><span style="color:#d14">\0</span><span style="color:#d14">&#34;</span>;
+	<span style="color:#458;font-weight:bold">int</span> ret;
+
+	(<span style="color:#458;font-weight:bold">void</span>) snprintf(buffer, BUF_SIZE, <span style="color:#d14">&#34;%s&#34;</span>, msg);
+
+	<span style="color:#000;font-weight:bold">do</span> {
+		ret <span style="color:#000;font-weight:bold">=</span> fi_send(ep, buffer, BUF_SIZE, <span style="color:#0086b3">NULL</span>, fi_addr, <span style="color:#0086b3">NULL</span>);
+		<span style="color:#000;font-weight:bold">if</span> (ret <span style="color:#000;font-weight:bold">&amp;&amp;</span> ret <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">-</span>FI_EAGAIN) {
+			printf(<span style="color:#d14">&#34;error posting send buffer (%d)</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+			<span style="color:#000;font-weight:bold">return</span> ret;
+		}
+		<span style="color:#000;font-weight:bold">if</span> (ret <span style="color:#000;font-weight:bold">==</span> <span style="color:#000;font-weight:bold">-</span>FI_EAGAIN)
+			(<span style="color:#458;font-weight:bold">void</span>) fi_cq_read(cq, <span style="color:#0086b3">NULL</span>, <span style="color:#099">0</span>);
+	} <span style="color:#000;font-weight:bold">while</span> (ret);
+
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#099">0</span>;
+}
+
+<span style="color:#998;font-style:italic">/* Wait for the message to be sent/received using the CQ. fi_cq_read not only drives progress
+</span><span style="color:#998;font-style:italic"> * but also returns any completed events to notify the application that it can reuse
+</span><span style="color:#998;font-style:italic"> * the send/recv buffer. The returned completion entry will have fields set to let the application
+</span><span style="color:#998;font-style:italic"> * know what operation completed. Not all fields will be valid. The fields set will be indicated
+</span><span style="color:#998;font-style:italic"> * by the cq format (when creating the CQ). In this example, we use FI_CQ_FORMAT_MSG in order to
+</span><span style="color:#998;font-style:italic"> * use the flags field.
+</span><span style="color:#998;font-style:italic"> */</span>
+<span style="color:#000;font-weight:bold">static</span> <span style="color:#458;font-weight:bold">int</span> <span style="color:#900;font-weight:bold">wait_cq</span>(<span style="color:#458;font-weight:bold">void</span>)
+{
+	<span style="color:#000;font-weight:bold">struct</span> fi_cq_err_entry comp;
+	<span style="color:#458;font-weight:bold">int</span> ret;
+
+	<span style="color:#000;font-weight:bold">do</span> {
+		ret <span style="color:#000;font-weight:bold">=</span> fi_cq_read(cq, <span style="color:#000;font-weight:bold">&amp;</span>comp, <span style="color:#099">1</span>);
+		<span style="color:#000;font-weight:bold">if</span> (ret <span style="color:#000;font-weight:bold">&lt;</span> <span style="color:#099">0</span> <span style="color:#000;font-weight:bold">&amp;&amp;</span> ret <span style="color:#000;font-weight:bold">!=</span> <span style="color:#000;font-weight:bold">-</span>FI_EAGAIN) {
+			printf(<span style="color:#d14">&#34;error reading cq (%d)</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, ret);
+			<span style="color:#000;font-weight:bold">return</span> ret;
+		}
+	} <span style="color:#000;font-weight:bold">while</span> (ret <span style="color:#000;font-weight:bold">!=</span> <span style="color:#099">1</span>);
+
+	<span style="color:#000;font-weight:bold">if</span> (comp.flags <span style="color:#000;font-weight:bold">&amp;</span> FI_RECV)
+		printf(<span style="color:#d14">&#34;I received a message!</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>);
+	<span style="color:#000;font-weight:bold">else</span> <span style="color:#000;font-weight:bold">if</span> (comp.flags <span style="color:#000;font-weight:bold">&amp;</span> FI_SEND)
+		printf(<span style="color:#d14">&#34;My message got sent!</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>);
+
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#099">0</span>;
+}
+
+<span style="color:#000;font-weight:bold">static</span> <span style="color:#458;font-weight:bold">int</span> <span style="color:#900;font-weight:bold">run</span>(<span style="color:#458;font-weight:bold">void</span>)
+{
+	<span style="color:#458;font-weight:bold">int</span> ret;
+
+	<span style="color:#000;font-weight:bold">if</span> (dst_addr) {
+		printf(<span style="color:#d14">&#34;Client: send to server %s</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, dst_addr);
+
+		ret <span style="color:#000;font-weight:bold">=</span> post_send();
+		<span style="color:#000;font-weight:bold">if</span> (ret)
+			<span style="color:#000;font-weight:bold">return</span> ret;
+
+		ret <span style="color:#000;font-weight:bold">=</span> wait_cq();
+		<span style="color:#000;font-weight:bold">if</span> (ret)
+			<span style="color:#000;font-weight:bold">return</span> ret;
+
+	} <span style="color:#000;font-weight:bold">else</span> {
+		printf(<span style="color:#d14">&#34;Server: post buffer and wait for message from client</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>);
+
+		ret <span style="color:#000;font-weight:bold">=</span> post_recv();
+		<span style="color:#000;font-weight:bold">if</span> (ret)
+			<span style="color:#000;font-weight:bold">return</span> ret;
+
+		ret <span style="color:#000;font-weight:bold">=</span> wait_cq();
+		<span style="color:#000;font-weight:bold">if</span> (ret)
+			<span style="color:#000;font-weight:bold">return</span> ret;
+
+		printf(<span style="color:#d14">&#34;This is the message I received: %s</span><span style="color:#d14">\n</span><span style="color:#d14">&#34;</span>, buffer);
+	}
+	<span style="color:#000;font-weight:bold">return</span> <span style="color:#099">1</span>;
+}
+
+<span style="color:#458;font-weight:bold">int</span> <span style="color:#900;font-weight:bold">main</span>(<span style="color:#458;font-weight:bold">int</span> argc, <span style="color:#458;font-weight:bold">char</span> <span style="color:#000;font-weight:bold">**</span>argv)
+{
+	<span style="color:#458;font-weight:bold">int</span> ret;
+
+	<span style="color:#998;font-style:italic">/* Hints are used to request support for specific features from a provider */</span>
+	hints <span style="color:#000;font-weight:bold">=</span> fi_allocinfo(); <span style="color:#998;font-style:italic">// 
+</span><span style="color:#998;font-style:italic"></span>	<span style="color:#000;font-weight:bold">if</span> (<span style="color:#000;font-weight:bold">!</span>hints)
+		<span style="color:#000;font-weight:bold">return</span> EXIT_FAILURE;
+
+	<span style="color:#998;font-style:italic">/* Server run with no args, client has server&#39;s address as an argument */</span>
+	dst_addr <span style="color:#000;font-weight:bold">=</span> argv[<span style="color:#099">1</span>];
+
+
+<span style="color:#998;font-style:italic">//Set anything in hints that the application needs
+</span><span style="color:#998;font-style:italic"></span>
+	<span style="color:#998;font-style:italic">/* Request FI_EP_MSG (reliable datagram) endpoint which will allow us
+</span><span style="color:#998;font-style:italic">	 * to reliably send messages to peers without having to listen/connect/accept. */</span>
+	hints<span style="color:#000;font-weight:bold">-&gt;</span>ep_attr<span style="color:#000;font-weight:bold">-&gt;</span>type <span style="color:#000;font-weight:bold">=</span> FI_EP_MSG; <span style="color:#998;font-style:italic">// 可靠数据报端点, 类似socket, 但无须执行listen/connect/accept
+</span><span style="color:#998;font-style:italic"></span>
+	<span style="color:#998;font-style:italic">/* Request basic messaging capabilities from the provider (no tag matching,
+</span><span style="color:#998;font-style:italic">	 * no RMA, no atomic operations) */</span>
+	hints<span style="color:#000;font-weight:bold">-&gt;</span>caps <span style="color:#000;font-weight:bold">=</span> FI_MSG;
+
+	<span style="color:#998;font-style:italic">/* Specifically request the tcp provider for the simple test */</span>
+	<span style="color:#998;font-style:italic">// hints-&gt;fabric_attr-&gt;prov_name = &#34;tcp&#34;; // 类似socket的, 面向连接的消息类型端点
+</span><span style="color:#998;font-style:italic"></span> 	hints<span style="color:#000;font-weight:bold">-&gt;</span>fabric_attr<span style="color:#000;font-weight:bold">-&gt;</span>prov_name <span style="color:#000;font-weight:bold">=</span> <span style="color:#d14">&#34;ofi_rxm;verbs&#34;</span>;
+
+	<span style="color:#998;font-style:italic">/* Specifically request SOCKADDR_IN address format to simplify addressing for test */</span>
+	hints<span style="color:#000;font-weight:bold">-&gt;</span>addr_format <span style="color:#000;font-weight:bold">=</span> FI_SOCKADDR_IN;
+
+	<span style="color:#998;font-style:italic">/* Default to FI_DELIVERY_COMPLETE which will make sure completions do not get generated
+</span><span style="color:#998;font-style:italic">	 * until our message arrives at the destination. Otherwise, the client might get a completion
+</span><span style="color:#998;font-style:italic">	 * and exit before the server receives the message. This is to make the test simpler */</span>
+	<span style="color:#998;font-style:italic">/* 默认为 FI_DELIVERY_COMPLETE，这将确保在我们的消息到达目的地之前不会生成完成(等待)。 否则，客户端可能会在服务器收到消息之前完成并退出。 这是为了让测试更简单 */</span>
+	hints<span style="color:#000;font-weight:bold">-&gt;</span>tx_attr<span style="color:#000;font-weight:bold">-&gt;</span>op_flags <span style="color:#000;font-weight:bold">=</span> FI_DELIVERY_COMPLETE;
+
+<span style="color:#998;font-style:italic">//Done setting hints
+</span><span style="color:#998;font-style:italic"></span>
+	<span style="color:#000;font-weight:bold">if</span> (<span style="color:#000;font-weight:bold">!</span>dst_addr) {
+		ret <span style="color:#000;font-weight:bold">=</span> start_server();
+		<span style="color:#000;font-weight:bold">if</span> (ret) {
+			<span style="color:#000;font-weight:bold">goto</span> out;
+			<span style="color:#000;font-weight:bold">return</span> ret;
+		}
+	}
+
+	ret <span style="color:#000;font-weight:bold">=</span> dst_addr <span style="color:#000;font-weight:bold">?</span> start_client() <span style="color:#000;font-weight:bold">:</span> complete_connection();
+	<span style="color:#000;font-weight:bold">if</span> (ret) {
+		<span style="color:#000;font-weight:bold">goto</span> out;
+		<span style="color:#000;font-weight:bold">return</span> ret;
+	}
+
+	ret <span style="color:#000;font-weight:bold">=</span> run();
+<span style="color:#900;font-weight:bold">out</span>:
+	cleanup();
+	<span style="color:#000;font-weight:bold">return</span> ret;
+}
+
+</code></pre></td></tr></table>
+</div>
+</div><p>​</p>
+<h2 id="socket-vs-libfabric消息类型示意图两者都可完成建连和消息收发">socket vs libfabric消息类型示意图(两者都可完成建连和消息收发)</h2>
+<p>
+        <img class="mx-auto" alt="image-20230924170521591" src="../image-20230924170521591.png" />   
+    </p>
+<h2 id="gpu数据传输示例">GPU数据传输示例</h2>
+<h3 id="左边是内存直接访问dma-ibv-verbs示例-右边是dma-libfabric统一api的语义的示例">左边是内存直接访问DMA ibv verbs示例, 右边是DMA libfabric统一API的语义的示例</h3>
+<p>![image-20230924170643180](/Users/xb/Library/Application Support/typora-user-images/image-20230924170643180.png)</p>
+<p>
+        <img class="mx-auto" alt="image-20230924170655819" src="../image-20230924170655819.png" />   
+    </p>
+<p>
+        <img class="mx-auto" alt="image-20230924171049344" src="../image-20230924171049344.png" />   
+    </p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">verbs
+<span style="color:#a61717;background-color:#e3d2d2">服务端</span><span style="color:#000;font-weight:bold">:</span> .<span style="color:#000;font-weight:bold">/</span>rdmabw<span style="color:#000;font-weight:bold">-</span>xe <span style="color:#000;font-weight:bold">-</span>m host
+<span style="color:#a61717;background-color:#e3d2d2">客户端</span><span style="color:#000;font-weight:bold">:</span> .<span style="color:#000;font-weight:bold">/</span>rdmabw<span style="color:#000;font-weight:bold">-</span>xe <span style="color:#000;font-weight:bold">-</span>m host <span style="color:#000;font-weight:bold">-</span>S <span style="color:#099">1</span> <span style="color:#000;font-weight:bold">-</span>t write <span style="color:#099">192.168.5.6</span>  <span style="color:#a61717;background-color:#e3d2d2">#都是用主机内存</span>, <span style="color:#a61717;background-color:#e3d2d2">完成</span><span style="color:#099">1</span><span style="color:#a61717;background-color:#e3d2d2">字节的远程内存写操作</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="主机对主机gpu-libfabric-内存直接访问dma示例">主机对主机GPU libfabric 内存直接访问DMA示例</h3>
+<p>
+        <img class="mx-auto" alt="image-20230924172041854" src="../image-20230924172041854.png" />   
+    </p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">libfabric, host <span style="color:#000;font-weight:bold">-&gt;</span> host DMA
+<span style="color:#a61717;background-color:#e3d2d2">服务端</span><span style="color:#000;font-weight:bold">:</span> .<span style="color:#000;font-weight:bold">/</span>fi<span style="color:#000;font-weight:bold">-</span>rdmabw<span style="color:#000;font-weight:bold">-</span>xe <span style="color:#000;font-weight:bold">-</span>m host
+<span style="color:#a61717;background-color:#e3d2d2">客户端</span><span style="color:#000;font-weight:bold">:</span> .<span style="color:#000;font-weight:bold">/</span>fi<span style="color:#000;font-weight:bold">-</span>rdmabw<span style="color:#000;font-weight:bold">-</span>xe <span style="color:#000;font-weight:bold">-</span>m host <span style="color:#000;font-weight:bold">-</span>S <span style="color:#099">1</span> <span style="color:#000;font-weight:bold">-</span>t write <span style="color:#099">192.168.5.6</span>  <span style="color:#a61717;background-color:#e3d2d2">#都是用主机内存</span>, <span style="color:#a61717;background-color:#e3d2d2">完成</span><span style="color:#099">1</span><span style="color:#a61717;background-color:#e3d2d2">字节的远程内存写操作</span>
+verbs <span style="color:#a61717;background-color:#e3d2d2">代码相对位置</span><span style="color:#000;font-weight:bold">:</span> fabtests<span style="color:#000;font-weight:bold">/</span>component<span style="color:#000;font-weight:bold">/</span>dmabuf<span style="color:#000;font-weight:bold">-</span>rdma<span style="color:#000;font-weight:bold">/</span>rdmabw<span style="color:#000;font-weight:bold">-</span>xe.c
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="主机发给gpu设备-内存直接访问dma-libfabric示例">主机发给GPU设备 内存直接访问DMA libfabric示例</h3>
+<p>
+        <img class="mx-auto" alt="image-20230924172333123" src="../image-20230924172333123.png" />   
+    </p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">libfabric GPU设备 <span style="color:#000;font-weight:bold">-&gt;</span> host
+<span style="color:#a61717;background-color:#e3d2d2">服务端</span><span style="color:#000;font-weight:bold">:</span> .<span style="color:#000;font-weight:bold">/</span>fi<span style="color:#000;font-weight:bold">-</span>rdmabw<span style="color:#000;font-weight:bold">-</span>xe <span style="color:#000;font-weight:bold">-</span>m device <span style="color:#a61717;background-color:#e3d2d2">#使用</span>GPU设备的内存
+<span style="color:#a61717;background-color:#e3d2d2">客户端</span><span style="color:#000;font-weight:bold">:</span> .<span style="color:#000;font-weight:bold">/</span>fi<span style="color:#000;font-weight:bold">-</span>rdmabw<span style="color:#000;font-weight:bold">-</span>xe <span style="color:#000;font-weight:bold">-</span>m host <span style="color:#000;font-weight:bold">-</span>S <span style="color:#099">1</span> <span style="color:#000;font-weight:bold">-</span>t write <span style="color:#099">192.168.5.6</span>  <span style="color:#a61717;background-color:#e3d2d2">#用主机内存</span>, <span style="color:#a61717;background-color:#e3d2d2">完成</span><span style="color:#099">1</span><span style="color:#a61717;background-color:#e3d2d2">字节的远程内存写操作</span>
+libfabric <span style="color:#a61717;background-color:#e3d2d2">代码相对位置</span><span style="color:#000;font-weight:bold">:</span> fabtests<span style="color:#000;font-weight:bold">/</span>component<span style="color:#000;font-weight:bold">/</span>dmabuf<span style="color:#000;font-weight:bold">-</span>rdma<span style="color:#000;font-weight:bold">/</span>fi<span style="color:#000;font-weight:bold">-</span>rdmabw<span style="color:#000;font-weight:bold">-</span>xe.c
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="更多libfabric参考链接信息">更多libfabric参考链接信息</h2>
+<p>
+        <img class="mx-auto" alt="image-20230924172500273" src="../image-20230924172500273.png" />   
+    </p>
+<h2 id="end-谢谢">END, 谢谢</h2>
+<p>
+        <img class="mx-auto" alt="image-20230924172620060" src="../image-20230924172620060.png" />   
+    </p>
+<h2 id="附录">附录</h2>
+<p><strong>HOTI 热门互联网络技术</strong></p>
+<p>第30届IEEE热互连研讨会: <a href="https://hoti.org/">https://hoti.org/</a></p>
+<p>技术视频: <a href="https://www.youtube.com/@hoti-hotinterconnectssympo5358/videos">https://www.youtube.com/@hoti-hotinterconnectssympo5358/videos</a></p>
+<p>议题: <a href="https://hoti.org/program/">https://hoti.org/program/</a></p>
+<p>Hot Interconnects 是最先进的硬件和软件架构的研究人员和开发人员的首要国际论坛</p>
+<p>Hot Interconnects 是最先进的硬件和软件架构以及各种规模互连网络实现的研究人员和开发人员的首要国际论坛，范围从多核片上互连到系统、集群、数据中心内的互连 和云。 业界和学术界的领导人出席了这一年度会议。 这种氛围提供了大量与该领域前沿人士互动的机会。</p>
+<p>主题包括跨领域问题，涵盖计算机系统、网络技术和高性能互连网络的通信协议。 本次会议特别针对这些领域的令人兴奋的新技术和产品创新。</p>
+<p>欢迎来到第 30 届 IEEE 热互连研讨会。 HotI30 将以虚拟方式举行。</p>
+<p>IEEE Hot Interconnects 是最先进的硬件和软件架构以及各种规模互连网络实现的研究人员和开发人员的首要国际论坛，范围从多核片上互连到系统集群内的互连和数据互连。 中心。 工业界和学术界的领导者出席会议，与该领域最前沿的人士进行互动。</p>
+<p>我们的目标是解决数据中心网络和超级计算社区的问题。 我们希望您能加入我们，不仅从内容中受益，还从本次活动始终提供的绝佳交流机会中受益</p>
+<p>加速器互连</p>
+<p>几乎所有新兴的高价值应用程序，尤其是那些位于边缘的应用程序，都使用加速器而不是 CPU 来实现其基本功能。 此外，在任何规模的集群中，包括边缘集群，都会采用多个加速器来满足此类应用程序的动态需求。 这些加速器可以是同一类型（作为池），也可以是不同类型。 但与 CPU 的情况一样，系统的性能几乎总是受到 I/O 或互连的限制。 因此，我们想要探索加速器的互连如何不仅避免成为瓶颈，更重要的是使加速器协同工作以实现新的应用程序并彻底改变计算架构。 该小组将探讨最具创新性的加速器互连方法，以充分利用这些令人惊叹的加速器的功能</p>
+<h2 id="hpc高性能计算大牛-dhabaleswar-k-dk-panda-熊猫博士">HPC高性能计算大牛: Dhabaleswar K. (DK) Panda 熊猫博士</h2>
+<hr>
+<p>Panda是俄亥俄州<a href="http://www.acs.ohio-state.edu/">立大学</a><a href="http://www.cse.ohio-state.edu/">计算机科学与工程系</a>的教授和大学杰出学者 。Panda领导 <a href="http://nowlab.cse.ohio-state.edu/">基于网络的计算研究小组。</a><a href="http://icicle.ai/">Panda是新成立的耗资 2000 万美元的 NSF-AI 研究所ICICLE </a>的主任 。</p>
+<p>Panda的联系地址是：</p>
+<table>
+<thead>
+<tr>
+<th>计算机科学与工程系 Drreese Lab 785 俄亥俄州立大学 2015 Neil Avenue Columbus, OH-43210, USA</th>
+<th>电话：(614) 292-5199 传真：(614) 292-2911 电子邮件：<a href="mailto:panda@cse.ohio-state.edu"> panda AT cse.ohio-state.edu</a> Twitter：@dhabalkpanda</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong><a href="https://research.osu.edu/dhabaleswar-k-dk-panda-computer-science-and-engineering/">熊猫教授被公认为俄勒冈州立大学150年历史中的150位创新者之一！</a></strong></p>
+<p><strong><a href="https://engineering.osu.edu/news/2018/08/ohio-state-remains-forefront-supercomputer-advances">Panda教授的MVAPICH团队是NSF资助的新型Frontera超级计算机的合作伙伴！</a></strong></p>
+<p><strong><a href="https://insidehpc.com/2017/05/rock-stars-hpc-dk-panda/">Panda 教授被 InsideHPC 授予 HPC 摇滚明星奖。</a></strong></p>
+<hr>
+<p><strong><a href="http://mug.mvapich.cse.ohio-state.edu/">2023 年 MVAPICH 用户组 (MUG) 会议</a> 将于 2023 年 8 月 21 日至 23 日以混合方式举行。更多详细信息请参见 <a href="http://mug.mvapich.cse.ohio-state.edu/">此处</a>。MUG &lsquo;22 演示的视频和幻灯片可 <a href="http://mug.mvapich.cse.ohio-state.edu/mug/22/">在此处</a>获取。</strong></p>
+<hr>
+<p><strong>我的团队中的职位：
+1)<a href="http://nowlab.cse.ohio-state.edu/jobs/">博士后/研究科学家</a>（多名）
+\2) <a href="http://nowlab.cse.ohio-state.edu/jobs/">MPI 软件工程师/程序员</a>（多名）
+\3) 博士。硕士生（多名）
+4）本科生（多名）</strong></p>
+<hr>
+<h2 id="研究兴趣">研究兴趣</h2>
+<p>高性能计算、高性能网络、大数据分析、深度/机器学习、人工智能、云计算、GPU 和加速器、文件系统和存储以及百亿亿次计算</p>
+<hr>
+<h2 id="简介-1">简介</h2>
+<p>Dhabaleswar K. (DK) Panda 博士是俄亥俄州立大学计算机科学教授和杰出学者。他获得了博士学位。南加州大学计算机工程专业。他的研究兴趣包括高性能计算、高性能网络 (InfiniBand)、大数据分析（Spark 和 Hadoop）、深度学习、云计算、虚拟化、GPU 和加速器、文件系统和存储以及百亿亿次计算。他在与这些研究领域相关的主要期刊和国际会议上发表了 500 多篇论文。熊猫博士曾担任（或担任）许多国际会议和研讨会的程序主席/联合主席/副主席，包括 HPCAsia &lsquo;23、CCGRid &lsquo;22、SCAsia &lsquo;22、SCAsia &lsquo;20、ISC &lsquo;20、CCGrid &lsquo;18、 ExaComm (15-23)、ESPM2 (15-23)、HPBDC (15-19)、CCGrid &lsquo;16、PGAS &lsquo;15、HPBDC &lsquo;15、HiPC &lsquo;12、CCGrid &lsquo;12、HiPC &lsquo;11、IEEE 集群（集群）&lsquo;10、超级计算 (SC)&lsquo;08、ANCS &lsquo;07、热互连 2007、IPDPS &lsquo;07 、HiPC &lsquo;07、热互连 2006、CAC (2001-04)、ICPP &lsquo;01、CANPC (1997-98) 和 ICPP &lsquo;98。他曾担任 CCGrid &lsquo;20、IEEE Micro &lsquo;19 和 ICPP &lsquo;06 的总主席/联合主席。他曾担任 IEEE Transactions on Parallel and Distributed Systems (TPDS)、IEEE Transactions on Computers (TC) 和 Journal of Parallel and DistributedComputing (JPDC) 的副主编。目前，他担任《高性能计算 CCF Transactions》的联合主编。他曾担任 190 多个国际会议和研讨会的程序委员会成员。熊猫教授是一位积极主动的演讲者。他曾担任 IEEE 杰出访问者和 IEEE 分会教程演讲者。他在全球范围内发表了大量受邀主题演讲/全体会议、教程和演示。</p>
+<p>Panda 博士和他的研究小组成员一直在对现代网络技术进行广泛的研究，包括 InfiniBand、Omni-Path、iWARP、AWS EFA 和 RoCE。他的研究小组目前正在与国家实验室以及领先的 InfiniBand、Omni-Path、iWARP 和 RoCE 公司合作，设计下一代高端系统的各种子系统。 <a href="http://mvapich.cse.ohio-state.edu/">MVAPICH（基于 InfiniBand、iWARP 和 RoCE 的高性能 MPI 和 MPI+PGAS，支持 GPGPU 和虚拟化）软件库</a>是由他的研究小组开发的，目前已被全球 3,300 多个组织（90 个国家/地区）使用。这些软件包使得多个InfiniBand集群进入了最新的TOP500排名。截至 23 年 5 月，仅该项目网站上该软件的下载量就已超过 168 万次。这些软件包还可以与软件堆栈一起提供给网络供应商（InfiniBand、Omni-Path、RoCE、AWS EFA、iWARP 和 Slingshot）、服务器供应商、软件包（OpenHPC 和 Spack）以及 Linux 发行商（例如 RedHat 和 SuSE） ）。该软件目前正在为世界排名第七的超级计算机提供动力。</p>
+<p><a href="http://hibd.cse.ohio-state.edu/">由高性能大数据（HiBD）项目</a> 小组设计和开发的多个用于大数据处理和管理的软件库 可用。其中包括：1) 用于数据科学应用的 MPI4Dask，2) 用于大数据分析应用的 MPI4Spark；3) 支持 RDMA 的 Apache Hadoop 软件库，为 Apache Hadoop 的多个组件（HDFS、MapReduce 和 RPC）提供本机 RDMA（InfiniBand Verbs 和 RoCE）支持；4) 支持 RDMA 的 Spark 软件库，提供原生 RDMA（InfiniBand Verbs 和 RoCE）支持；5) RDMA-Memcached 软件库，为 Web 2.0 环境中使用的 Memcached 提供原生 RDMA（InfiniBand Verbs 和 RoCE）支持；5) OSU 高性能大数据基准 (OHB)。这些软件包的示例性能数据和下载说明可从上述网站获得。这些库目前被全球超过 355 个组织（位于 39 个国家/地区）使用。截至 23 年 5 月，超过 47 个，</p>
+<p>该小组还一直致力于在现代 HPC 集群和超级计算机上加速深度学习 (DL) 框架（TensorFlow 和 PyTorch）和机器学习 (ML) 框架。<a href="http://hidl.cse.ohio-state.edu/"> 高性能深度学习 (HiDL) 项目网站</a>提供了 MPI 驱动的高性能和可扩展版本 DL/ML 框架的方法 。</p>
+<p>熊猫博士领导 <a href="http://nowlab.cse.ohio-state.edu/">基于网络的计算研究小组</a>。该小组的学生和工作人员参与了多个 <a href="http://nowlab.cse.ohio-state.edu/projects">最先进的研究项目</a>。他的团队成员获得了大量 <a href="http://nowlab.cse.ohio-state.edu/awards">奖项和荣誉</a>。熊猫博士的研究得到了美国国家科学基金会、美国能源部、美国国防部、俄亥俄州董事会、俄亥俄州发展部以及AMD、ARM、Broadcom、IBM、Intel、Cisco、Cornelis等多个行业的资助Networks、Cray、Oracle、SUN、Mellanox、Microsoft、NVIDIA、Pattern Computer、Rockport Networks、QLogic 和 NetApp。</p>
+<p>Panda博士是IEEE Fellow、ACM会员。他是 2022 年 IEEE 查尔斯·巴贝奇奖的获得者 <a href="https://www.computer.org/volunteering/awards/babbage">。</a></p>
+<p><a href="http://www.cse.ohio-state.edu/~panda/vita.pdf">关于熊猫博士的更多详细信息可以从他的详细Vita</a> 中获得 。</p>
+<hr>
+<h2 id="主要研究项目和软件分发">主要研究项目和软件分发</h2>
+<ul>
+<li>
+<p><a href="http://nowlab.cse.ohio-state.edu/">基于网络的计算研究小组</a></p>
+</li>
+<li>
+<p>MAPICH（基于 InfiniBand、Omni-Path、RoCE 和 iWARP 的高性能 MPI）项目</p>
+<ul>
+<li><a href="http://www.cra.org/govaffairs/blog/archives/000101.html">InfiniBand 研究在国会山的演示</a></li>
+<li><a href="http://www.cse.ohio-state.edu/news/news19.shtml">OSU 软件“增强”超级计算机</a></li>
+<li><a href="http://www.tgc.com/hpc-bin/engine.pl?name=/articles/toc121302.html">有关该项目的 HPCWire 文章</a></li>
+<li><a href="http://mvapich.cse.ohio-state.edu/news/">最近的新闻稿和新闻文章中对该项目的其他引用</a></li>
+</ul>
+</li>
+<li>
+<p><a href="http://hibd.cse.ohio-state.edu/">HiBD（高性能大数据）项目</a></p>
+</li>
+<li>
+<p><a href="http://hidl.cse.ohio-state.edu/">HiDL（高性能深度学习）项目</a></p>
+</li>
+<li>
+<p><a href="http://nowlab.cse.ohio-state.edu/projects">研究项目</a></p>
+</li>
+<li>
+<p><a href="http://nowlab.cse.ohio-state.edu/publications/">刊物</a></p>
+</li>
+<li>
+<p><a href="http://nowlab.cse.ohio-state.edu/awards">奖项和认可</a></p>
+</li>
+</ul>
+<h2 id="教学">教学</h2>
+<ul>
+<li>[教学兴趣](<a href="https://web.cse.ohio-state.edu/~panda.2/#Teaching">https://web.cse.ohio-state.edu/~panda.2/#Teaching</a> Interests)</li>
+<li>[教学计划（2022-23）](<a href="https://web.cse.ohio-state.edu/~panda.2/#Teaching">https://web.cse.ohio-state.edu/~panda.2/#Teaching</a> Schedule)</li>
+<li>[工作时间](<a href="https://web.cse.ohio-state.edu/~panda.2/#Office">https://web.cse.ohio-state.edu/~panda.2/#Office</a> Hours)</li>
+</ul>
+<hr>
+<p>教学兴趣</p>
+<p>我通常教授以下课程。</p>
+<ul>
+<li><a href="http://www.cse.ohio-state.edu/~panda/6422">CSE 6422：高级计算机架构</a></li>
+<li><a href="http://www.cse.ohio-state.edu/~panda/5194_nbc">CSE 5194：基于网络的 HPC、云和大数据计算</a></li>
+<li><a href="http://www.cse.ohio-state.edu/~panda/5449">CSE 5449：高性能深度学习简介</a></li>
+<li><a href="http://www.cse.ohio-state.edu/~panda/6429/">CSE 6429：计算机体系结构高级研究：基于网络的计算</a></li>
+</ul>
+<p>教学计划（2022-23）</p>
+<p>我2022-23学年的教学任务如下：</p>
+<p>23 年春季：</p>
+<ul>
+<li><a href="http://www.cse.ohio-state.edu/~panda/6422">CSE 6422：高级计算机架构</a></li>
+<li><a href="http://www.cse.ohio-state.edu/~panda/6429/">CSE 6429：计算机体系结构高级研究：基于网络的计算</a></li>
+</ul>
+<p>22 年秋季：</p>
+<ul>
+<li><a href="http://www.cse.ohio-state.edu/~panda/5449">CSE 5449：高性能深度学习简介</a></li>
+<li><a href="http://www.cse.ohio-state.edu/~panda/6429/">CSE 6429：计算机体系结构高级研究：基于网络的计算</a></li>
+</ul>
+<h2 id="参考">参考</h2>
+<p>libfabric教程视频链接: <a href="https://www.youtube.com/watch?v=b-ri1mMLbZ0&amp;t=2432s">https://www.youtube.com/watch?v=b-ri1mMLbZ0&amp;t=2432s</a></p>
+<h2 id="晓兵">晓兵</h2>
+<p>博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a> | <a href="https://cloud.tencent.com/developer/user/5060293/articles">https://cloud.tencent.com/developer/user/5060293/articles</a></p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/">https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/ofa/ofa_librabric/">OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织</a></li>
+        
+        <li><a href="/post/net/libfabric_hpc_net_api_rdma_daos_mercury/">OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</a></li>
+        
+        <li><a href="/post/daos/daos_dfuse_fs_io_path/">DAOS用户态文件系统IO路径(dfuse io全路径)</a></li>
+        
+        <li><a href="/post/daos/daos_docker/">DAOS-在docker中搭建daos开发调试环境</a></li>
+        
+        <li><a href="/post/daos/daos_eq_and_event/">DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+                <li><a href='/tags/network'>network</a></li>
+                
+                <li><a href='/tags/ofa'>ofa</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2023
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/" title="英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda">英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/" title="OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)">OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_dfuse_fs_io_path/" title="DAOS用户态文件系统IO路径(dfuse io全路径)">DAOS用户态文件系统IO路径(dfuse io全路径)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_docker/" title="DAOS-在docker中搭建daos开发调试环境">DAOS-在docker中搭建daos开发调试环境</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_eq_and_event/" title="DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析">DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_tse/" title="DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析">DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/" title="Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/nvmf/" title="NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析">NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_cart_swim/" title="DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)">DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/multipath/linux_kernel_multipath_fail_path/" title="linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2">linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/libfabric/">libfabric (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/multipath/">multipath (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/network/">network (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvmeof/">nvmeof (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/roce/">roce (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (21)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (26)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/libfabric/">libfabric</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/network/">network</a>
+  
+  <a href="https://logread.cn/tags/nvmeof/">nvmeof</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/roce/">roce</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/">多路径</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://github.com/ssbandjl/golang-design-pattern" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

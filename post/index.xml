@@ -6,7 +6,16 @@
     <description>Recent content in Posts on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 17 Sep 2023 10:44:13 +0800</lastBuildDate><atom:link href="https://logread.cn/post/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 24 Sep 2023 17:32:26 +0800</lastBuildDate><atom:link href="https://logread.cn/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda</title>
+      <link>https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/</link>
+      <pubDate>Sun, 24 Sep 2023 17:32:26 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/</guid>
+      <description>Intel Open Fabrics Interfaces Libfabric Tutorial 英特尔开放结构接口 Libfabric 教程 rdma verbs network gpu panda hpc ai 简介 本文介绍了libfabric的基本教程, 以及常见代码示例, 包含tcp_socket, libfabric, gpu, dma等代码和示例, 内容基于intel专家的的视频和个人理解, 欢迎一起交流高性能存储, 分布式存储, 网络, rdma等技术 HOTI 热门互联网络技术 视</description>
+    </item>
+    
     <item>
       <title>OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</title>
       <link>https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/</link>
@@ -103,7 +112,7 @@
       <pubDate>Sat, 17 Jun 2023 22:47:44 +0800</pubDate>
       
       <guid>https://logread.cn/post/study/summary/</guid>
-      <description>本文链接 https://logread.cn/post/study/summary/ 性能 P99 CONF 大会(P99分位数, 极致)是面向工程师和由工程师举办的跨行业虚拟活动，以低延迟、高性能设计为中心, 突出低延迟、高性能分布式计算所需的工程挑战和创造性解决方案 P99大会: https://www.p99conf.io/on-demand/ HPC高性能计算 Mochi 项目是阿贡国家实验室、洛斯阿拉莫斯国家实验室、卡内基梅隆大学和 HDF 集团之间的</description>
+      <description>本文链接 https://logread.cn/post/study/summary/ 热门互联网络技术 第30届IEEE热互连研讨会: https://hoti.org/ 技术视频: https://www.youtube.com/@hoti-hotinterconnectssympo5358/videos 议题: https://hoti.org/program/ Hot Interconnects 是最先进的硬件和软件架构的研究人员和开发人员的首要国际论坛，&amp;hellip; Hot Interconnects 是最先进的硬件和软件架构以及各种规模互连网络实现的研究人员和开发人员的首要国际论坛，范围从多核片上互连到系统、集群、数</description>
     </item>
     
     <item>
