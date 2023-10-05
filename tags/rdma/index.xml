@@ -6,7 +6,16 @@
     <description>Recent content in rdma on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 17 Sep 2023 10:44:13 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/rdma/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 05 Oct 2023 10:11:49 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/rdma/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</title>
+      <link>https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/</link>
+      <pubDate>Thu, 05 Oct 2023 10:11:49 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/</guid>
+      <description>DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解 简介 参考之前的分享中, DAOS与RDMA分层关系如下图, DAOS引擎 -&amp;gt; CART(RPC/大块数据/集合RPC请求) -&amp;gt; Mercury(HG: RPC注册/回调/RPC操作/预期/非预期消息/大块消息/轮训/阻塞/网络抽象等) -&amp;gt; Libfabric(网络抽象层,对rxm,r</description>
+    </item>
+    
     <item>
       <title>OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</title>
       <link>https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/</link>

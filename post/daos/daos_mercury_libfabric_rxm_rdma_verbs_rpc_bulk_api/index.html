@@ -1,0 +1,1899 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7571343657358120"
+     crossorigin="anonymous"></script>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解 | 晓兵</title>
+    <meta property="og:title" content="DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解 - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2023-10-05T10:11:49&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2023-10-05T10:11:49&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储,ceph,分布式块存储,云计算,daos,rdma,spdk,nvmeof,linux,kernel,内核,分布式存储,dpdk,rpc">
+    <meta name="description" content="DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#简介">简介</a></li>
+    <li><a href="#典型rdma双边通信api调用汇总">典型RDMA双边通信API调用汇总</a></li>
+    <li><a href="#另一个参考示例">另一个参考示例</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#rdma单边读写主流程以及部分调用栈">RDMA单边(读/写)主流程以及部分调用栈</a></li>
+    <li><a href="#参考">参考</a></li>
+    <li><a href="#晓兵">晓兵</a>
+      <ul>
+        <li><a href="#晓兵技术杂谈系列">晓兵技术杂谈(系列)</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年10月5日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E7%BD%91%E7%BB%9C'>网络</a></span>
+            
+            <span class="meta-category"><a href='/categories/rdma'>rdma</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="daos-mercuryhg-libfabricofi-rdma-分层verbs接口调用详解">DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</h1>
+<h2 id="简介">简介</h2>
+<p>参考之前的分享中, DAOS与RDMA分层关系如下图, DAOS引擎 -&gt; CART(RPC/大块数据/集合RPC请求) -&gt; Mercury(HG: RPC注册/回调/RPC操作/预期/非预期消息/大块消息/轮训/阻塞/网络抽象等) -&gt; Libfabric(网络抽象层,对rxm,rdma verbs, socket, 共享内存等抽象) -&gt; RDMA(verbs) -&gt; rdma-core(用户态驱动) -&gt; RDMA网卡硬件驱动(如:英伟达 mellanox迈络思), 今天咱们来探讨一下分层verbs接口调用详情</p>
+<p>
+        <img class="mx-auto" alt="image-20231005093355059" src="../image-20231005093355059.png" />   
+    </p>
+<h2 id="典型rdma双边通信api调用汇总">典型RDMA双边通信API调用汇总</h2>
+<p>
+        <img class="mx-auto" alt="rdma_verbs_summary.drawio" src="../rdma_verbs_summary.drawio.png" />   
+    </p>
+<h2 id="另一个参考示例">另一个参考示例</h2>
+<p>
+        <img class="mx-auto" alt="rdma_demo-rdma_demo.drawio" src="../rdma_demo-rdma_demo.drawio.png" />   
+    </p>
+<h1 id="mercury中rdma相关api汇总">MERCURY中RDMA相关API汇总</h1>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">102
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">103
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">104
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">105
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">106
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">107
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">108
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">109
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">110
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">111
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">112
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">113
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">114
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">115
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">116
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">117
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">118
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">119
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">120
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">121
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">122
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">123
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#900;font-weight:bold">server</span>: <span style="color:#a61717;background-color:#e3d2d2">服务端创建事件通道</span>,<span style="color:#a61717;background-color:#e3d2d2">创建通信标识</span>ID, <span style="color:#a61717;background-color:#e3d2d2">启动</span>RDMA监听
+rdma_create_event_channel <span style="color:#000;font-weight:bold">&lt;-</span> vrb_eq_open <span style="color:#000;font-weight:bold">&lt;-</span> fi_eq_open
+rdma_create_id <span style="color:#000;font-weight:bold">&lt;-</span> vrb_create_ep <span style="color:#000;font-weight:bold">&lt;-</span> vrb_open_ep <span style="color:#000;font-weight:bold">&lt;-</span> fi_endpoint, librdmacm<span style="color:#000;font-weight:bold">/</span>cma.c <span style="color:#000;font-weight:bold">-&gt;</span> rdma_create_event_channel HG创建端点 na_ofi_basic_ep_open
+rdma_listen <span style="color:#000;font-weight:bold">-&gt;</span> fi_listen <span style="color:#000;font-weight:bold">-&gt;</span> .listen <span style="color:#000;font-weight:bold">=</span> vrb_pep_listen <span style="color:#000;font-weight:bold">-&gt;</span> vrb_pep_listen <span style="color:#000;font-weight:bold">-&gt;</span> rdma_listen, na_ofi_basic_ep_open <span style="color:#000;font-weight:bold">-&gt;</span> fi_enable <span style="color:#000;font-weight:bold">-&gt;</span> rxm_ep_ctrl <span style="color:#000;font-weight:bold">-&gt;</span> rxm_start_listen <span style="color:#000;font-weight:bold">-&gt;</span> fi_listen
+
+<span style="color:#900;font-weight:bold">client</span>:<span style="color:#a61717;background-color:#e3d2d2">客户端创建事件通道</span>,<span style="color:#a61717;background-color:#e3d2d2">创建通信标识</span>ID, <span style="color:#a61717;background-color:#e3d2d2">解析服务端地址</span>, <span style="color:#a61717;background-color:#e3d2d2">发送数据时</span>, <span style="color:#a61717;background-color:#e3d2d2">获取连接</span>, <span style="color:#a61717;background-color:#e3d2d2">解析路由</span>
+rdma_create_event_channel
+rdma_create_id
+rdma_resolve_addr <span style="color:#000;font-weight:bold">-&gt;</span> RDMA_CM_EVENT_ADDRESS_RESOLVED <span style="color:#000;font-weight:bold">-&gt;</span>  rxm_open_conn <span style="color:#000;font-weight:bold">-&gt;</span> fi_endpoint (vrb_open_ep) <span style="color:#000;font-weight:bold">-&gt;</span> rdma_resolve_addr HG <span style="color:#000;font-weight:bold">-&gt;</span> HG_Trigger <span style="color:#000;font-weight:bold">-&gt;</span> hg_op_id<span style="color:#000;font-weight:bold">-&gt;</span>callback(<span style="color:#000;font-weight:bold">&amp;</span>hg_cb_info) <span style="color:#a61717;background-color:#e3d2d2">查询地址设置的回调</span> lookup_callback <span style="color:#000;font-weight:bold">-&gt;</span>  HG_Forward <span style="color:#000;font-weight:bold">-&gt;</span> NA_Msg_send_unexpected <span style="color:#000;font-weight:bold">-&gt;</span> fi_senddata <span style="color:#000;font-weight:bold">-&gt;</span> rxm_get_conn <span style="color:#000;font-weight:bold">-&gt;</span> fi_endpoint <span style="color:#000;font-weight:bold">-&gt;</span> vrb_open_ep <span style="color:#000;font-weight:bold">-&gt;</span> vrb_create_ep <span style="color:#000;font-weight:bold">-&gt;</span> rdma_resolve_addr
+rdma_resolve_route <span style="color:#000;font-weight:bold">-&gt;</span> RDMA_CM_EVENT_ROUTE_RESOLVED <span style="color:#000;font-weight:bold">-&gt;</span> rxm_send_connect <span style="color:#000;font-weight:bold">-&gt;</span> fi_connect <span style="color:#000;font-weight:bold">-&gt;</span> rdma_resolve_route <span style="color:#a61717;background-color:#e3d2d2">也是</span>HG发送的时候建立连接
+<span style="color:#000;font-weight:bold">------------------</span> 
+<span style="color:#a61717;background-color:#e3d2d2">分配</span>RDMA结构(<span style="color:#a61717;background-color:#e3d2d2">服务端和客户端对等</span>, <span style="color:#a61717;background-color:#e3d2d2">均要执行</span>), <span style="color:#a61717;background-color:#e3d2d2">查询网卡</span>, <span style="color:#a61717;background-color:#e3d2d2">分配保护域</span>, <span style="color:#a61717;background-color:#e3d2d2">创建完成通道</span>,<span style="color:#a61717;background-color:#e3d2d2">完成队列</span>, <span style="color:#a61717;background-color:#e3d2d2">通知完成队列准备好接收完成事件</span>, <span style="color:#a61717;background-color:#e3d2d2">创建队列对</span>, <span style="color:#a61717;background-color:#e3d2d2">注册内存</span>
+ibv_query_device <span style="color:#000;font-weight:bold">&lt;-</span> fi_getinfo <span style="color:#000;font-weight:bold">-&gt;</span> vrb_getinfo <span style="color:#000;font-weight:bold">-&gt;</span> ibv_query_device
+ibv_alloc_pd <span style="color:#000;font-weight:bold">&lt;-</span> fi_domain <span style="color:#000;font-weight:bold">-&gt;</span> rxm_domain_open <span style="color:#000;font-weight:bold">-&gt;</span> ibv_alloc_pd
+ibv_create_comp_channel <span style="color:#000;font-weight:bold">-&gt;</span> na_ofi_eq_open <span style="color:#000;font-weight:bold">-&gt;</span> fi_cq_open <span style="color:#000;font-weight:bold">-&gt;</span> vrb_cq_open <span style="color:#000;font-weight:bold">-&gt;</span> ibv_create_comp_channel
+ibv_create_cq <span style="color:#000;font-weight:bold">-&gt;</span> na_ofi_eq_open <span style="color:#000;font-weight:bold">-&gt;</span> fi_cq_open <span style="color:#000;font-weight:bold">-&gt;</span> vrb_cq_open <span style="color:#000;font-weight:bold">-&gt;</span> ibv_create_cq
+ibv_req_notify_cq <span style="color:#000;font-weight:bold">-&gt;</span> na_ofi_poll_try_wait <span style="color:#000;font-weight:bold">-&gt;</span> fi_trywait <span style="color:#000;font-weight:bold">-&gt;</span> vrb_trywait <span style="color:#000;font-weight:bold">-&gt;</span> vrb_cq_trywait
+rdma_create_qp <span style="color:#000;font-weight:bold">-&gt;</span> na_ofi_context_create <span style="color:#000;font-weight:bold">-&gt;</span> fi_enable <span style="color:#000;font-weight:bold">-&gt;</span> rdma_create_qp
+ibv_reg_mr <span style="color:#000;font-weight:bold">-&gt;</span> NA_Mem_register <span style="color:#000;font-weight:bold">-&gt;</span> na_ofi_mem_register <span style="color:#000;font-weight:bold">-&gt;</span> fi_mr_regv <span style="color:#000;font-weight:bold">-&gt;</span> ibv_reg_mr
+<span style="color:#000;font-weight:bold">------------------</span>
+<span style="color:#a61717;background-color:#e3d2d2">轮训完成队列</span>
+ibv_poll_cq <span style="color:#000;font-weight:bold">-&gt;</span> na_ofi_msg_send_unexpected <span style="color:#000;font-weight:bold">-&gt;</span> fi_senddata <span style="color:#000;font-weight:bold">-&gt;</span> fi_send <span style="color:#000;font-weight:bold">-&gt;</span> vrb_flush_cq <span style="color:#000;font-weight:bold">-&gt;</span> ibv_poll_cq
+
+<span style="color:#a61717;background-color:#e3d2d2">接收端提前往接收队列放置工作请求</span>WR
+ibv_post_recv <span style="color:#000;font-weight:bold">-&gt;</span> rxm_open_conn <span style="color:#000;font-weight:bold">-&gt;</span> ibv_post_recv <span style="color:#000;font-weight:bold">|</span> na_ofi_tag_recv, na_ofi_msg_multi_recv <span style="color:#000;font-weight:bold">-&gt;</span> fi_trecv <span style="color:#000;font-weight:bold">-&gt;</span> ibv_post_recv
+
+<span style="color:#a61717;background-color:#e3d2d2">客户端与服务端建立连接</span>
+rdma_connect <span style="color:#000;font-weight:bold">-&gt;</span> server <span style="color:#000;font-weight:bold">-&gt;</span> RDMA_CM_EVENT_CONNECT_REQUEST, <span style="color:#000;font-weight:bold">-&gt;</span> fi_senddata <span style="color:#000;font-weight:bold">-&gt;</span> rxm_get_conn <span style="color:#000;font-weight:bold">-&gt;</span> rdma_connect
+
+<span style="color:#900;font-weight:bold">server</span>:
+<span style="color:#000;font-weight:bold">case</span> RDMA_CM_EVENT_CONNECT_REQUEST
+<span style="color:#000;font-weight:bold">------------------</span> 
+<span style="color:#a61717;background-color:#e3d2d2">分配</span>RDMA结构
+ibv_query_device
+ibv_alloc_pd
+ibv_create_comp_channel
+ibv_create_cq
+ibv_req_notify_cq
+rdma_create_qp
+ibv_reg_mr
+<span style="color:#000;font-weight:bold">------------------</span>
+ibv_post_recv
+rdma_accept
+RDMA_CM_EVENT_ESTABLISHED
+ibv_post_send
+
+<span style="color:#900;font-weight:bold">clinet</span>: <span style="color:#a61717;background-color:#e3d2d2">客户端发送非预期消息</span>
+RDMA_CM_EVENT_ESTABLISHED
+ibv_post_send <span style="color:#000;font-weight:bold">-&gt;</span> na_ofi_msg_send_unexpected <span style="color:#000;font-weight:bold">-&gt;</span> ibv_post_send
+
+<span style="color:#a61717;background-color:#e3d2d2">销毁资源</span>
+<span style="color:#900;font-weight:bold">server</span>:
+rdma_disconnect
+
+ibv_dereg_mr
+ibv_destroy_cq
+ibv_destroy_comp_channel
+rdma_destroy_qp
+
+rdma_destroy_id
+rdma_destroy_event_channel
+
+<span style="color:#900;font-weight:bold">client</span>:
+rdma_disconnect
+
+ibv_dereg_mr
+ibv_destroy_cq
+ibv_destroy_comp_channel
+rdma_destroy_qp
+
+rdma_destroy_id
+rdma_destroy_event_channel
+
+
+
+<span style="color:#a61717;background-color:#e3d2d2">以下是部分接口详解</span><span style="color:#000;font-weight:bold">:</span>
+<span style="color:#a61717;background-color:#e3d2d2">创建事件通道</span><span style="color:#000;font-weight:bold">:</span>
+rdma_create_event_channel <span style="color:#000;font-weight:bold">-</span> <span style="color:#a61717;background-color:#e3d2d2">打开用于报告通信事件的通道。</span> <span style="color:#a61717;background-color:#e3d2d2">描述：异步事件通过事件通道上报给用户。</span> <span style="color:#a61717;background-color:#e3d2d2">每个事件通道映射到一个文件描述符。</span> <span style="color:#a61717;background-color:#e3d2d2">注意：所有创建的事件通道必须通过调用</span> rdma_destroy_event_channel <span style="color:#a61717;background-color:#e3d2d2">销毁。</span> <span style="color:#a61717;background-color:#e3d2d2">用户应调用</span> rdma_get_cm_event <span style="color:#a61717;background-color:#e3d2d2">来检索事件通道上的事件。</span> <span style="color:#a61717;background-color:#e3d2d2">另请参见：</span>rdma_get_cm_event<span style="color:#a61717;background-color:#e3d2d2">、</span>rdma_destroy_event_channel, <span style="color:#a61717;background-color:#e3d2d2">流程</span><span style="color:#000;font-weight:bold">:</span> <span style="color:#a61717;background-color:#e3d2d2">查询获取所有</span>IB设备<span style="color:#a61717;background-color:#e3d2d2">，存放在</span>cma_dev_array全局数组中<span style="color:#a61717;background-color:#e3d2d2">；检测是否支持</span>AF_IB协议, <span style="color:#a61717;background-color:#e3d2d2">打开</span>CM的fd, <span style="color:#a61717;background-color:#e3d2d2">返回事件</span>
+<span style="color:#000;font-weight:bold">struct</span> rdma_event_channel <span style="color:#000;font-weight:bold">*</span>rdma_create_event_channel(<span style="color:#458;font-weight:bold">void</span>)
+  ucma_init()
+  channel<span style="color:#000;font-weight:bold">-&gt;</span>fd <span style="color:#000;font-weight:bold">=</span> open_cdev(dev_name, dev_cdev) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">打开</span>fd <span style="color:#000;font-weight:bold">/</span>dev<span style="color:#000;font-weight:bold">/</span>infiniband<span style="color:#000;font-weight:bold">/</span>rdma_cm
+  <span style="color:#a61717;background-color:#e3d2d2">返回通道</span>
+
+
+
+<span style="color:#a61717;background-color:#e3d2d2">分配通信标识</span>
+<span style="color:#458;font-weight:bold">int</span> rdma_create_id(<span style="color:#000;font-weight:bold">struct</span> rdma_event_channel <span style="color:#000;font-weight:bold">*</span>channel, <span style="color:#000;font-weight:bold">struct</span> rdma_cm_id <span style="color:#000;font-weight:bold">**</span>id, <span style="color:#458;font-weight:bold">void</span> <span style="color:#000;font-weight:bold">*</span>context, <span style="color:#000;font-weight:bold">enum</span> rdma_port_space ps)
+cmd <span style="color:#000;font-weight:bold">=</span> UCMA_CMD_CREATE_ID
+ret <span style="color:#000;font-weight:bold">=</span> write(id_priv<span style="color:#000;font-weight:bold">-&gt;</span>id.channel<span style="color:#000;font-weight:bold">-&gt;</span>fd, <span style="color:#000;font-weight:bold">&amp;</span>cmd, <span style="color:#000;font-weight:bold">sizeof</span> cmd) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">通知内核</span>
+ucma_insert_id(id_priv)
+  idm_set <span style="color:#000;font-weight:bold">-&gt;</span> librdmacm<span style="color:#a61717;background-color:#e3d2d2">：定义通过</span> RDMA <span style="color:#a61717;background-color:#e3d2d2">接口</span> (rsockets) <span style="color:#a61717;background-color:#e3d2d2">的流式传输，引入了一组新的</span> API<span style="color:#a61717;background-color:#e3d2d2">，支持</span> RDMA <span style="color:#a61717;background-color:#e3d2d2">设备上的字节流接口。</span> <span style="color:#a61717;background-color:#e3d2d2">新接口与套接字匹配，只是所有函数调用都以“</span>r<span style="color:#a61717;background-color:#e3d2d2">”为前缀。</span> <span style="color:#a61717;background-color:#e3d2d2">定义了以下函数：</span> rsocket rbind<span style="color:#a61717;background-color:#e3d2d2">、</span>rlisten<span style="color:#a61717;background-color:#e3d2d2">、</span>raccept<span style="color:#a61717;background-color:#e3d2d2">、</span>rconnect rshutdown<span style="color:#a61717;background-color:#e3d2d2">、</span>rclose rrecv<span style="color:#a61717;background-color:#e3d2d2">、</span>rrecvfrom<span style="color:#a61717;background-color:#e3d2d2">、</span>rrecvmsg<span style="color:#a61717;background-color:#e3d2d2">、</span>rread<span style="color:#a61717;background-color:#e3d2d2">、</span>rreadv rsend<span style="color:#a61717;background-color:#e3d2d2">、</span>rsendto<span style="color:#a61717;background-color:#e3d2d2">、</span>rsendmsg<span style="color:#a61717;background-color:#e3d2d2">、</span>rwrite<span style="color:#a61717;background-color:#e3d2d2">、</span>rwritev rpoll<span style="color:#a61717;background-color:#e3d2d2">、</span>rselect rgetpeername<span style="color:#a61717;background-color:#e3d2d2">、</span>rgetsockname rsetsockopt<span style="color:#a61717;background-color:#e3d2d2">、</span>rgetsockopt<span style="color:#a61717;background-color:#e3d2d2">、</span>rfcntl <span style="color:#a61717;background-color:#e3d2d2">函数采用相同的方法</span> <span style="color:#a61717;background-color:#e3d2d2">参数与用于套接字的参数相同。</span> <span style="color:#a61717;background-color:#e3d2d2">目前支持以下功能和标志：</span> PF_INET<span style="color:#a61717;background-color:#e3d2d2">、</span>PF_INET6<span style="color:#a61717;background-color:#e3d2d2">、</span>SOCK_STREAM<span style="color:#a61717;background-color:#e3d2d2">、</span>IPPROTO_TCP MSG_DONTWAIT<span style="color:#a61717;background-color:#e3d2d2">、</span>MSG_PEEK SO_REUSEADDR<span style="color:#a61717;background-color:#e3d2d2">、</span>TCP_NODELAY<span style="color:#a61717;background-color:#e3d2d2">、</span>SO_ERROR<span style="color:#a61717;background-color:#e3d2d2">、</span>SO_SNDBUF<span style="color:#a61717;background-color:#e3d2d2">、</span>SO_RCVBUF O_NONBLOCK rpoll <span style="color:#a61717;background-color:#e3d2d2">调用支持轮询</span> rsockets <span style="color:#a61717;background-color:#e3d2d2">和普通</span> fd, 
+  index_map(<span style="color:#a61717;background-color:#e3d2d2">二级指针</span>)<span style="color:#000;font-weight:bold">:</span> <span style="color:#a61717;background-color:#e3d2d2">索引映射</span> <span style="color:#000;font-weight:bold">-</span> <span style="color:#a61717;background-color:#e3d2d2">将结构与索引关联起来。</span> <span style="color:#a61717;background-color:#e3d2d2">同步必须由调用者提供。</span> <span style="color:#a61717;background-color:#e3d2d2">调用者必须通过将索引映射设置为</span> <span style="color:#099">0</span> <span style="color:#a61717;background-color:#e3d2d2">来初始化它</span>
+  <span style="color:#a61717;background-color:#e3d2d2">提供一组索引操作接口</span>, <span style="color:#a61717;background-color:#e3d2d2">设置</span>,<span style="color:#a61717;background-color:#e3d2d2">插入</span>(idx_insert),<span style="color:#a61717;background-color:#e3d2d2">增长</span>(idx_grow),<span style="color:#a61717;background-color:#e3d2d2">替换</span>,<span style="color:#a61717;background-color:#e3d2d2">移除</span>,<span style="color:#a61717;background-color:#e3d2d2">清理等</span>
+  rsocket是附在rdma_cm库中的一个子模块<span style="color:#a61717;background-color:#e3d2d2">，提供了完全类似于</span>socket接口的rdma调用
+  <span style="color:#a61717;background-color:#e3d2d2">对于</span>rdma编程<span style="color:#a61717;background-color:#e3d2d2">，目前主流实现是利用</span>rdma_cm来建立连接<span style="color:#a61717;background-color:#e3d2d2">，然后利用</span>verbs来传输数据<span style="color:#a61717;background-color:#e3d2d2">。</span>  rdma_cm和ibverbs分别会创建一个fd<span style="color:#a61717;background-color:#e3d2d2">，这两个</span>fd的分工不同<span style="color:#a61717;background-color:#e3d2d2">。</span>rdma_cm fd主要用于通知建连相关的事件<span style="color:#a61717;background-color:#e3d2d2">，</span>verbs fd则主要通知有新的cqe发生<span style="color:#a61717;background-color:#e3d2d2">。当直接对</span>rdma_cm fd进行poll<span style="color:#000;font-weight:bold">/</span>epoll监听时<span style="color:#a61717;background-color:#e3d2d2">，此时只能监听到</span>POLLIN事件<span style="color:#a61717;background-color:#e3d2d2">，这意味着有</span>rdma_cm事件发生<span style="color:#a61717;background-color:#e3d2d2">。当直接对</span>verbs fd进行poll<span style="color:#000;font-weight:bold">/</span>epoll监听时<span style="color:#a61717;background-color:#e3d2d2">，同样只能监听到</span>POLLIN事件<span style="color:#a61717;background-color:#e3d2d2">，这意味着有新的</span>cqe  <span style="color:#a61717;background-color:#e3d2d2">作者：异客</span>z <span style="color:#a61717;background-color:#e3d2d2">链接：</span><span style="color:#900;font-weight:bold">https</span>:<span style="color:#998;font-style:italic">//www.jianshu.com/p/4d71f1c8e77c
+</span><span style="color:#998;font-style:italic"></span>
+
+
+<span style="color:#a61717;background-color:#e3d2d2">监听客户端的连接请求</span>, <span style="color:#a61717;background-color:#e3d2d2">给内核发送监听命令</span>, <span style="color:#a61717;background-color:#e3d2d2">查询地址</span><span style="color:#000;font-weight:bold">/</span><span style="color:#a61717;background-color:#e3d2d2">路由</span>
+<span style="color:#458;font-weight:bold">int</span> rdma_listen(<span style="color:#000;font-weight:bold">struct</span> rdma_cm_id <span style="color:#000;font-weight:bold">*</span>id, <span style="color:#458;font-weight:bold">int</span> backlog)
+cmd <span style="color:#000;font-weight:bold">=</span> UCMA_CMD_LISTEN
+write(id<span style="color:#000;font-weight:bold">-&gt;</span>channel<span style="color:#000;font-weight:bold">-&gt;</span>fd, <span style="color:#000;font-weight:bold">&amp;</span>cmd, <span style="color:#000;font-weight:bold">sizeof</span> cmd)
+
+
+
+<span style="color:#a61717;background-color:#e3d2d2">解析地址</span>
+<span style="color:#458;font-weight:bold">int</span> rdma_resolve_addr(<span style="color:#000;font-weight:bold">struct</span> rdma_cm_id <span style="color:#000;font-weight:bold">*</span>id, <span style="color:#000;font-weight:bold">struct</span> sockaddr <span style="color:#000;font-weight:bold">*</span>src_addr, <span style="color:#000;font-weight:bold">struct</span> sockaddr <span style="color:#000;font-weight:bold">*</span>dst_addr, <span style="color:#458;font-weight:bold">int</span> timeout_ms)
+
+
+
+ibv_query_device
+  mlx5_query_device_ex
+  IB_USER_VERBS_EX_CMD_QUERY_DEVICE
+
+
+<span style="color:#a61717;background-color:#e3d2d2">发起连接请求</span>
+<span style="color:#458;font-weight:bold">int</span> rdma_connect(<span style="color:#000;font-weight:bold">struct</span> rdma_cm_id <span style="color:#000;font-weight:bold">*</span>id, <span style="color:#000;font-weight:bold">struct</span> rdma_conn_param <span style="color:#000;font-weight:bold">*</span>conn_param)
+cmd <span style="color:#000;font-weight:bold">=</span> UCMA_CMD_CONNECT
+ucma_copy_conn_param_to_kern
+  dst<span style="color:#000;font-weight:bold">-&gt;</span>retry_count <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">7</span>;   <span style="color:#998;font-style:italic">// 无限次重试
+</span><span style="color:#998;font-style:italic"></span>	dst<span style="color:#000;font-weight:bold">-&gt;</span>rnr_retry_count <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">7</span>; <span style="color:#998;font-style:italic">// 无限次重试
+</span><span style="color:#998;font-style:italic"></span>ucma_copy_ece_param_to_kern_req
+ret <span style="color:#000;font-weight:bold">=</span> write(id<span style="color:#000;font-weight:bold">-&gt;</span>channel<span style="color:#000;font-weight:bold">-&gt;</span>fd, <span style="color:#000;font-weight:bold">&amp;</span>cmd, <span style="color:#000;font-weight:bold">sizeof</span> cmd)
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="rdma单边读写主流程以及部分调用栈">RDMA单边(读/写)主流程以及部分调用栈</h2>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">102
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">103
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">104
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">105
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">106
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">107
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">108
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">109
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">110
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">111
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">112
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">113
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">114
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">115
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">116
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">117
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">118
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">119
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">120
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">121
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">122
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">123
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">124
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">125
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">126
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">127
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">128
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">129
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">130
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">131
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">132
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">133
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">134
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">135
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">136
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">137
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">138
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">139
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">140
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">141
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">142
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">143
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">144
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">145
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">146
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">147
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">148
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">149
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">150
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">151
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">152
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">153
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">154
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">155
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">156
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">157
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">158
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">159
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">160
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">161
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">162
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">163
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">164
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">165
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">166
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">167
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">168
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">169
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">170
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">171
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">172
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">173
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">174
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">175
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">176
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">177
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">178
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">179
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">180
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">181
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">182
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">183
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">184
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">185
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">186
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">187
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">188
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">189
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">190
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">191
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">192
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">193
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">194
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">195
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">196
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">197
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">198
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">199
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">200
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">201
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">202
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">203
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">204
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">205
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">206
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">207
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">208
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">209
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">210
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">211
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">212
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">213
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">214
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">215
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">216
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">217
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">218
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">219
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">220
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">221
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">222
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">223
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">224
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">225
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">226
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">227
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">228
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">229
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">230
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">231
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">232
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">233
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">234
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">235
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">236
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">237
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">238
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">239
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">240
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">241
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">242
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">243
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">244
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">245
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">246
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">247
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">248
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">249
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">250
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">251
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">252
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">253
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">254
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">255
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">256
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">257
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">258
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">259
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">260
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">261
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">262
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">263
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">264
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">265
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">266
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">267
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">268
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">269
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">270
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">271
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">272
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">273
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">274
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">275
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">276
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">277
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">278
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">279
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">280
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">281
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">282
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">283
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">284
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">285
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">286
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">287
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">288
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">289
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">290
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">291
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">292
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">293
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">294
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">295
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">296
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">297
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">298
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">299
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">300
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">301
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">302
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">303
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">304
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">305
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">306
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">307
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">308
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">309
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">310
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">311
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">312
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">313
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">314
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">315
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">316
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">317
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">318
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">319
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">320
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">321
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">322
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">323
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">324
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">325
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">326
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">327
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">328
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">329
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">330
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">331
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">332
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">333
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">334
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">335
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">336
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">337
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">338
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">339
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">340
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">341
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">342
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">343
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">344
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">345
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">346
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">347
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">348
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">349
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">350
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">351
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">352
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">353
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">354
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">355
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">356
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">357
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">358
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">359
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">360
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">361
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">362
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">363
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">364
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">365
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">366
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">367
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">368
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">369
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">370
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">371
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">372
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">373
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">374
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">375
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">376
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">377
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">378
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">379
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">380
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">381
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">382
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">383
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">384
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">385
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">386
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">387
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">388
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">389
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">390
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">391
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">392
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">393
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">394
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">395
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">396
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">397
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">398
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">399
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">400
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">401
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">402
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">403
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">404
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">405
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">406
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">407
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">408
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">409
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">410
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">411
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">412
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">413
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">414
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">415
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">416
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">417
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">418
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">419
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">420
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">421
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">422
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">423
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">424
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">425
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">426
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">427
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">428
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">429
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">430
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">431
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">432
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">433
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">434
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">435
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">436
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">437
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">438
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">439
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">440
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">441
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">442
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">443
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">444
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">445
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">446
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">447
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">448
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">449
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">450
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">451
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">452
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">453
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">454
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">455
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">456
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">457
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">458
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">459
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">460
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">461
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">462
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">463
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">464
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">465
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">466
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">467
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">468
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">469
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">470
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">471
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">472
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">473
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">474
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">475
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">476
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">477
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">478
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">479
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">480
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">481
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">482
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">483
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">484
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">485
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">486
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">487
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">488
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">489
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">490
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">491
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">492
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">493
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">494
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">495
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">496
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">497
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">498
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#000;font-weight:bold">----------</span> bulk <span style="color:#000;font-weight:bold">----------</span>
+bulk rdma收发文件
+
+mercury<span style="color:#000;font-weight:bold">/</span><span style="color:#099">05</span>_bulk<span style="color:#000;font-weight:bold">/</span>client.c
+.<span style="color:#000;font-weight:bold">/</span>client protocal server_addr filename
+main
+  HG_Set_log_level(<span style="color:#d14">&#34;debug&#34;</span>)
+  state.hg_class <span style="color:#000;font-weight:bold">=</span> HG_Init(protocol, HG_FALSE)
+  state.hg_context <span style="color:#000;font-weight:bold">=</span> HG_Context_create(state.hg_class)
+  state.save_rpc_id <span style="color:#000;font-weight:bold">=</span> MERCURY_REGISTER(state.hg_class, <span style="color:#d14">&#34;save&#34;</span>, save_in_t, save_out_t, <span style="color:#0086b3">NULL</span>)
+  access(save_op.filename, F_OK) <span style="color:#a61717;background-color:#e3d2d2">检查文件是否存在</span>
+  HG_Addr_lookup1(state.hg_context, lookup_callback, <span style="color:#000;font-weight:bold">&amp;</span>save_op, server_address, HG_OP_ID_IGNORE) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">查地址</span>, <span style="color:#a61717;background-color:#e3d2d2">然后回调</span>
+  lookup_callback  
+    save_operation<span style="color:#000;font-weight:bold">*</span> save_op <span style="color:#000;font-weight:bold">=</span> (save_operation<span style="color:#000;font-weight:bold">*</span>)(callback_info<span style="color:#000;font-weight:bold">-&gt;</span>arg); <span style="color:#a61717;background-color:#e3d2d2">回调通过指针传递参数</span>
+    FILE<span style="color:#000;font-weight:bold">*</span> file <span style="color:#000;font-weight:bold">=</span> fopen(save_op<span style="color:#000;font-weight:bold">-&gt;</span>filename,<span style="color:#d14">&#34;r&#34;</span>);
+    fseek(file, <span style="color:#099">0L</span>, SEEK_END)
+    save_op<span style="color:#000;font-weight:bold">-&gt;</span>size <span style="color:#000;font-weight:bold">=</span> ftell(file) <span style="color:#a61717;background-color:#e3d2d2">计算文件位置</span>
+    fseek(file, <span style="color:#099">0L</span>, SEEK_SET);
+    save_op<span style="color:#000;font-weight:bold">-&gt;</span>buffer <span style="color:#000;font-weight:bold">=</span> calloc(<span style="color:#099">1</span>, save_op<span style="color:#000;font-weight:bold">-&gt;</span>size);
+    fread(save_op<span style="color:#000;font-weight:bold">-&gt;</span>buffer,<span style="color:#099">1</span>,save_op<span style="color:#000;font-weight:bold">-&gt;</span>size,file)  <span style="color:#998;font-style:italic">// fread和fwrite的用法详解（以数据块的形式读写文件）
+</span><span style="color:#998;font-style:italic"></span>    HG_Create(state<span style="color:#000;font-weight:bold">-&gt;</span>hg_context, addr, state<span style="color:#000;font-weight:bold">-&gt;</span>save_rpc_id, <span style="color:#000;font-weight:bold">&amp;</span>handle)
+    HG_Bulk_create(state<span style="color:#000;font-weight:bold">-&gt;</span>hg_class, <span style="color:#099">1</span>, (<span style="color:#458;font-weight:bold">void</span><span style="color:#000;font-weight:bold">**</span>) <span style="color:#000;font-weight:bold">&amp;</span>(save_op<span style="color:#000;font-weight:bold">-&gt;</span>buffer), <span style="color:#000;font-weight:bold">&amp;</span>(save_op<span style="color:#000;font-weight:bold">-&gt;</span>size), HG_BULK_READ_ONLY, <span style="color:#000;font-weight:bold">&amp;</span>(save_op<span style="color:#000;font-weight:bold">-&gt;</span>bulk_handle));
+    HG_Bulk_create (<span style="color:#458;font-weight:bold">void</span><span style="color:#000;font-weight:bold">**</span>) <span style="color:#000;font-weight:bold">&amp;</span>(save_op<span style="color:#000;font-weight:bold">-&gt;</span>buffer) <span style="color:#a61717;background-color:#e3d2d2">传入文件内容</span>buf指针地址<span style="color:#a61717;background-color:#e3d2d2">（二级指针）</span> <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">客户端创建</span>BULK
+      hg_buld malloc<span style="color:#000;font-weight:bold">/</span>memset <span style="color:#099">0</span>
+      hg_atomic_init32 ref_count <span style="color:#099">1</span> <span style="color:#a61717;background-color:#e3d2d2">初始化引用计数</span>
+      <span style="color:#a61717;background-color:#e3d2d2">转分段</span> <span style="color:#a61717;background-color:#e3d2d2">注册分段</span> hg_bulk_register_segments <span style="color:#a61717;background-color:#e3d2d2">最大静态段</span><span style="color:#000;font-weight:bold">=</span><span style="color:#099">8</span><span style="color:#a61717;background-color:#e3d2d2">，</span> HG_BULK_STATIC_MAX
+      hg_bulk_create_na_mem_descs <span style="color:#a61717;background-color:#e3d2d2">单独注册内存描述</span> individually <span style="color:#a61717;background-color:#e3d2d2">分为静态</span>staic和动态数组dynamic
+        hg_bulk_register <span style="color:#a61717;background-color:#e3d2d2">注册段</span> <span style="color:#a61717;background-color:#e3d2d2">传递索引</span>i
+          NA_Mem_handle_create
+            mem_handler_create <span style="color:#000;font-weight:bold">-&gt;</span> na_ofi_mem_handler_create
+              NA_UNUSED <span style="color:#a61717;background-color:#e3d2d2">编译参数</span> <span style="color:#a61717;background-color:#e3d2d2">忽略编译告警</span>
+              calloc
+              na_ofi_mem_desc s[<span style="color:#099">0</span>] <span style="color:#a61717;background-color:#e3d2d2">单段，</span> d <span style="color:#a61717;background-color:#e3d2d2">多段</span>
+              flags <span style="color:#000;font-weight:bold">&amp;</span> <span style="color:#099">0xff</span> <span style="color:#a61717;background-color:#e3d2d2">全</span><span style="color:#099">1</span>
+          NA_Mem_register
+            mem_register na_ofi_mem_register
+              requested_key <span style="color:#a61717;background-color:#e3d2d2">自增</span>
+              NA_MEM_READ_ONLY 
+              access <span style="color:#000;font-weight:bold">=</span> FI_REMOTE_READ <span style="color:#000;font-weight:bold">|</span> FI_WRITE <span style="color:#a61717;background-color:#e3d2d2">远程读和本地写</span>
+              fi_mr_regv <span style="color:#a61717;background-color:#e3d2d2">注册内存向量</span>
+                rxm_mr_regv
+                  rxm_mr_get_msg_access
+                  fi_mr_regv
+                    vrb_mr_regv
+                      vrb_mr_cache_reg
+                        ofi_mr_rbt_find <span style="color:#a61717;background-color:#e3d2d2">如果有缓存就找红黑树</span>
+                        util_mr_cache_create
+                        add_region
+                          vrb_mr_reg_common
+                            ibv_reg_mr <span style="color:#a61717;background-color:#e3d2d2">注册内存</span>
+                            md<span style="color:#000;font-weight:bold">-&gt;</span>mr_fid.key <span style="color:#000;font-weight:bold">=</span> md<span style="color:#000;font-weight:bold">-&gt;</span>mr<span style="color:#000;font-weight:bold">-&gt;</span>rkey <span style="color:#a61717;background-color:#e3d2d2">远程键</span>
+                            md<span style="color:#000;font-weight:bold">-&gt;</span>lkey <span style="color:#000;font-weight:bold">=</span> md<span style="color:#000;font-weight:bold">-&gt;</span>mr<span style="color:#000;font-weight:bold">-&gt;</span>lkey <span style="color:#a61717;background-color:#e3d2d2">本地键</span>
+                            vrb_eq_write_event <span style="color:#a61717;background-color:#e3d2d2">写完成事件</span>
+                  rxm_mr_init
+              fi_mr_key <span style="color:#a61717;background-color:#e3d2d2">取回内存</span>key
+              ...desc.info.fi_mr_key <span style="color:#000;font-weight:bold">=</span> <span style="color:#a61717;background-color:#e3d2d2">远程键</span>
+          NA_Mem_handle_get_serialize_size na_ofi_mem_handle_get_serialize_size
+            <span style="color:#000;font-weight:bold">sizeof</span> iovec info <span style="color:#000;font-weight:bold">+</span> iovcnt
+    HG_Forward <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">客户端调用</span>RDMA的发送接口, <span style="color:#a61717;background-color:#e3d2d2">服务端调用</span> HG_Bulk_transfer HG_BULK_PULL <span style="color:#a61717;background-color:#e3d2d2">拉取数据</span>
+    save_completed
+  <span style="color:#000;font-weight:bold">while</span> ... <span style="color:#000;font-weight:bold">do</span> <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">循环</span>
+    ret <span style="color:#000;font-weight:bold">=</span> HG_Trigger(state.hg_context, <span style="color:#099">0</span>, <span style="color:#099">1</span>, <span style="color:#000;font-weight:bold">&amp;</span>count)
+    HG_Progress(state.hg_context, <span style="color:#099">100</span>)
+  ret <span style="color:#000;font-weight:bold">=</span> HG_Context_destroy(state.hg_context)
+  hg_return_t err <span style="color:#000;font-weight:bold">=</span> HG_Finalize(state.hg_class)
+
+<span style="color:#000;font-weight:bold">----------</span>
+
+<span style="color:#900;font-weight:bold">server</span>:
+mercury<span style="color:#000;font-weight:bold">/</span><span style="color:#099">05</span>_bulk<span style="color:#000;font-weight:bold">/</span>server.c
+.<span style="color:#000;font-weight:bold">/</span>server addr
+main
+  HG_Init
+  HG_Addr_self
+  HG_Addr_to_string
+  HG_Context_create
+  HG_Register_data
+  <span style="color:#000;font-weight:bold">do</span>
+    HG_Trigger
+    HG_Progress
+  save
+    HG_Bulk_transfer(stt<span style="color:#000;font-weight:bold">-&gt;</span>hg_context, save_bulk_completed, my_rpc_state, HG_BULK_PULL, info<span style="color:#000;font-weight:bold">-&gt;</span>addr, in.bulk_handle, <span style="color:#099">0</span>, my_rpc_state<span style="color:#000;font-weight:bold">-&gt;</span>bulk_handle, <span style="color:#099">0</span>, my_rpc_state<span style="color:#000;font-weight:bold">-&gt;</span>size, HG_OP_ID_IGNORE) origin and local <span style="color:#a61717;background-color:#e3d2d2">对齐</span> <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">服务端通过</span>RDMA的单边读请求, <span style="color:#a61717;background-color:#e3d2d2">从客户端</span>DMA拉取数据
+  HG_Context_destroy
+  HG_Finalize
+<span style="color:#000;font-weight:bold">----------</span> bulk <span style="color:#000;font-weight:bold">----------</span>
+HG_Forward
+  ...
+  hg_core_handle<span style="color:#000;font-weight:bold">-&gt;</span>ops.forward(hg_core_handle) <span style="color:#000;font-weight:bold">-&gt;</span> hg_core_forward_na
+    na_ret <span style="color:#000;font-weight:bold">=</span> NA_Msg_send_unexpected(hg_core_handle<span style="color:#000;font-weight:bold">-&gt;</span>na_class,
+        hg_core_handle<span style="color:#000;font-weight:bold">-&gt;</span>na_context, hg_core_send_input_cb, hg_core_handle,
+        hg_core_handle<span style="color:#000;font-weight:bold">-&gt;</span>core_handle.in_buf, hg_core_handle<span style="color:#000;font-weight:bold">-&gt;</span>in_buf_used,
+        hg_core_handle<span style="color:#000;font-weight:bold">-&gt;</span>in_buf_plugin_data, hg_core_handle<span style="color:#000;font-weight:bold">-&gt;</span>na_addr,
+        hg_core_handle<span style="color:#000;font-weight:bold">-&gt;</span>core_handle.info.context_id, hg_core_handle<span style="color:#000;font-weight:bold">-&gt;</span>tag,
+        hg_core_handle<span style="color:#000;font-weight:bold">-&gt;</span>na_send_op_id);
+      ...
+      na_ofi_msg_send_unexpected(na_class_t <span style="color:#000;font-weight:bold">*</span>na_class <span style="color:#000;font-weight:bold">-&gt;</span> na_ofi_msg_send
+        rc <span style="color:#000;font-weight:bold">=</span> fi_senddata(ep, msg_info<span style="color:#000;font-weight:bold">-&gt;</span>buf.const_ptr, msg_info<span style="color:#000;font-weight:bold">-&gt;</span>buf_size,
+        msg_info<span style="color:#000;font-weight:bold">-&gt;</span>desc, msg_info<span style="color:#000;font-weight:bold">-&gt;</span>tag <span style="color:#000;font-weight:bold">&amp;</span> NA_OFI_TAG_MASK, msg_info<span style="color:#000;font-weight:bold">-&gt;</span>fi_addr,
+        context);
+
+
+
+ofi<span style="color:#000;font-weight:bold">+</span>verbs;<span style="color:#900;font-weight:bold">ofi_rxm</span>:<span style="color:#998;font-style:italic">//192.169.29.63:55555, class_name:ofi, protocol_name:verbs
+</span><span style="color:#998;font-style:italic"></span>HG_Core_init_opt2
+hg_core_init
+NA_Initialize_opt <span style="color:#000;font-weight:bold">-&gt;</span> Initialize NA <span style="color:#000;font-weight:bold">if</span> not provided externally
+  na_plugin_check_protocol
+    na_ofi_check_protocol(<span style="color:#000;font-weight:bold">const</span> <span style="color:#458;font-weight:bold">char</span> <span style="color:#000;font-weight:bold">*</span>protocol_name)
+      uint32_t runtime_version <span style="color:#000;font-weight:bold">=</span> fi_version()
+      FI_MAJOR(runtime_version), FI_MINOR(runtime_version)
+      type <span style="color:#000;font-weight:bold">=</span> na_ofi_prov_name_to_type(protocol_name) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#000;font-weight:bold">static</span> <span style="color:#000;font-weight:bold">const</span> <span style="color:#458;font-weight:bold">char</span> <span style="color:#000;font-weight:bold">*</span><span style="color:#000;font-weight:bold">const</span> na_ofi_prov_name[] <span style="color:#000;font-weight:bold">=</span> {NA_OFI_PROV_TYPES} <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">网络配置</span>,<span style="color:#a61717;background-color:#e3d2d2">插件</span>, <span style="color:#a61717;background-color:#e3d2d2">协议等</span>
+      na_ofi_getinfo(type, <span style="color:#0086b3">NULL</span>, <span style="color:#000;font-weight:bold">&amp;</span>providers)
+        <span style="color:#998;font-style:italic">// 设置网络参数(提示信息,过滤提供者)
+</span><span style="color:#998;font-style:italic"></span>        hints <span style="color:#000;font-weight:bold">=</span> fi_allocinfo()
+        hints<span style="color:#000;font-weight:bold">-&gt;</span>mode <span style="color:#000;font-weight:bold">=</span> FI_ASYNC_IOV <span style="color:#000;font-weight:bold">-&gt;</span> FI_ASYNC_IOV <span style="color:#a61717;background-color:#e3d2d2">模式指示应用程序必须提供</span> IO <span style="color:#a61717;background-color:#e3d2d2">向量所需的缓冲。</span> <span style="color:#a61717;background-color:#e3d2d2">设置后，应用程序不得修改长度</span> <span style="color:#000;font-weight:bold">&gt;</span> <span style="color:#099">1</span> <span style="color:#a61717;background-color:#e3d2d2">的</span> IO <span style="color:#a61717;background-color:#e3d2d2">向量，包括任何相关的内存描述符数组，直到关联操作完成</span>
+        hints<span style="color:#000;font-weight:bold">-&gt;</span>ep_attr<span style="color:#000;font-weight:bold">-&gt;</span>type <span style="color:#000;font-weight:bold">=</span> FI_EP_RDM <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">设置端点类型为</span><span style="color:#000;font-weight:bold">:</span> <span style="color:#a61717;background-color:#e3d2d2">可靠但是连接更少的数据报类型</span>
+        hints<span style="color:#000;font-weight:bold">-&gt;</span>caps <span style="color:#000;font-weight:bold">=</span> FI_MSG <span style="color:#000;font-weight:bold">|</span> FI_TAGGED <span style="color:#000;font-weight:bold">|</span> FI_RMA <span style="color:#000;font-weight:bold">|</span> FI_DIRECTED_RECV
+        hints<span style="color:#000;font-weight:bold">-&gt;</span>tx_attr<span style="color:#000;font-weight:bold">-&gt;</span>msg_order <span style="color:#000;font-weight:bold">=</span> FI_ORDER_SAS <span style="color:#000;font-weight:bold">-&gt;</span> msg_order<span style="color:#a61717;background-color:#e3d2d2">：保证具有相同标签的消息是有序的。</span> <span style="color:#a61717;background-color:#e3d2d2">（</span>FI_ORDER_SAS <span style="color:#000;font-weight:bold">-</span> <span style="color:#a61717;background-color:#e3d2d2">发送后发送</span>(send after send)<span style="color:#a61717;background-color:#e3d2d2">。如果设置，消息发送操作（包括标记的发送）将按照相对于其他消息发送的提交顺序进行传输。如果未设置，则消息发送可能会不按其提交的顺序进行传输）</span>
+        hints<span style="color:#000;font-weight:bold">-&gt;</span>tx_attr<span style="color:#000;font-weight:bold">-&gt;</span>op_flags <span style="color:#000;font-weight:bold">=</span> FI_INJECT_COMPLETE <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">当可以安全地重用缓冲区时生成完成事件</span>
+        hints<span style="color:#000;font-weight:bold">-&gt;</span>domain_attr<span style="color:#000;font-weight:bold">-&gt;</span>av_type <span style="color:#000;font-weight:bold">=</span> FI_AV_MAP
+        hints<span style="color:#000;font-weight:bold">-&gt;</span>domain_attr<span style="color:#000;font-weight:bold">-&gt;</span>resource_mgmt <span style="color:#000;font-weight:bold">=</span> FI_RM_ENABLED
+        hints<span style="color:#000;font-weight:bold">-&gt;</span>fabric_attr<span style="color:#000;font-weight:bold">-&gt;</span>prov_name <span style="color:#000;font-weight:bold">=</span> strdup(na_ofi_prov_name[prov_type]) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">提供者</span><span style="color:#000;font-weight:bold">:</span> verbs;ofi_rxm
+        hints<span style="color:#000;font-weight:bold">-&gt;</span>mode <span style="color:#000;font-weight:bold">|=</span> FI_CONTEXT
+        hints<span style="color:#000;font-weight:bold">-&gt;</span>ep_attr<span style="color:#000;font-weight:bold">-&gt;</span>protocol <span style="color:#000;font-weight:bold">=</span> (uint32_t) na_ofi_prov_ep_proto[prov_type]
+        hints<span style="color:#000;font-weight:bold">-&gt;</span>caps <span style="color:#000;font-weight:bold">|=</span> na_ofi_prov_extra_caps[prov_type]
+        hints<span style="color:#000;font-weight:bold">-&gt;</span>domain_attr<span style="color:#000;font-weight:bold">-&gt;</span>control_progress <span style="color:#000;font-weight:bold">=</span> na_ofi_prov_progress[prov_type]
+        hints<span style="color:#000;font-weight:bold">-&gt;</span>domain_attr<span style="color:#000;font-weight:bold">-&gt;</span>data_progress <span style="color:#000;font-weight:bold">=</span> na_ofi_prov_progress[prov_type]
+        rc <span style="color:#000;font-weight:bold">=</span> fi_getinfo(NA_OFI_VERSION, node, service, flags, hints, fi_info_p)
+      fi_freeinfo(providers)
+    ret <span style="color:#000;font-weight:bold">=</span> na_private_class<span style="color:#000;font-weight:bold">-&gt;</span>na_class.ops<span style="color:#000;font-weight:bold">-&gt;</span>initialize( <span style="color:#000;font-weight:bold">&amp;</span>na_private_class<span style="color:#000;font-weight:bold">-&gt;</span>na_class, na_info, listen) <span style="color:#000;font-weight:bold">-&gt;</span> na_ofi_initialize(
+      na_ofi_prov_addr_format(prov_type, na_init_info.addr_format)
+      info.thread_mode <span style="color:#000;font-weight:bold">=</span> ((na_init_info.thread_mode <span style="color:#000;font-weight:bold">&amp;</span> NA_THREAD_MODE_SINGLE)
+      na_ofi_class <span style="color:#000;font-weight:bold">=</span> na_ofi_class_alloc();            
+      ret <span style="color:#000;font-weight:bold">=</span> na_ofi_verify_info
+      na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>msg_recv_unexpected <span style="color:#000;font-weight:bold">==</span> na_ofi_msg_recv
+      na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>opt_features <span style="color:#000;font-weight:bold">|=</span> NA_OPT_MULTI_RECV
+      na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>cq_poll <span style="color:#000;font-weight:bold">=</span> na_ofi_cq_poll_no_source
+      na_ofi_fabric_open(prov_type, na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>fi_info<span style="color:#000;font-weight:bold">-&gt;</span>fabric_attr, <span style="color:#000;font-weight:bold">&amp;</span>na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>fabric)
+      na_ofi_domain_open(na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>fabric, na_init_info.auth_key,
+        no_wait, na_ofi_prov_flags[prov_type] <span style="color:#000;font-weight:bold">&amp;</span> NA_OFI_SEP,
+        na_ofi_prov_flags[prov_type] <span style="color:#000;font-weight:bold">&amp;</span> NA_OFI_DOM_SHARED, na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>fi_info,
+        <span style="color:#000;font-weight:bold">&amp;</span>na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>domain)
+      na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>context_max <span style="color:#000;font-weight:bold">=</span> na_init_info.max_contexts
+      na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>use_sep
+      na_ofi_endpoint_open(na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>fabric, na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>domain,
+        na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>no_wait, na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>use_sep, na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>context_max,
+        na_init_info.max_unexpected_size, na_init_info.max_expected_size,
+        na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>fi_info, <span style="color:#000;font-weight:bold">&amp;</span>na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>endpoint)
+      pool_chunk_size
+      na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>send_pool <span style="color:#000;font-weight:bold">=</span> hg_mem_pool_create(pool_chunk_size
+      na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>recv_pool <span style="color:#000;font-weight:bold">=</span> hg_mem_pool_create(pool_chunk_size
+      <span style="color:#000;font-weight:bold">for</span> (i <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>; i <span style="color:#000;font-weight:bold">&lt;</span> NA_OFI_ADDR_POOL_COUNT; i<span style="color:#000;font-weight:bold">++</span>) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">地址池</span>
+        <span style="color:#000;font-weight:bold">struct</span> na_ofi_addr <span style="color:#000;font-weight:bold">*</span>na_ofi_addr <span style="color:#000;font-weight:bold">=</span> na_ofi_addr_alloc(na_ofi_class)
+        HG_QUEUE_PUSH_TAIL(<span style="color:#000;font-weight:bold">&amp;</span>na_ofi_class<span style="color:#000;font-weight:bold">-&gt;</span>addr_pool.queue, na_ofi_addr, entry)      
+      ret <span style="color:#000;font-weight:bold">=</span> na_ofi_endpoint_get_src_addr(na_ofi_class)
+      
+
+
+
+fi_getinfo
+ret <span style="color:#000;font-weight:bold">=</span> prov<span style="color:#000;font-weight:bold">-&gt;</span>provider<span style="color:#000;font-weight:bold">-&gt;</span>getinfo(version, node, service, flags, hints, <span style="color:#000;font-weight:bold">&amp;</span>cur); <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#000;font-weight:bold">static</span> <span style="color:#458;font-weight:bold">int</span> rxm_getinfo
+  ofi_is_wildcard_listen_addr
+  rxm_validate_atomic_hints(hints)
+  ofix_getinfo(version, node, service, flags, <span style="color:#000;font-weight:bold">&amp;</span>rxm_util_prov, hints, rxm_info_to_core, rxm_info_to_rxm, info)
+    ...
+    prov_mode <span style="color:#000;font-weight:bold">=</span> ofi_mr_get_prov_mode(api_version, user_info, prov_info)
+      prov_mode <span style="color:#000;font-weight:bold">=</span> ofi_cap_mr_mode(user_info<span style="color:#000;font-weight:bold">-&gt;</span>caps, prov_mode)
+      
+  rxm_alter_info(hints, <span style="color:#000;font-weight:bold">*</span>info)
+ofi_set_prov_attr(tail<span style="color:#000;font-weight:bold">-&gt;</span>fabric_attr, prov<span style="color:#000;font-weight:bold">-&gt;</span>provider)
+
+<span style="color:#a61717;background-color:#e3d2d2">发送数据</span>
+fi_senddata <span style="color:#000;font-weight:bold">-&gt;</span> rxm_senddata
+  rxm_get_conn(rxm_ep, dest_addr, <span style="color:#000;font-weight:bold">&amp;</span>rxm_conn)
+    ...
+    rxm_conn_progress(ep)
+      ret <span style="color:#000;font-weight:bold">=</span> fi_eq_read(ep<span style="color:#000;font-weight:bold">-&gt;</span>msg_eq, <span style="color:#000;font-weight:bold">&amp;</span>event, <span style="color:#000;font-weight:bold">&amp;</span>cm_entry <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#000;font-weight:bold">do</span> loop <span style="color:#000;font-weight:bold">-&gt;</span> vrb_eq_read(<span style="color:#000;font-weight:bold">struct</span> fid_eq <span style="color:#000;font-weight:bold">*</span>eq_fid, uint32_t <span style="color:#000;font-weight:bold">*</span>event, <span style="color:#458;font-weight:bold">void</span> <span style="color:#000;font-weight:bold">*</span>buf, size_t len, uint64_t flags)
+        eq <span style="color:#000;font-weight:bold">=</span> container_of(eq_fid, <span style="color:#000;font-weight:bold">struct</span> vrb_eq, eq_fid.fid) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">事件队列</span>, <span style="color:#a61717;background-color:#e3d2d2">参考结构</span><span style="color:#000;font-weight:bold">:</span> <span style="color:#000;font-weight:bold">struct</span> vrb_eq {
+        ret <span style="color:#000;font-weight:bold">=</span> vrb_eq_read_event(eq, event, buf, len, flags)
+          <span style="color:#000;font-weight:bold">if</span> (dlistfd_empty(<span style="color:#000;font-weight:bold">&amp;</span>eq<span style="color:#000;font-weight:bold">-&gt;</span>list_head)) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">读</span>eq队列
+        rdma_get_cm_event(eq<span style="color:#000;font-weight:bold">-&gt;</span>channel, <span style="color:#000;font-weight:bold">&amp;</span>cma_event);
+        vrb_eq_cm_process_event(eq, cma_event, event, buf, len) <span style="color:#000;font-weight:bold">-&gt;</span> VERBS模块, <span style="color:#a61717;background-color:#e3d2d2">从事件队列中处理</span>CM事件
+          RDMA_CM_EVENT_ROUTE_RESOLVED <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">客户端路由解析事件</span>
+          ep<span style="color:#000;font-weight:bold">-&gt;</span>state <span style="color:#000;font-weight:bold">=</span> VRB_CONNECTING
+          rdma_connect(ep<span style="color:#000;font-weight:bold">-&gt;</span>id, <span style="color:#000;font-weight:bold">&amp;</span>ep<span style="color:#000;font-weight:bold">-&gt;</span>conn_param) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">主动发起连接请求</span>(<span style="color:#a61717;background-color:#e3d2d2">建连</span>) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#458;font-weight:bold">int</span> rdma_connect (<span style="color:#000;font-weight:bold">struct</span> rdma_cm_id <span style="color:#000;font-weight:bold">*</span>id, <span style="color:#000;font-weight:bold">struct</span> rdma_conn_param <span style="color:#000;font-weight:bold">*</span>conn_param) <span style="color:#000;font-weight:bold">-&gt;</span> 
+          rdma_ack_cm_event(cma_event)
+      rxm_handle_event(ep, event, <span style="color:#000;font-weight:bold">&amp;</span>cm_entry, ret)
+        rxm_process_connect(cm_entry)
+          domain<span style="color:#000;font-weight:bold">-&gt;</span>flow_ctrl_ops<span style="color:#000;font-weight:bold">-&gt;</span>enable(conn<span style="color:#000;font-weight:bold">-&gt;</span>msg_ep, conn<span style="color:#000;font-weight:bold">-&gt;</span>ep<span style="color:#000;font-weight:bold">-&gt;</span>msg_info<span style="color:#000;font-weight:bold">-&gt;</span>rx_attr<span style="color:#000;font-weight:bold">-&gt;</span>size <span style="color:#000;font-weight:bold">/</span> <span style="color:#099">2</span>) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">流控</span> <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#000;font-weight:bold">static</span> <span style="color:#458;font-weight:bold">int</span> vrb_enable_ep_flow_ctrl
+            ep<span style="color:#000;font-weight:bold">-&gt;</span>peer_rq_credits <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">1</span> <span style="color:#000;font-weight:bold">+</span> ep<span style="color:#000;font-weight:bold">-&gt;</span>saved_peer_rq_credits
+            vrb_ep2_domain(ep)<span style="color:#000;font-weight:bold">-&gt;</span>send_credits
+        conn<span style="color:#000;font-weight:bold">-&gt;</span>state <span style="color:#000;font-weight:bold">=</span> RXM_CM_CONNECTED <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">已建连</span>
+  rxm_send_common <span style="color:#000;font-weight:bold">-&gt;</span> rxm_send_common(<span style="color:#000;font-weight:bold">struct</span> rxm_ep <span style="color:#000;font-weight:bold">*</span>rxm_ep,
+    data_len <span style="color:#000;font-weight:bold">=</span> ofi_total_iov_len(iov, count)
+    assert(count <span style="color:#000;font-weight:bold">&lt;=</span> rxm_ep<span style="color:#000;font-weight:bold">-&gt;</span>rxm_info<span style="color:#000;font-weight:bold">-&gt;</span>tx_attr<span style="color:#000;font-weight:bold">-&gt;</span>iov_limit) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">限制</span><span style="color:#099">4</span><span style="color:#a61717;background-color:#e3d2d2">个</span>iov
+    iface <span style="color:#000;font-weight:bold">=</span> rxm_mr_desc_to_hmem_iface_dev(desc, count, <span style="color:#000;font-weight:bold">&amp;</span>device)
+    <span style="color:#000;font-weight:bold">if</span> (data_len <span style="color:#000;font-weight:bold">&lt;=</span> rxm_ep<span style="color:#000;font-weight:bold">-&gt;</span>eager_limit) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">紧急数据</span>(<span style="color:#a61717;background-color:#e3d2d2">小数据</span>)<span style="color:#099">16</span>KB<span style="color:#000;font-weight:bold">=</span><span style="color:#099">16384</span>B, data_len<span style="color:#000;font-weight:bold">=</span><span style="color:#099">184</span>
+      rxm_send_eager(rxm_ep, rxm_conn, iov, desc, count,
+        fi_send(rxm_conn<span style="color:#000;font-weight:bold">-&gt;</span>msg_ep, <span style="color:#000;font-weight:bold">&amp;</span>eager_buf<span style="color:#000;font-weight:bold">-&gt;</span>pkt, total_len  <span style="color:#000;font-weight:bold">-&gt;</span> vrb_msg_ep_send
+          <span style="color:#000;font-weight:bold">struct</span> ibv_send_wr wr <span style="color:#000;font-weight:bold">=</span> {
+            .wr_id <span style="color:#000;font-weight:bold">=</span> VERBS_COMP(ep, (uintptr_t)context),
+            .opcode <span style="color:#000;font-weight:bold">=</span> IBV_WR_SEND,
+            .send_flags <span style="color:#000;font-weight:bold">=</span> VERBS_INJECT(ep, len, desc),
+          };
+          vrb_send_buf
+            <span style="color:#000;font-weight:bold">struct</span> ibv_sge sge <span style="color:#000;font-weight:bold">=</span> vrb_init_sge(buf, len, desc);
+            wr<span style="color:#000;font-weight:bold">-&gt;</span>sg_list <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">&amp;</span>sge;
+            wr<span style="color:#000;font-weight:bold">-&gt;</span>num_sge <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">1</span>;
+            vrb_post_send(ep, wr, <span style="color:#099">0</span>)
+              <span style="color:#000;font-weight:bold">if</span> (<span style="color:#000;font-weight:bold">!</span>ep<span style="color:#000;font-weight:bold">-&gt;</span>sq_credits <span style="color:#000;font-weight:bold">||</span> <span style="color:#000;font-weight:bold">!</span>ep<span style="color:#000;font-weight:bold">-&gt;</span>peer_rq_credits) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">流控</span>
+                vrb_flush_cq(cq)
+                  vrb_poll_cq(cq, <span style="color:#000;font-weight:bold">&amp;</span>wc)
+                    ret <span style="color:#000;font-weight:bold">=</span> ibv_poll_cq(cq<span style="color:#000;font-weight:bold">-&gt;</span>cq, <span style="color:#099">1</span>, wc)
+                  vrb_report_wc(cq, <span style="color:#000;font-weight:bold">&amp;</span>wc)    
+                    (<span style="color:#458;font-weight:bold">void</span>) ofi_cq_write(<span style="color:#000;font-weight:bold">&amp;</span>cq<span style="color:#000;font-weight:bold">-&gt;</span>util_cq, (<span style="color:#458;font-weight:bold">void</span> <span style="color:#000;font-weight:bold">*</span>) (uintptr_t) wc<span style="color:#000;font-weight:bold">-&gt;</span>wr_id,flags, len, <span style="color:#0086b3">NULL</span>, data, <span style="color:#099">0</span>)
+                      ofi_cirque_commit(cq<span style="color:#000;font-weight:bold">-&gt;</span>cirq) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">环形链表计数器</span><span style="color:#000;font-weight:bold">+</span><span style="color:#099">1</span>
+              ep<span style="color:#000;font-weight:bold">-&gt;</span>sq_credits<span style="color:#000;font-weight:bold">--</span>
+              ret <span style="color:#000;font-weight:bold">=</span> ibv_post_send(ep<span style="color:#000;font-weight:bold">-&gt;</span>ibv_qp, wr, <span style="color:#000;font-weight:bold">&amp;</span>bad_wr)
+
+<span style="color:#900;font-weight:bold">buf转sge</span>:
+<span style="color:#999;font-weight:bold;font-style:italic">#define vrb_init_sge(buf, len, desc) (struct ibv_sge)	\
+</span><span style="color:#999;font-weight:bold;font-style:italic">	{ .addr = (uintptr_t) buf,			\
+</span><span style="color:#999;font-weight:bold;font-style:italic">	  .length = (uint32_t) len,			\
+</span><span style="color:#999;font-weight:bold;font-style:italic">	  .lkey = (desc) ? ((struct vrb_mem_desc *) (desc))-&gt;lkey : 0 }
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>
+
+
+
+
+
+
+
+
+<span style="color:#000;font-weight:bold">static</span> <span style="color:#458;font-weight:bold">int</span> rxm_send_connect(<span style="color:#000;font-weight:bold">struct</span> rxm_conn <span style="color:#000;font-weight:bold">*</span>conn)
+<span style="color:#000;font-weight:bold">static</span> <span style="color:#458;font-weight:bold">int</span> rxm_open_conn
+  ret <span style="color:#000;font-weight:bold">=</span> fi_endpoint(domain<span style="color:#000;font-weight:bold">-&gt;</span>msg_domain, msg_info, <span style="color:#000;font-weight:bold">&amp;</span>msg_ep, conn)
+  <span style="color:#458;font-weight:bold">int</span> vrb_open_ep <span style="color:#000;font-weight:bold">-&gt;</span> vrb_get_port_space <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#000;font-weight:bold">return</span> RDMA_PS_TCP
+    <span style="color:#458;font-weight:bold">int</span> vrb_create_ep
+      rdma_create_id
+      rdma_resolve_addr <span style="color:#000;font-weight:bold">-&gt;</span> TODO <span style="color:#a61717;background-color:#e3d2d2">也将此调用转换为非阻塞（使用事件通道）：在运行大型</span> MPI <span style="color:#a61717;background-color:#e3d2d2">作业时，这可能是为了更好地扩展所需要的。</span> <span style="color:#a61717;background-color:#e3d2d2">使其成为非阻塞意味着我们无法在</span> EP <span style="color:#a61717;background-color:#e3d2d2">启用时创建</span> QP<span style="color:#a61717;background-color:#e3d2d2">。</span> <span style="color:#a61717;background-color:#e3d2d2">在使用</span> rdma_create_qp <span style="color:#a61717;background-color:#e3d2d2">创建</span> QP <span style="color:#a61717;background-color:#e3d2d2">之前，我们需要等待</span> RDMA_CM_EVENT_ADDR_RESOLVED <span style="color:#a61717;background-color:#e3d2d2">事件。</span> <span style="color:#a61717;background-color:#e3d2d2">它还需要一个</span>SW接收队列来存储启用EP后应用程序发布的recvs
+    ep<span style="color:#000;font-weight:bold">-&gt;</span>util_ep.ep_fid.fid.ops <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">&amp;</span>vrb_ep_ops
+    ep<span style="color:#000;font-weight:bold">-&gt;</span>util_ep.ep_fid.ops <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">&amp;</span>vrb_ep_base_ops
+  fi_ep_bind(msg_ep, <span style="color:#000;font-weight:bold">&amp;</span>ep<span style="color:#000;font-weight:bold">-&gt;</span>msg_eq<span style="color:#000;font-weight:bold">-&gt;</span>fid, <span style="color:#099">0</span>) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#000;font-weight:bold">static</span> <span style="color:#458;font-weight:bold">int</span> vrb_ep_bind(<span style="color:#000;font-weight:bold">struct</span> fid <span style="color:#000;font-weight:bold">*</span>fid, <span style="color:#000;font-weight:bold">struct</span> fid <span style="color:#000;font-weight:bold">*</span>bfid, uint64_t flags)
+    ofi_ep_bind_valid(<span style="color:#000;font-weight:bold">&amp;</span>vrb_prov, bfid, flags)
+    rdma_migrate_id(ep<span style="color:#000;font-weight:bold">-&gt;</span>id, ep<span style="color:#000;font-weight:bold">-&gt;</span>eq<span style="color:#000;font-weight:bold">-&gt;</span>channel)
+  rxm_bind_comp(ep, msg_ep)  
+    fi_ep_bind(msg_ep, <span style="color:#000;font-weight:bold">&amp;</span>ep<span style="color:#000;font-weight:bold">-&gt;</span>msg_cq<span style="color:#000;font-weight:bold">-&gt;</span>fid, FI_TRANSMIT <span style="color:#000;font-weight:bold">|</span> FI_RECV)
+      ret <span style="color:#000;font-weight:bold">=</span> ofi_ep_bind_cq(<span style="color:#000;font-weight:bold">&amp;</span>ep<span style="color:#000;font-weight:bold">-&gt;</span>util_ep, <span style="color:#000;font-weight:bold">&amp;</span>cq<span style="color:#000;font-weight:bold">-&gt;</span>util_cq, flags)
+        <span style="color:#000;font-weight:bold">return</span> fid_list_insert(<span style="color:#000;font-weight:bold">&amp;</span>cq<span style="color:#000;font-weight:bold">-&gt;</span>ep_list
+  fi_enable(msg_ep); <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#000;font-weight:bold">static</span> <span style="color:#458;font-weight:bold">int</span> vrb_ep_enable(<span style="color:#000;font-weight:bold">struct</span> fid_ep <span style="color:#000;font-weight:bold">*</span>ep_fid)
+    vrb_msg_ep_get_qp_attr(ep, <span style="color:#000;font-weight:bold">&amp;</span>attr)
+    ret <span style="color:#000;font-weight:bold">=</span> rdma_create_qp(ep<span style="color:#000;font-weight:bold">-&gt;</span>id, domain<span style="color:#000;font-weight:bold">-&gt;</span>pd, <span style="color:#000;font-weight:bold">&amp;</span>attr)
+  conn<span style="color:#000;font-weight:bold">-&gt;</span>flow_ctrl <span style="color:#000;font-weight:bold">=</span> domain<span style="color:#000;font-weight:bold">-&gt;</span>flow_ctrl_ops<span style="color:#000;font-weight:bold">-&gt;</span>available(msg_ep) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#000;font-weight:bold">static</span> <span style="color:#458;font-weight:bold">bool</span> vrb_flow_ctrl_available
+  ret <span style="color:#000;font-weight:bold">=</span> rxm_prepost_recv(ep, msg_ep) <span style="color:#000;font-weight:bold">-&gt;</span> ep<span style="color:#000;font-weight:bold">-&gt;</span>msg_info<span style="color:#000;font-weight:bold">-&gt;</span>rx_attr<span style="color:#000;font-weight:bold">-&gt;</span>size <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">128</span>
+    rx_buf <span style="color:#000;font-weight:bold">=</span> ofi_buf_alloc(rxm_ep<span style="color:#000;font-weight:bold">-&gt;</span>rx_pool)
+      <span style="color:#000;font-weight:bold">if</span> (ofi_bufpool_grow(pool))
+	      ret <span style="color:#000;font-weight:bold">=</span> ofi_bufpool_region_alloc(buf_region);
+    rxm_post_recv(rx_buf)
+      ret <span style="color:#000;font-weight:bold">=</span> (<span style="color:#458;font-weight:bold">int</span>) fi_recv(rx_buf<span style="color:#000;font-weight:bold">-&gt;</span>rx_ep, <span style="color:#000;font-weight:bold">&amp;</span>rx_buf<span style="color:#000;font-weight:bold">-&gt;</span>pkt <span style="color:#000;font-weight:bold">-&gt;</span> vrb_msg_ep_recv(<span style="color:#000;font-weight:bold">struct</span> fid_ep <span style="color:#000;font-weight:bold">*</span>ep_fid
+        <span style="color:#000;font-weight:bold">struct</span> ibv_recv_wr wr <span style="color:#000;font-weight:bold">=</span> {
+          .wr_id <span style="color:#000;font-weight:bold">=</span> (uintptr_t)context,
+          .num_sge <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">1</span>,
+          .sg_list <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">&amp;</span>sge,
+          .next <span style="color:#000;font-weight:bold">=</span> <span style="color:#0086b3">NULL</span>,
+        };
+       ssize_t <span style="color:#900;font-weight:bold">vrb_post_recv</span>(<span style="color:#000;font-weight:bold">struct</span> vrb_ep <span style="color:#000;font-weight:bold">*</span>ep, <span style="color:#000;font-weight:bold">struct</span> ibv_recv_wr <span style="color:#000;font-weight:bold">*</span>wr)
+         ret <span style="color:#000;font-weight:bold">=</span> ibv_post_recv(ep<span style="color:#000;font-weight:bold">-&gt;</span>ibv_qp, wr, <span style="color:#000;font-weight:bold">&amp;</span>bad_wr)
+  conn<span style="color:#000;font-weight:bold">-&gt;</span>msg_ep <span style="color:#000;font-weight:bold">=</span> msg_ep
+ret <span style="color:#000;font-weight:bold">=</span> rxm_init_connect_data(conn, <span style="color:#000;font-weight:bold">&amp;</span>cm_data)
+  ret <span style="color:#000;font-weight:bold">=</span> fi_getopt(<span style="color:#000;font-weight:bold">&amp;</span>conn<span style="color:#000;font-weight:bold">-&gt;</span>ep<span style="color:#000;font-weight:bold">-&gt;</span>msg_pep<span style="color:#000;font-weight:bold">-&gt;</span>fid, FI_OPT_ENDPOINT
+  cm_data<span style="color:#000;font-weight:bold">-&gt;</span>connect.port <span style="color:#000;font-weight:bold">=</span> ofi_addr_get_port(<span style="color:#000;font-weight:bold">&amp;</span>conn<span style="color:#000;font-weight:bold">-&gt;</span>ep<span style="color:#000;font-weight:bold">-&gt;</span>addr.sa)
+  cm_data<span style="color:#000;font-weight:bold">-&gt;</span>connect.client_conn_id <span style="color:#000;font-weight:bold">=</span> rxm_conn_id(conn<span style="color:#000;font-weight:bold">-&gt;</span>peer<span style="color:#000;font-weight:bold">-&gt;</span>index) <span style="color:#000;font-weight:bold">-&gt;</span> rx_size<span style="color:#000;font-weight:bold">=</span><span style="color:#099">128</span>
+fi_connect(conn<span style="color:#000;font-weight:bold">-&gt;</span>msg_ep, info<span style="color:#000;font-weight:bold">-&gt;</span>dest_addr, <span style="color:#000;font-weight:bold">&amp;</span>cm_data, <span style="color:#000;font-weight:bold">sizeof</span>(cm_data)) <span style="color:#000;font-weight:bold">-&gt;</span> vrb_msg_ep_connect(<span style="color:#000;font-weight:bold">struct</span> fid_ep <span style="color:#000;font-weight:bold">*</span>ep_fid,
+  vrb_msg_ep_prepare_cm_data(param, paramlen, cm_hdr)
+  vrb_ep_prepare_rdma_cm_param(<span style="color:#000;font-weight:bold">&amp;</span>ep<span style="color:#000;font-weight:bold">-&gt;</span>conn_param,
+    conn_param<span style="color:#000;font-weight:bold">-&gt;</span>responder_resources <span style="color:#000;font-weight:bold">=</span> RDMA_MAX_RESP_RES
+    conn_param<span style="color:#000;font-weight:bold">-&gt;</span>initiator_depth <span style="color:#000;font-weight:bold">=</span> RDMA_MAX_INIT_DEPTH
+    conn_param<span style="color:#000;font-weight:bold">-&gt;</span>flow_control <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">1</span>;
+	  conn_param<span style="color:#000;font-weight:bold">-&gt;</span>rnr_retry_count <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">7</span>; <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">无限重试</span>
+  ep<span style="color:#000;font-weight:bold">-&gt;</span>conn_param.retry_count <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">15</span>
+  rdma_resolve_route(ep<span style="color:#000;font-weight:bold">-&gt;</span>id, VERBS_RESOLVE_TIMEOUT) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">触发</span><span style="color:#900;font-weight:bold">CM事件</span>: RDMA_CM_EVENT_ROUTE_RESOLVED
+
+rxm_ep_settings_init
+
+
+
+
+rdma write, <span style="color:#a61717;background-color:#e3d2d2">单边写</span>, 
+NA_Put
+na_ofi_put
+na_ofi_rma fi_writemsg <span style="color:#000;font-weight:bold">=</span> fi_rma_op   .writemsg <span style="color:#000;font-weight:bold">=</span>    <span style="color:#000;font-weight:bold">-&gt;</span> include<span style="color:#000;font-weight:bold">/</span>rdma<span style="color:#000;font-weight:bold">/</span>fi_rma.h <span style="color:#000;font-weight:bold">-&gt;</span> fi_writemsg(<span style="color:#000;font-weight:bold">struct</span> fid_ep <span style="color:#000;font-weight:bold">*</span>ep, <span style="color:#000;font-weight:bold">const</span> <span style="color:#000;font-weight:bold">struct</span> fi_msg_rma <span style="color:#000;font-weight:bold">*</span>msg, uint64_t flags)
+ep<span style="color:#000;font-weight:bold">-&gt;</span>rma<span style="color:#000;font-weight:bold">-&gt;</span>writemsg(ep, msg, flags)
+.writemsg <span style="color:#000;font-weight:bold">=</span> vrb_msg_ep_rma_writemsg
+vrb_msg_ep_rma_writemsg <span style="color:#000;font-weight:bold">-&gt;</span> prov<span style="color:#000;font-weight:bold">/</span>verbs<span style="color:#000;font-weight:bold">/</span>src<span style="color:#000;font-weight:bold">/</span>verbs_rma.c
+  <span style="color:#000;font-weight:bold">struct</span> ibv_send_wr wr
+  wr.opcode <span style="color:#000;font-weight:bold">=</span> IBV_WR_RDMA_WRITE <span style="color:#000;font-weight:bold">|</span> wr.opcode <span style="color:#000;font-weight:bold">=</span> IBV_WR_RDMA_WRITE_WITH_IMM <span style="color:#a61717;background-color:#e3d2d2">写</span><span style="color:#000;font-weight:bold">|</span><span style="color:#a61717;background-color:#e3d2d2">立即数写</span>
+  vrb_send_iov(ep, <span style="color:#000;font-weight:bold">&amp;</span>wr, msg<span style="color:#000;font-weight:bold">-&gt;</span>msg_iov, msg<span style="color:#000;font-weight:bold">-&gt;</span>desc <span style="color:#000;font-weight:bold">-&gt;</span> ssize_t vrb_send_iovli
+    wr<span style="color:#000;font-weight:bold">-&gt;</span>sg_list <span style="color:#000;font-weight:bold">=</span> alloca(<span style="color:#000;font-weight:bold">sizeof</span>(<span style="color:#000;font-weight:bold">*</span>wr<span style="color:#000;font-weight:bold">-&gt;</span>sg_list) <span style="color:#000;font-weight:bold">*</span> count)
+    wr<span style="color:#000;font-weight:bold">-&gt;</span>sg_list[i].addr <span style="color:#000;font-weight:bold">=</span> (uintptr_t) iov[i].iov_base
+    wr<span style="color:#000;font-weight:bold">-&gt;</span>sg_list[i].length <span style="color:#000;font-weight:bold">=</span> iov[i].iov_len;
+    wr<span style="color:#000;font-weight:bold">-&gt;</span>send_flags <span style="color:#000;font-weight:bold">=</span> IBV_SEND_INLINE <span style="color:#000;font-weight:bold">?</span>IBV_SEND_FENCE
+    wr<span style="color:#000;font-weight:bold">-&gt;</span>sg_list[<span style="color:#099">0</span>]
+    wr<span style="color:#000;font-weight:bold">-&gt;</span>num_sge <span style="color:#000;font-weight:bold">=</span>
+    vrb_post_send(ep, wr, flags) <span style="color:#000;font-weight:bold">-&gt;</span> prov<span style="color:#000;font-weight:bold">/</span>verbs<span style="color:#000;font-weight:bold">/</span>src<span style="color:#000;font-weight:bold">/</span>verbs_ep.c <span style="color:#000;font-weight:bold">-&gt;</span> ssize_t vrb_post_send
+      ibv_post_send(ep<span style="color:#000;font-weight:bold">-&gt;</span>ibv_qp, wr, <span style="color:#000;font-weight:bold">&amp;</span>bad_wr)
+
+<span style="color:#a61717;background-color:#e3d2d2">所有标签</span>(Flags), include<span style="color:#000;font-weight:bold">/</span>rdma<span style="color:#000;font-weight:bold">/</span>fabric.h <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">#</span>define FI_MSG			(<span style="color:#099">1ULL</span> <span style="color:#000;font-weight:bold">&lt;&lt;</span> <span style="color:#099">1</span>) ...
+
+
+<span style="color:#a61717;background-color:#e3d2d2">服务端执行</span>bulk拉取
+HG_Bulk_transfer(hg_context_t <span style="color:#000;font-weight:bold">*</span>context
+  hg_bulk_transfer_na(hg_bulk_op_t op
+    <span style="color:#000;font-weight:bold">case</span> <span style="color:#900;font-weight:bold">HG_BULK_PULL</span>:
+      na_bulk_op <span style="color:#000;font-weight:bold">=</span> hg_bulk_na_get
+      na_ret <span style="color:#000;font-weight:bold">=</span> na_bulk_op(hg_bulk_op_id<span style="color:#000;font-weight:bold">-&gt;</span>na_class <span style="color:#000;font-weight:bold">-&gt;</span> hg_bulk_na_get <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#000;font-weight:bold">return</span> NA_Get <span style="color:#000;font-weight:bold">-&gt;</span> na_class<span style="color:#000;font-weight:bold">-&gt;</span>ops<span style="color:#000;font-weight:bold">-&gt;</span>get <span style="color:#000;font-weight:bold">-&gt;</span> na_ofi_get(na_class_t <span style="color:#000;font-weight:bold">*</span>na_class
+        na_ofi_rma_common(NA_OFI_CLASS(na_class), context, NA_CB_GET,
+        callback, arg, fi_readmsg, <span style="color:#d14">&#34;fi_readmsg&#34;</span>, FI_COMPLETION,
+        (<span style="color:#000;font-weight:bold">struct</span> na_ofi_mem_handle <span style="color:#000;font-weight:bold">*</span>) local_mem_handle, local_offset,
+        (<span style="color:#000;font-weight:bold">struct</span> na_ofi_mem_handle <span style="color:#000;font-weight:bold">*</span>) remote_mem_handle, remote_offset, length,
+        (<span style="color:#000;font-weight:bold">struct</span> na_ofi_addr <span style="color:#000;font-weight:bold">*</span>) remote_addr, remote_id,
+        (<span style="color:#000;font-weight:bold">struct</span> na_ofi_op_id <span style="color:#000;font-weight:bold">*</span>) op_id) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">服务端拉取数据</span>(READ)
+        ..
+na_ofi_rma_common(<span style="color:#000;font-weight:bold">struct</span> na_ofi_class <span style="color:#000;font-weight:bold">*</span>na_ofi_class,
+  <span style="color:#000;font-weight:bold">struct</span> iovec <span style="color:#000;font-weight:bold">*</span>local_iov <span style="color:#000;font-weight:bold">=</span> NA_OFI_IOV
+  <span style="color:#458;font-weight:bold">void</span> <span style="color:#000;font-weight:bold">*</span>local_desc <span style="color:#000;font-weight:bold">=</span> fi_mr_desc(na_ofi_mem_handle_local<span style="color:#000;font-weight:bold">-&gt;</span>fi_mr)
+  na_ofi_iov_translate        
+  na_ofi_rma_iov_translate
+  na_ofi_rma_post(na_ofi_context<span style="color:#000;font-weight:bold">-&gt;</span>fi_tx, rma_info, <span style="color:#000;font-weight:bold">&amp;</span>na_ofi_op_id<span style="color:#000;font-weight:bold">-&gt;</span>fi_ctx)
+    rc <span style="color:#000;font-weight:bold">=</span> rma_info<span style="color:#000;font-weight:bold">-&gt;</span>fi_rma_op <span style="color:#000;font-weight:bold">-&gt;</span> rxm_ep_readmsg(<span style="color:#000;font-weight:bold">struct</span> fid_ep <span style="color:#000;font-weight:bold">*</span>ep_fid,
+      <span style="color:#000;font-weight:bold">return</span> rxm_ep_rma_common(rxm_ep, msg, flags <span style="color:#000;font-weight:bold">|</span> rxm_ep<span style="color:#000;font-weight:bold">-&gt;</span>util_ep.tx_msg_flags, fi_readmsg, FI_READ);
+        rxm_ep_rma_reg_iov(rxm_ep, msg_rma.msg_iov, msg_rma.desc, mr_desc, msg_rma.iov_count, comp_flags <span style="color:#000;font-weight:bold">&amp;</span> (FI_WRITE <span style="color:#000;font-weight:bold">|</span> FI_READ), rma_buf)
+          fi_mr_desc(((<span style="color:#000;font-weight:bold">struct</span> rxm_mr <span style="color:#000;font-weight:bold">*</span>) desc[i])<span style="color:#000;font-weight:bold">-&gt;</span>msg_mr)
+          rma_msg(rxm_conn<span style="color:#000;font-weight:bold">-&gt;</span>msg_ep, <span style="color:#000;font-weight:bold">&amp;</span>msg_rma, flags) <span style="color:#000;font-weight:bold">-&gt;</span> vrb_msg_ep_rma_readmsg(<span style="color:#000;font-weight:bold">struct</span> fid_ep <span style="color:#000;font-weight:bold">*</span>ep_fid
+            <span style="color:#000;font-weight:bold">struct</span> ibv_send_wr wr <span style="color:#000;font-weight:bold">=</span> {
+              .wr_id <span style="color:#000;font-weight:bold">=</span> VERBS_COMP_READ_FLAGS(ep, flags, (uintptr_t)msg<span style="color:#000;font-weight:bold">-&gt;</span>context),
+              .opcode <span style="color:#000;font-weight:bold">=</span> IBV_WR_RDMA_READ,
+              .wr.rdma.remote_addr <span style="color:#000;font-weight:bold">=</span> msg<span style="color:#000;font-weight:bold">-&gt;</span>rma_iov<span style="color:#000;font-weight:bold">-&gt;</span>addr,
+              .wr.rdma.rkey <span style="color:#000;font-weight:bold">=</span> (uint32_t)msg<span style="color:#000;font-weight:bold">-&gt;</span>rma_iov<span style="color:#000;font-weight:bold">-&gt;</span>key,
+              .num_sge <span style="color:#000;font-weight:bold">=</span> msg<span style="color:#000;font-weight:bold">-&gt;</span>iov_count,
+            };
+            vrb_post_send(ep, <span style="color:#000;font-weight:bold">&amp;</span>wr, <span style="color:#099">0</span>)
+              vrb_flush_cq(cq)
+              ep<span style="color:#000;font-weight:bold">-&gt;</span>sq_credits<span style="color:#000;font-weight:bold">--</span>
+              ctx<span style="color:#000;font-weight:bold">-&gt;</span>op_queue <span style="color:#000;font-weight:bold">=</span> VRB_OP_SQ
+              ret <span style="color:#000;font-weight:bold">=</span> ibv_post_send(ep<span style="color:#000;font-weight:bold">-&gt;</span>ibv_qp, wr, <span style="color:#000;font-weight:bold">&amp;</span>bad_wr) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">提交</span>WR,<span style="color:#a61717;background-color:#e3d2d2">将客户端数据读过来</span>(DMA)
+              wr<span style="color:#000;font-weight:bold">-&gt;</span>wr_id <span style="color:#000;font-weight:bold">=</span> (uintptr_t) ctx<span style="color:#000;font-weight:bold">-&gt;</span>user_ctx
+              slist_insert_tail(<span style="color:#000;font-weight:bold">&amp;</span>ctx<span style="color:#000;font-weight:bold">-&gt;</span>entry, <span style="color:#000;font-weight:bold">&amp;</span>ep<span style="color:#000;font-weight:bold">-&gt;</span>sq_list) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">触发</span> vrb_flush_sq <span style="color:#a61717;background-color:#e3d2d2">遍历该发送队列</span> <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#000;font-weight:bold">while</span> (<span style="color:#000;font-weight:bold">!</span>slist_empty(<span style="color:#000;font-weight:bold">&amp;</span>ep<span style="color:#000;font-weight:bold">-&gt;</span>sq_list))
+
+
+<span style="color:#a61717;background-color:#e3d2d2">下刷发送队列调用栈</span>
+(gdb) bt
+<span style="color:#999;font-weight:bold;font-style:italic">#0  vrb_flush_sq (ep=0xb7a4d0) at prov/verbs/src/verbs_ep.c:456
+</span><span style="color:#999;font-weight:bold;font-style:italic">#1  0x00007ffff7339f90 in vrb_ep_close (fid=0xb7a4d0) at prov/verbs/src/verbs_ep.c:582
+</span><span style="color:#999;font-weight:bold;font-style:italic">#2  0x00007ffff7349804 in fi_close (fid=0xb7a4d0) at ./include</span><span style="color:#999;font-weight:bold;font-style:italic">/rdma/fabric.h:631</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#3  0x00007ffff734a605 in rxm_close_conn (conn=0xb756b8) at prov/rxm/src/rxm_conn.c:88
+</span><span style="color:#999;font-weight:bold;font-style:italic">#4  0x00007ffff734cd88 in rxm_process_shutdown (conn=0xb756b8) at prov/rxm/src/rxm_conn.c:768
+</span><span style="color:#999;font-weight:bold;font-style:italic">#5  0x00007ffff734d170 in rxm_handle_event (ep=0x78b570, event=3, cm_entry=0x7fffffffd3d0, len=16) at prov/rxm/src/rxm_conn.c:830
+</span><span style="color:#999;font-weight:bold;font-style:italic">#6  0x00007ffff734d279 in rxm_conn_progress (ep=0x78b570) at prov/rxm/src/rxm_conn.c:850
+</span><span style="color:#999;font-weight:bold;font-style:italic">#7  0x00007ffff736256e in rxm_ep_do_progress (util_ep=0x78b570) at prov/rxm/src/rxm_cq.c:1843
+</span><span style="color:#999;font-weight:bold;font-style:italic">#8  0x00007ffff736268a in rxm_ep_progress (util_ep=0x78b570) at prov/rxm/src/rxm_cq.c:1863
+</span><span style="color:#999;font-weight:bold;font-style:italic">#9  0x00007ffff72d5b7d in ofi_cq_progress (cq=0x787770) at prov/util/src/util_cq.c:498
+</span><span style="color:#999;font-weight:bold;font-style:italic">#10 0x00007ffff72d51c0 in ofi_cq_readfrom (cq_fid=0x787770, buf=0x0, count=0, src_addr=0x0) at prov/util/src/util_cq.c:257
+</span><span style="color:#999;font-weight:bold;font-style:italic">#11 0x00007ffff72d3a56 in fi_cq_readfrom (cq=0x787770, buf=0x0, count=0, src_addr=0x0) at ./include</span><span style="color:#999;font-weight:bold;font-style:italic">/rdma/fi_eq.h:400</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#12 0x00007ffff72d5207 in ofi_cq_read (cq_fid=0x787770, buf=0x0, count=0) at prov/util/src/util_cq.c:264
+</span><span style="color:#999;font-weight:bold;font-style:italic">#13 0x00007ffff72dbf4f in fi_cq_read (cq=0x787770, buf=0x0, count=0) at ./include</span><span style="color:#999;font-weight:bold;font-style:italic">/rdma/fi_eq.h:394</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#14 0x00007ffff72dc4cc in util_poll_run (poll_fid=0x783390, context=0x7fffffffdb78, count=1) at prov/util/src/util_poll.c:95
+</span><span style="color:#999;font-weight:bold;font-style:italic">#15 0x00007ffff72dc9a0 in fi_poll (pollset=0x783390, context=0x7fffffffdb78, count=1) at ./include</span><span style="color:#999;font-weight:bold;font-style:italic">/rdma/fi_eq.h:335</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#16 0x00007ffff72de0bf in util_wait_fd_try (wait=0x783290) at prov/util/src/util_wait.c:366
+</span><span style="color:#999;font-weight:bold;font-style:italic">#17 0x00007ffff72dd456 in ofi_trywait (fabric=0x781b40, fids=0x7fffffffdc40, count=1) at prov/util/src/util_wait.c:72
+</span><span style="color:#999;font-weight:bold;font-style:italic">#18 0x00000000004266de in fi_trywait (count=1, fids=0x7fffffffdc40, fabric=&lt;optimized out&gt;) at /usr/local/include</span><span style="color:#999;font-weight:bold;font-style:italic">/rdma/fi_eq.h:323</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#19 na_ofi_poll_try_wait (na_class=&lt;optimized out&gt;, context=&lt;optimized out&gt;) at /home/xb/project/mercury/src/na/na_ofi.c:8229
+</span><span style="color:#999;font-weight:bold;font-style:italic">#20 0x0000000000417b4a in hg_core_poll_try_wait (context=0x786c80) at /home/xb/project/mercury/src/mercury_core.c:5058
+</span><span style="color:#999;font-weight:bold;font-style:italic">#21 hg_core_progress (context=context@entry=0x786c80, timeout_ms=100) at /home/xb/project/mercury/src/mercury_core.c:5001
+</span><span style="color:#999;font-weight:bold;font-style:italic">#22 0x000000000042043e in HG_Core_progress (context=0x786c80, timeout_ms=timeout_ms@entry=100) at /home/xb/project/mercury/src/mercury_core.c:6530
+</span><span style="color:#999;font-weight:bold;font-style:italic">#23 0x000000000040bf02 in HG_Progress (context=&lt;optimized out&gt;, timeout=timeout@entry=100) at /home/xb/project/mercury/src/mercury.c:2178
+</span><span style="color:#999;font-weight:bold;font-style:italic">#24 0x0000000000407741 in main (argc=&lt;optimized out&gt;, argv=&lt;optimized out&gt;) at /home/xb/project/mercury/Examples/src/server.c:69              
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>
+
+
+
+<span style="color:#a61717;background-color:#e3d2d2">创建</span>RDMA事件通道调用栈
+<span style="color:#999;font-weight:bold;font-style:italic">#0  0x00007ffff6c966d0 in rdma_create_event_channel () from /lib64/librdmacm.so.1
+</span><span style="color:#999;font-weight:bold;font-style:italic">#1  0x00007ffff6c967c5 in ucma_alloc_id () from /lib64/librdmacm.so.1
+</span><span style="color:#999;font-weight:bold;font-style:italic">#2  0x00007ffff6c96821 in rdma_create_id2.part.20 () from /lib64/librdmacm.so.1
+</span><span style="color:#999;font-weight:bold;font-style:italic">#3  0x00007ffff6c96476 in ucma_init () from /lib64/librdmacm.so.1
+</span><span style="color:#999;font-weight:bold;font-style:italic">#4  0x00007ffff6c9697a in rdma_create_id () from /lib64/librdmacm.so.1
+</span><span style="color:#999;font-weight:bold;font-style:italic">#5  0x00007ffff7334ebe in vrb_ifa_rdma_info (ifa=0x6784b0, dev_name=0x7fffffffd428, rai=0x7fffffffd420) at prov/verbs/src/verbs_info.c:955
+</span><span style="color:#999;font-weight:bold;font-style:italic">#6  0x00007ffff73359e6 in vrb_getifaddrs (verbs_devs=0x7ffff776aaa0 &lt;verbs_devs&gt;) at prov/verbs/src/verbs_info.c:1177
+</span><span style="color:#999;font-weight:bold;font-style:italic">#7  0x00007ffff7336048 in vrb_init_info (all_infos=0x7ffff776a5e8 &lt;vrb_util_prov+8&gt;) at prov/verbs/src/verbs_info.c:1378
+</span><span style="color:#999;font-weight:bold;font-style:italic">#8  0x00007ffff73379c9 in vrb_getinfo (version=65549, node=0x0, service=0x0, flags=576460752303423488, hints=0x66a4c0, info=0x7fffffffd600) at prov/verbs/src/verbs_info.c:1872
+</span><span style="color:#999;font-weight:bold;font-style:italic">#9  0x00007ffff729730c in fi_getinfo_ (version=65549, node=0x0, service=0x0, flags=576460752303423488, hints=0x66a4c0, info=0x7fffffffd750) at src/fabric.c:1282
+</span><span style="color:#999;font-weight:bold;font-style:italic">#10 0x00007ffff72c70c0 in ofi_get_core_info (version=65549, node=0x0, service=0x0, flags=0, util_prov=0x7ffff776b960 &lt;rxm_util_prov&gt;, util_hints=0x6681e0, base_attr=0x7ffff776b8e0 &lt;rxm_verbs_info&gt;, info_to_core=0x7ffff73448f8 &lt;rxm_info_to_core&gt;, core_info=0x7fffffffd750)
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>    at prov<span style="color:#000;font-weight:bold">/</span>util<span style="color:#000;font-weight:bold">/</span>src<span style="color:#000;font-weight:bold">/</span>util_attr.<span style="color:#900;font-weight:bold">c</span>:<span style="color:#099">305</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#11 0x00007ffff72c71da in ofix_getinfo (version=65549, node=0x0, service=0x0, flags=0, util_prov=0x7ffff776b960 &lt;rxm_util_prov&gt;, hints=0x6681e0, info_to_core=0x7ffff73448f8 &lt;rxm_info_to_core&gt;, info_to_util=0x7ffff7344ff7 &lt;rxm_info_to_rxm&gt;, info=0x7fffffffd8c0)
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>    at prov<span style="color:#000;font-weight:bold">/</span>util<span style="color:#000;font-weight:bold">/</span>src<span style="color:#000;font-weight:bold">/</span>util_attr.<span style="color:#900;font-weight:bold">c</span>:<span style="color:#099">328</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#12 0x00007ffff7345d68 in rxm_getinfo (version=65549, node=0x0, service=0x0, flags=0, hints=0x6681e0, info=0x7fffffffd8c0) at prov/rxm/src/rxm_init.c:557
+</span><span style="color:#999;font-weight:bold;font-style:italic">#13 0x00007ffff729730c in fi_getinfo_ (version=65549, node=0x0, service=0x0, flags=0, hints=0x6681e0, info=0x7fffffffd9c0) at src/fabric.c:1282
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span><span style="color:#000;font-weight:bold">--------------------------</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#14 0x000000000042a22f in na_ofi_getinfo (prov_type=prov_type@entry=NA_OFI_PROV_VERBS_RXM, info=info@entry=0x0, fi_info_p=fi_info_p@entry=0x7fffffffd9c0) at /home/xb/project/mercury/src/na/na_ofi.c:3247
+</span><span style="color:#999;font-weight:bold;font-style:italic">#15 0x00000000004313ee in na_ofi_check_protocol (protocol_name=protocol_name@entry=0x6681a0 &#34;verbs;ofi_rxm&#34;) at /home/xb/project/mercury/src/na/na_ofi.c:6679
+</span><span style="color:#999;font-weight:bold;font-style:italic">#16 0x00000000004225ce in na_plugin_check_protocol (class_ops=0x44a2e0 &lt;na_plugin_static_g&gt;, ops_p=&lt;synthetic pointer&gt;, protocol_name=&lt;optimized out&gt;, class_name=0x668180 &#34;ofi&#34;) at /home/xb/project/mercury/src/na/na.c:451
+</span><span style="color:#999;font-weight:bold;font-style:italic">#17 NA_Initialize_opt2 (info_string=info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//175.16.53.61:55555&#34;, listen=&lt;optimized out&gt;, version=version@entry=262144, na_init_info=na_init_info@entry=0x7fffffffdaf0) at /home/xb/project/mercury/src/na/na.c:776
+</span><span style="color:#998;font-style:italic"></span><span style="color:#999;font-weight:bold;font-style:italic">#18 0x00000000004229d1 in NA_Initialize_opt (info_string=info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//175.16.53.61:55555&#34;, listen=&lt;optimized out&gt;, na_init_info=na_init_info@entry=0x7fffffffdaf0) at /home/xb/project/mercury/src/na/na.c:734
+</span><span style="color:#998;font-style:italic"></span><span style="color:#999;font-weight:bold;font-style:italic">#19 0x0000000000413378 in hg_core_init (na_info_string=na_info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//175.16.53.61:55555&#34;, na_listen=na_listen@entry=1 &#39;\001&#39;, version=version@entry=0, hg_init_info_p=hg_init_info_p@entry=0x0, class_p=class_p@entry=0x7fffffffdcb8)
+</span><span style="color:#998;font-style:italic"></span>    at <span style="color:#000;font-weight:bold">/</span>home<span style="color:#000;font-weight:bold">/</span>xb<span style="color:#000;font-weight:bold">/</span>project<span style="color:#000;font-weight:bold">/</span>mercury<span style="color:#000;font-weight:bold">/</span>src<span style="color:#000;font-weight:bold">/</span>mercury_core.<span style="color:#900;font-weight:bold">c</span>:<span style="color:#099">1225</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#20 0x000000000041bce1 in HG_Core_init_opt2 (na_info_string=na_info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//175.16.53.61:55555&#34;, na_listen=na_listen@entry=1 &#39;\001&#39;, version=version@entry=0, hg_init_info=hg_init_info@entry=0x0)
+</span><span style="color:#998;font-style:italic"></span>    at <span style="color:#000;font-weight:bold">/</span>home<span style="color:#000;font-weight:bold">/</span>xb<span style="color:#000;font-weight:bold">/</span>project<span style="color:#000;font-weight:bold">/</span>mercury<span style="color:#000;font-weight:bold">/</span>src<span style="color:#000;font-weight:bold">/</span>mercury_core.<span style="color:#900;font-weight:bold">c</span>:<span style="color:#099">5620</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#21 0x000000000040967f in HG_Init_opt2 (na_info_string=na_info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//175.16.53.61:55555&#34;, na_listen=na_listen@entry=1 &#39;\001&#39;, version=version@entry=0, hg_init_info_p=hg_init_info_p@entry=0x0) at /home/xb/project/mercury/src/mercury.c:1100
+</span><span style="color:#998;font-style:italic"></span><span style="color:#999;font-weight:bold;font-style:italic">#22 0x000000000040987d in HG_Init (na_info_string=na_info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//175.16.53.61:55555&#34;, na_listen=na_listen@entry=1 &#39;\001&#39;) at /home/xb/project/mercury/src/mercury.c:1041
+</span><span style="color:#998;font-style:italic"></span><span style="color:#999;font-weight:bold;font-style:italic">#23 0x0000000000407681 in main (argc=&lt;optimized out&gt;, argv=&lt;optimized out&gt;) at /home/xb/project/mercury/Examples/src/server.c:42
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>
+
+vrb_getifaddrs
+  vrb_ifa_rdma_info
+    rdma_getaddrinfo
+    rdma_bind_addr
+    <span style="color:#000;font-weight:bold">*</span>dev_name <span style="color:#000;font-weight:bold">=</span> strdup(ibv_get_device_name(id<span style="color:#000;font-weight:bold">-&gt;</span>verbs<span style="color:#000;font-weight:bold">-&gt;</span>device))
+
+
+
+
+<span style="color:#999;font-weight:bold;font-style:italic">#0  0x00007ffff6c966d0 in rdma_create_event_channel () from /lib64/librdmacm.so.1
+</span><span style="color:#999;font-weight:bold;font-style:italic">#1  0x00007ffff6c967c5 in ucma_alloc_id () from /lib64/librdmacm.so.1
+</span><span style="color:#999;font-weight:bold;font-style:italic">#2  0x00007ffff6c96821 in rdma_create_id2.part.20 () from /lib64/librdmacm.so.1
+</span><span style="color:#999;font-weight:bold;font-style:italic">#3  0x00007ffff7320cc0 in vrb_get_rai_id (node=0x0, service=0x0, flags=576460752303423488, hints=0x787fd0, rai=0x7fffffffd4c8, id=0x7fffffffd4c0) at prov/verbs/src/verbs_init.c:278
+</span><span style="color:#999;font-weight:bold;font-style:italic">#4  0x00007ffff733745a in vrb_handle_sock_addr (node=0x0, service=0x0, flags=576460752303423488, hints=0x787fd0, info=0x7fffffffd650) at prov/verbs/src/verbs_info.c:1770
+</span><span style="color:#999;font-weight:bold;font-style:italic">#5  0x00007ffff733764c in vrb_get_match_infos (version=65549, node=0x0, service=0x0, flags=576460752303423488, hints=0x787fd0, raw_info=0x7ffff776a5e8 &lt;vrb_util_prov+8&gt;, info=0x7fffffffd650) at prov/verbs/src/verbs_info.c:1805
+</span><span style="color:#999;font-weight:bold;font-style:italic">#6  0x00007ffff7337a01 in vrb_getinfo (version=65549, node=0x0, service=0x0, flags=576460752303423488, hints=0x787fd0, info=0x7fffffffd650) at prov/verbs/src/verbs_info.c:1876
+</span><span style="color:#999;font-weight:bold;font-style:italic">#7  0x00007ffff729730c in fi_getinfo_ (version=65549, node=0x0, service=0x0, flags=576460752303423488, hints=0x787fd0, info=0x78b700) at src/fabric.c:1282
+</span><span style="color:#999;font-weight:bold;font-style:italic">#8  0x00007ffff72c70c0 in ofi_get_core_info (version=65549, node=0x0, service=0x0, flags=0, util_prov=0x7ffff776b960 &lt;rxm_util_prov&gt;, util_hints=0x784540, base_attr=0x0, info_to_core=0x7ffff73448f8 &lt;rxm_info_to_core&gt;, core_info=0x78b700) at prov/util/src/util_attr.c:305
+</span><span style="color:#999;font-weight:bold;font-style:italic">#9  0x00007ffff7353f15 in rxm_open_core_res (ep=0x78b560) at prov/rxm/src/rxm_ep.c:1748
+</span><span style="color:#999;font-weight:bold;font-style:italic">#10 0x00007ffff73545b3 in rxm_endpoint (domain=0x788450, info=0x6683b0, ep_fid=0x670ad0, context=0x0) at prov/rxm/src/rxm_ep.c:1925
+</span><span style="color:#999;font-weight:bold;font-style:italic">#11 0x0000000000434563 in fi_endpoint (context=0x0, ep=0x670ad0, info=0x6683b0, domain=&lt;optimized out&gt;) at /usr/local/include</span><span style="color:#999;font-weight:bold;font-style:italic">/rdma/fi_endpoint.h:178</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#12 na_ofi_basic_ep_open (na_ofi_endpoint=0x670ad0, no_wait=false, fi_info=0x6683b0, na_ofi_domain=0x780ca0, na_ofi_fabric=0x7836b0) at /home/xb/project/mercury/src/na/na_ofi.c:4385
+</span><span style="color:#999;font-weight:bold;font-style:italic">#13 na_ofi_endpoint_open (na_ofi_endpoint_p=0x66a4f0, fi_info=0x6683b0, expected_msg_size_max=0, unexpected_msg_size_max=0, max_contexts=&lt;optimized out&gt;, sep=false, no_wait=false, na_ofi_domain=0x780ca0, na_ofi_fabric=0x7836b0) at /home/xb/project/mercury/src/na/na_ofi.c:4357
+</span><span style="color:#999;font-weight:bold;font-style:italic">#14 na_ofi_initialize (na_class=&lt;optimized out&gt;, na_info=&lt;optimized out&gt;, listen=&lt;optimized out&gt;) at /home/xb/project/mercury/src/na/na_ofi.c:6867
+</span><span style="color:#999;font-weight:bold;font-style:italic">#15 0x00000000004227cb in NA_Initialize_opt2 (info_string=info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//172.17.29.63:55555&#34;, listen=&lt;optimized out&gt;, version=version@entry=262144, na_init_info=na_init_info@entry=0x7fffffffdaf0) at /home/xb/project/mercury/src/na/na.c:819
+</span><span style="color:#998;font-style:italic"></span><span style="color:#999;font-weight:bold;font-style:italic">#16 0x00000000004229d1 in NA_Initialize_opt (info_string=info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//172.17.29.63:55555&#34;, listen=&lt;optimized out&gt;, na_init_info=na_init_info@entry=0x7fffffffdaf0) at /home/xb/project/mercury/src/na/na.c:734
+</span><span style="color:#998;font-style:italic"></span><span style="color:#999;font-weight:bold;font-style:italic">#17 0x0000000000413378 in hg_core_init (na_info_string=na_info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//172.17.29.63:55555&#34;, na_listen=na_listen@entry=1 &#39;\001&#39;, version=version@entry=0, hg_init_info_p=hg_init_info_p@entry=0x0, class_p=class_p@entry=0x7fffffffdcb8)
+</span><span style="color:#998;font-style:italic"></span>    at <span style="color:#000;font-weight:bold">/</span>home<span style="color:#000;font-weight:bold">/</span>xb<span style="color:#000;font-weight:bold">/</span>project<span style="color:#000;font-weight:bold">/</span>mercury<span style="color:#000;font-weight:bold">/</span>src<span style="color:#000;font-weight:bold">/</span>mercury_core.<span style="color:#900;font-weight:bold">c</span>:<span style="color:#099">1225</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#18 0x000000000041bce1 in HG_Core_init_opt2 (na_info_string=na_info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//172.17.29.63:55555&#34;, na_listen=na_listen@entry=1 &#39;\001&#39;, version=version@entry=0, hg_init_info=hg_init_info@entry=0x0)
+</span><span style="color:#998;font-style:italic"></span>    at <span style="color:#000;font-weight:bold">/</span>home<span style="color:#000;font-weight:bold">/</span>xb<span style="color:#000;font-weight:bold">/</span>project<span style="color:#000;font-weight:bold">/</span>mercury<span style="color:#000;font-weight:bold">/</span>src<span style="color:#000;font-weight:bold">/</span>mercury_core.<span style="color:#900;font-weight:bold">c</span>:<span style="color:#099">5620</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#19 0x000000000040967f in HG_Init_opt2 (na_info_string=na_info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//172.17.29.63:55555&#34;, na_listen=na_listen@entry=1 &#39;\001&#39;, version=version@entry=0, hg_init_info_p=hg_init_info_p@entry=0x0) at /home/xb/project/mercury/src/mercury.c:1100
+</span><span style="color:#998;font-style:italic"></span><span style="color:#999;font-weight:bold;font-style:italic">#20 0x000000000040987d in HG_Init (na_info_string=na_info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//172.17.29.63:55555&#34;, na_listen=na_listen@entry=1 &#39;\001&#39;) at /home/xb/project/mercury/src/mercury.c:1041
+</span><span style="color:#998;font-style:italic"></span><span style="color:#999;font-weight:bold;font-style:italic">#21 0x0000000000407681 in main (argc=&lt;optimized out&gt;, argv=&lt;optimized out&gt;) at /home/xb/project/mercury/Examples/src/server.c:42
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>
+
+
+
+<span style="color:#900;font-weight:bold">rdma_listen</span>: <span style="color:#a61717;background-color:#e3d2d2">服务端</span>RDMA监听, <span style="color:#a61717;background-color:#e3d2d2">调用栈</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#0  0x00007ffff6c95dd0 in rdma_listen () from /lib64/librdmacm.so.1
+</span><span style="color:#999;font-weight:bold;font-style:italic">#1  0x00007ffff7324566 in vrb_pep_listen (pep_fid=0x783dd0) at prov/verbs/src/verbs_cm.c:535
+</span><span style="color:#999;font-weight:bold;font-style:italic">#2  0x00007ffff7349ea9 in fi_listen (pep=0x783dd0) at ./include</span><span style="color:#999;font-weight:bold;font-style:italic">/rdma/fi_cm.h:91</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#3  0x00007ffff734dcee in rxm_start_listen (ep=0x78b560) at prov/rxm/src/rxm_conn.c:1009
+</span><span style="color:#999;font-weight:bold;font-style:italic">#4  0x00007ffff7353959 in rxm_ep_ctrl (fid=0x78b560, command=6, arg=0x0) at prov/rxm/src/rxm_ep.c:1607
+</span><span style="color:#999;font-weight:bold;font-style:italic">#5  0x00000000004346cf in fi_enable (ep=&lt;optimized out&gt;) at /usr/local/include</span><span style="color:#999;font-weight:bold;font-style:italic">/rdma/fi_endpoint.h:217</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#6  na_ofi_basic_ep_open (na_ofi_endpoint=0x670ad0, no_wait=false, fi_info=0x6683b0, na_ofi_domain=&lt;optimized out&gt;, na_ofi_fabric=0x7836b0) at /home/xb/project/mercury/src/na/na_ofi.c:4427
+</span><span style="color:#999;font-weight:bold;font-style:italic">#7  na_ofi_endpoint_open (na_ofi_endpoint_p=0x66a4f0, fi_info=0x6683b0, expected_msg_size_max=0, unexpected_msg_size_max=0, max_contexts=&lt;optimized out&gt;, sep=false, no_wait=false, na_ofi_domain=&lt;optimized out&gt;, na_ofi_fabric=0x7836b0) at /home/xb/project/mercury/src/na/na_ofi.c:4357
+</span><span style="color:#999;font-weight:bold;font-style:italic">#8  na_ofi_initialize (na_class=&lt;optimized out&gt;, na_info=&lt;optimized out&gt;, listen=&lt;optimized out&gt;) at /home/xb/project/mercury/src/na/na_ofi.c:6867
+</span><span style="color:#999;font-weight:bold;font-style:italic">#9  0x00000000004227cb in NA_Initialize_opt2 (info_string=info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//172.17.29.63:55555&#34;, listen=&lt;optimized out&gt;, version=version@entry=262144, na_init_info=na_init_info@entry=0x7fffffffdaf0) at /home/xb/project/mercury/src/na/na.c:819
+</span><span style="color:#998;font-style:italic"></span><span style="color:#999;font-weight:bold;font-style:italic">#10 0x00000000004229d1 in NA_Initialize_opt (info_string=info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//172.17.29.63:55555&#34;, listen=&lt;optimized out&gt;, na_init_info=na_init_info@entry=0x7fffffffdaf0) at /home/xb/project/mercury/src/na/na.c:734
+</span><span style="color:#998;font-style:italic"></span><span style="color:#999;font-weight:bold;font-style:italic">#11 0x0000000000413378 in hg_core_init (na_info_string=na_info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//172.17.29.63:55555&#34;, na_listen=na_listen@entry=1 &#39;\001&#39;, version=version@entry=0, hg_init_info_p=hg_init_info_p@entry=0x0, class_p=class_p@entry=0x7fffffffdcb8)
+</span><span style="color:#998;font-style:italic"></span>    at <span style="color:#000;font-weight:bold">/</span>home<span style="color:#000;font-weight:bold">/</span>xb<span style="color:#000;font-weight:bold">/</span>project<span style="color:#000;font-weight:bold">/</span>mercury<span style="color:#000;font-weight:bold">/</span>src<span style="color:#000;font-weight:bold">/</span>mercury_core.<span style="color:#900;font-weight:bold">c</span>:<span style="color:#099">1225</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#12 0x000000000041bce1 in HG_Core_init_opt2 (na_info_string=na_info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//172.17.29.63:55555&#34;, na_listen=na_listen@entry=1 &#39;\001&#39;, version=version@entry=0, hg_init_info=hg_init_info@entry=0x0)
+</span><span style="color:#998;font-style:italic"></span>    at <span style="color:#000;font-weight:bold">/</span>home<span style="color:#000;font-weight:bold">/</span>xb<span style="color:#000;font-weight:bold">/</span>project<span style="color:#000;font-weight:bold">/</span>mercury<span style="color:#000;font-weight:bold">/</span>src<span style="color:#000;font-weight:bold">/</span>mercury_core.<span style="color:#900;font-weight:bold">c</span>:<span style="color:#099">5620</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#13 0x000000000040967f in HG_Init_opt2 (na_info_string=na_info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//172.17.29.63:55555&#34;, na_listen=na_listen@entry=1 &#39;\001&#39;, version=version@entry=0, hg_init_info_p=hg_init_info_p@entry=0x0) at /home/xb/project/mercury/src/mercury.c:1100
+</span><span style="color:#998;font-style:italic"></span><span style="color:#999;font-weight:bold;font-style:italic">#14 0x000000000040987d in HG_Init (na_info_string=na_info_string@entry=0x7fffffffe1db &#34;ofi+verbs;ofi_rxm:</span><span style="color:#998;font-style:italic">//172.17.29.63:55555&#34;, na_listen=na_listen@entry=1 &#39;\001&#39;) at /home/xb/project/mercury/src/mercury.c:1041
+</span><span style="color:#998;font-style:italic"></span><span style="color:#999;font-weight:bold;font-style:italic">#15 0x0000000000407681 in main (argc=&lt;optimized out&gt;, argv=&lt;optimized out&gt;) at /home/xb/project/mercury/Examples/src/server.c:42
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>
+
+
+(gdb) <span style="color:#a61717;background-color:#e3d2d2">发送端解析地址调用栈</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#0  0x00007ffff6c97780 in rdma_resolve_addr () from /lib64/librdmacm.so.1
+</span><span style="color:#999;font-weight:bold;font-style:italic">#1  0x00007ffff73211be in vrb_create_ep (ep=0xa42010, ps=RDMA_PS_TCP, id=0xa42200) at prov/verbs/src/verbs_init.c:346
+</span><span style="color:#999;font-weight:bold;font-style:italic">#2  0x00007ffff733c492 in vrb_open_ep (domain=0x783730, info=0x793e00, ep_fid=0x7fffffffd790, context=0xa3ccb8) at prov/verbs/src/verbs_ep.c:1210
+</span><span style="color:#999;font-weight:bold;font-style:italic">#3  0x00007ffff7349da7 in fi_endpoint (domain=0x783730, info=0x793e00, ep=0x7fffffffd790, context=0xa3ccb8) at ./include</span><span style="color:#999;font-weight:bold;font-style:italic">/rdma/fi_endpoint.h:178</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#4  0x00007ffff734ad73 in rxm_open_conn (conn=0xa3ccb8, msg_info=0x793e00) at prov/rxm/src/rxm_conn.c:189
+</span><span style="color:#999;font-weight:bold;font-style:italic">#5  0x00007ffff734b455 in rxm_send_connect (conn=0xa3ccb8) at prov/rxm/src/rxm_conn.c:289
+</span><span style="color:#999;font-weight:bold;font-style:italic">#6  0x00007ffff734b5fb in rxm_connect (conn=0xa3ccb8) at prov/rxm/src/rxm_conn.c:321
+</span><span style="color:#999;font-weight:bold;font-style:italic">#7  0x00007ffff734bcd3 in rxm_get_conn (ep=0x786300, addr=1, conn=0x7fffffffd928) at prov/rxm/src/rxm_conn.c:466
+</span><span style="color:#999;font-weight:bold;font-style:italic">#8  0x00007ffff7357dba in rxm_senddata (ep_fid=0x786300, buf=0x7ffff7edb030, len=156, desc=0x7934b0, data=1, dest_addr=1, context=0xa3c310) at prov/rxm/src/rxm_msg.c:848
+</span><span style="color:#999;font-weight:bold;font-style:italic">#9  0x000000000042762c in fi_senddata (context=0xa3c310, dest_addr=&lt;optimized out&gt;, data=&lt;optimized out&gt;, desc=&lt;optimized out&gt;, len=&lt;optimized out&gt;, buf=&lt;optimized out&gt;, ep=0x786300) at /usr/local/include</span><span style="color:#999;font-weight:bold;font-style:italic">/rdma/fi_endpoint.h:343</span><span style="color:#999;font-weight:bold;font-style:italic">
+</span><span style="color:#999;font-weight:bold;font-style:italic">#10 na_ofi_msg_send (ep=0x786300, msg_info=0xa3c138, context=0xa3c310) at /home/xb/project/mercury/src/na/na_ofi.c:5065
+</span><span style="color:#999;font-weight:bold;font-style:italic">#11 0x000000000042d088 in na_ofi_msg_send_unexpected (na_class=&lt;optimized out&gt;, context=&lt;optimized out&gt;, callback=&lt;optimized out&gt;, arg=0xa3bc50, buf=&lt;optimized out&gt;, buf_size=&lt;optimized out&gt;, plugin_data=&lt;optimized out&gt;, dest_addr=&lt;optimized out&gt;, 
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>    dest_id<span style="color:#000;font-weight:bold">=&lt;</span>optimized out<span style="color:#000;font-weight:bold">&gt;</span>, tag<span style="color:#000;font-weight:bold">=&lt;</span>optimized out<span style="color:#000;font-weight:bold">&gt;</span>, op_id<span style="color:#000;font-weight:bold">=&lt;</span>optimized out<span style="color:#000;font-weight:bold">&gt;</span>) at <span style="color:#000;font-weight:bold">/</span>home<span style="color:#000;font-weight:bold">/</span>xb<span style="color:#000;font-weight:bold">/</span>project<span style="color:#000;font-weight:bold">/</span>mercury<span style="color:#000;font-weight:bold">/</span>src<span style="color:#000;font-weight:bold">/</span>na<span style="color:#000;font-weight:bold">/</span>na_ofi.<span style="color:#900;font-weight:bold">c</span>:<span style="color:#099">7554</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#12 0x0000000000414b8e in NA_Msg_send_unexpected (op_id=&lt;optimized out&gt;, tag=&lt;optimized out&gt;, dest_id=&lt;optimized out&gt;, dest_addr=&lt;optimized out&gt;, plugin_data=&lt;optimized out&gt;, buf_size=&lt;optimized out&gt;, buf=&lt;optimized out&gt;, arg=0xa3bc50, 
+</span><span style="color:#999;font-weight:bold;font-style:italic"></span>    callback<span style="color:#000;font-weight:bold">=</span><span style="color:#099">0x41a620</span> <span style="color:#000;font-weight:bold">&lt;</span>hg_core_send_input_cb<span style="color:#000;font-weight:bold">&gt;</span>, context<span style="color:#000;font-weight:bold">=&lt;</span>optimized out<span style="color:#000;font-weight:bold">&gt;</span>, na_class<span style="color:#000;font-weight:bold">=&lt;</span>optimized out<span style="color:#000;font-weight:bold">&gt;</span>) at <span style="color:#000;font-weight:bold">/</span>home<span style="color:#000;font-weight:bold">/</span>xb<span style="color:#000;font-weight:bold">/</span>project<span style="color:#000;font-weight:bold">/</span>mercury<span style="color:#000;font-weight:bold">/</span>src<span style="color:#000;font-weight:bold">/</span>na<span style="color:#000;font-weight:bold">/</span>na.<span style="color:#900;font-weight:bold">h</span>:<span style="color:#099">1140</span>
+<span style="color:#999;font-weight:bold;font-style:italic">#13 hg_core_forward_na (hg_core_handle=0xa3bc50) at /home/xb/project/mercury/src/mercury_core.c:3949
+</span><span style="color:#999;font-weight:bold;font-style:italic">#14 0x00000000004200d5 in hg_core_forward (payload_size=128, flags=0 &#39;\000&#39;, arg=0xa3c6c0, callback=0x408120 &lt;hg_core_forward_cb&gt;, hg_core_handle=0xa3bc50) at /home/xb/project/mercury/src/mercury_core.c:3887
+</span><span style="color:#999;font-weight:bold;font-style:italic">#15 HG_Core_forward (handle=0xa3bc50, callback=callback@entry=0x408120 &lt;hg_core_forward_cb&gt;, arg=arg@entry=0xa3c6c0, flags=&lt;optimized out&gt;, payload_size=128) at /home/xb/project/mercury/src/mercury_core.c:6432
+</span><span style="color:#999;font-weight:bold;font-style:italic">#16 0x000000000040bdad in HG_Forward (handle=0xa3c6c0, callback=callback@entry=0x4080a0 &lt;save_completed&gt;, arg=arg@entry=0x7fffffffdda0, in_struct=in_struct@entry=0x7fffffffdbb0) at /home/xb/project/mercury/src/mercury.c:2111
+</span><span style="color:#999;font-weight:bold;font-style:italic">#17 0x000000000040807b in lookup_callback (callback_info=0x7fffffffdc00) at /home/xb/project/mercury/Examples/src/client.c:132
+</span><span style="color:#999;font-weight:bold;font-style:italic">#18 0x0000000000408245 in hg_core_addr_lookup_cb (callback_info=&lt;optimized out&gt;) at /home/xb/project/mercury/src/mercury.c:437
+</span><span style="color:#999;font-weight:bold;font-style:italic">#19 0x00000000004186d5 in hg_core_trigger_lookup_entry (hg_core_op_id=0x786260) at /home/xb/project/mercury/src/mercury_core.c:5387
+</span><span style="color:#999;font-weight:bold;font-style:italic">#20 hg_core_trigger (context=0x78d750, timeout_ms=timeout_ms@entry=0, max_count=max_count@entry=1, actual_count_p=actual_count_p@entry=0x7fffffffdd7c) at /home/xb/project/mercury/src/mercury_core.c:5339
+</span><span style="color:#999;font-weight:bold;font-style:italic">#21 0x000000000042072f in HG_Core_trigger (context=&lt;optimized out&gt;, timeout=timeout@entry=0, max_count=max_count@entry=1, actual_count_p=actual_count_p@entry=0x7fffffffdd7c) at /home/xb/project/mercury/src/mercury_core.c:6577
+</span><span style="color:#999;font-weight:bold;font-style:italic">#22 0x000000000040c162 in HG_Trigger (context=&lt;optimized out&gt;, timeout=timeout@entry=0, max_count=max_count@entry=1, actual_count_p=actual_count_p@entry=0x7fffffffdd7c) at /home/xb/project/mercury/src/mercury.c:2197
+</span><span style="color:#999;font-weight:bold;font-style:italic">#23 0x0000000000407896 in main (argc=&lt;optimized out&gt;, argv=0x7fffffffdec8) at /home/xb/project/mercury/Examples/src/client.c:78
+</span></code></pre></td></tr></table>
+</div>
+</div><h2 id="参考">参考</h2>
+<p>以下项目持续更新</p>
+<p>DAOS项目: <a href="https://github.com/ssbandjl/daos.git">https://github.com/ssbandjl/daos.git</a></p>
+<p>MERCURY项目: <a href="https://github.com/ssbandjl/mercury.git">https://github.com/ssbandjl/mercury.git</a></p>
+<p>OFI项目: <a href="https://github.com/ssbandjl/libfabric.git">https://github.com/ssbandjl/libfabric.git</a></p>
+<h2 id="晓兵">晓兵</h2>
+<p>博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a> | <a href="https://cloud.tencent.com/developer/user/5060293/articles">https://cloud.tencent.com/developer/user/5060293/articles</a></p>
+<p>weixin: ssbandjl</p>
+<h3 id="晓兵技术杂谈系列">晓兵技术杂谈(系列)</h3>
+<table>
+<thead>
+<tr>
+<th>主题</th>
+<th>时间</th>
+<th>链接</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>晓兵技术杂谈1-intel_daos项目简介_高性能分布式存储_RDMA_SPDK_NVME_HPC_对象存储_源码分析_c语言</td>
+<td>2023-09-02 00:22:15</td>
+<td><a href="https://www.bilibili.com/video/BV1mz4y1M7GN">https://www.bilibili.com/video/BV1mz4y1M7GN</a></td>
+</tr>
+<tr>
+<td>晓兵技术杂谈2-daos用户态文件系统io路径_dfuse_io全路径_io栈_分布式存储_c语言</td>
+<td>2023-09-03 17:21:31</td>
+<td><a href="https://www.bilibili.com/video/BV1gu411P71a">https://www.bilibili.com/video/BV1gu411P71a</a></td>
+</tr>
+<tr>
+<td>晓兵技术杂谈3-分布式存储系统-daos的rdma通信框架_verbs_rpc_cart_mercury_libfabric_c语言</td>
+<td>2023-09-08 23:16:22</td>
+<td><a href="https://www.bilibili.com/video/BV1fp4y1L7VZ">https://www.bilibili.com/video/BV1fp4y1L7VZ</a></td>
+</tr>
+<tr>
+<td>晓兵技术杂谈4-分布式存储系统-daos的异步任务调度引擎框架TSE_task_schedule_engine_c语言编程</td>
+<td>2023-09-16 22:01:48</td>
+<td><a href="https://www.bilibili.com/video/BV18u411c7Mg">https://www.bilibili.com/video/BV18u411c7Mg</a></td>
+</tr>
+<tr>
+<td>晓兵技术杂谈5-分布式存储系统-daos底层通信rdma接口_libfabric教程_gpu数据dma_socket_大块数据bulk传输原理_rdma_单边读写_c语言编程.mp4</td>
+<td>2023-09-24 23:41:08</td>
+<td><a href="https://www.bilibili.com/video/BV1nr4y1f7kE">https://www.bilibili.com/video/BV1nr4y1f7kE</a></td>
+</tr>
+</tbody>
+</table>
+<p>欢迎对DAOS, SPDK, RDMA等高性能技术感兴趣的朋友加我, 进入[DAOS技术交流(群)]</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/">https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/net/libfabric_hpc_net_api_rdma_daos_mercury/">OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</a></li>
+        
+        <li><a href="/post/daos/daos_eq_and_event/">DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</a></li>
+        
+        <li><a href="/post/daos/daos_tse/">DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</a></li>
+        
+        <li><a href="/post/rdma/rdma_rocev2_lossless_lossy/">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</a></li>
+        
+        <li><a href="/post/linux/nvmf/">NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+                <li><a href='/tags/rdma'>rdma</a></li>
+                
+                <li><a href='/tags/daos'>daos</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2023
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/" title="DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解">DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/" title="英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda">英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/" title="OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)">OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_dfuse_fs_io_path/" title="DAOS用户态文件系统IO路径(dfuse io全路径)">DAOS用户态文件系统IO路径(dfuse io全路径)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_docker/" title="DAOS-在docker中搭建daos开发调试环境">DAOS-在docker中搭建daos开发调试环境</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_eq_and_event/" title="DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析">DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_tse/" title="DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析">DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/" title="Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/nvmf/" title="NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析">NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_cart_swim/" title="DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)">DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/libfabric/">libfabric (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/multipath/">multipath (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/network/">network (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvmeof/">nvmeof (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (6)</a></li>
+    
+    <li><a href="https://logread.cn/categories/roce/">roce (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (22)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (27)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (4)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/libfabric/">libfabric</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/network/">network</a>
+  
+  <a href="https://logread.cn/tags/nvmeof/">nvmeof</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/roce/">roce</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/">多路径</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://github.com/ssbandjl/golang-design-pattern" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

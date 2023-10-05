@@ -6,7 +6,16 @@
     <description>Recent content in daos on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 19 Aug 2023 22:23:52 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/daos/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 05 Oct 2023 10:11:49 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/daos/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</title>
+      <link>https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/</link>
+      <pubDate>Thu, 05 Oct 2023 10:11:49 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/</guid>
+      <description>DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解 简介 参考之前的分享中, DAOS与RDMA分层关系如下图, DAOS引擎 -&amp;gt; CART(RPC/大块数据/集合RPC请求) -&amp;gt; Mercury(HG: RPC注册/回调/RPC操作/预期/非预期消息/大块消息/轮训/阻塞/网络抽象等) -&amp;gt; Libfabric(网络抽象层,对rxm,r</description>
+    </item>
+    
     <item>
       <title>DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</title>
       <link>https://logread.cn/post/daos/daos_eq_and_event/</link>
