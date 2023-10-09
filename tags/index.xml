@@ -6,7 +6,34 @@
     <description>Recent content in Tags on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Thu, 05 Oct 2023 10:11:49 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 06 Oct 2023 14:43:38 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>linux</title>
+      <link>https://logread.cn/tags/linux/</link>
+      <pubDate>Fri, 06 Oct 2023 14:43:38 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/linux/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>net</title>
+      <link>https://logread.cn/tags/net/</link>
+      <pubDate>Fri, 06 Oct 2023 14:43:38 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/net/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>stor</title>
+      <link>https://logread.cn/tags/stor/</link>
+      <pubDate>Fri, 06 Oct 2023 14:43:38 +0800</pubDate>
+      
+      <guid>https://logread.cn/tags/stor/</guid>
+      <description></description>
+    </item>
+    
     <item>
       <title>daos</title>
       <link>https://logread.cn/tags/daos/</link>
@@ -17,29 +44,11 @@
     </item>
     
     <item>
-      <title>linux</title>
-      <link>https://logread.cn/tags/linux/</link>
-      <pubDate>Thu, 05 Oct 2023 10:11:49 +0800</pubDate>
-      
-      <guid>https://logread.cn/tags/linux/</guid>
-      <description></description>
-    </item>
-    
-    <item>
       <title>rdma</title>
       <link>https://logread.cn/tags/rdma/</link>
       <pubDate>Thu, 05 Oct 2023 10:11:49 +0800</pubDate>
       
       <guid>https://logread.cn/tags/rdma/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>stor</title>
-      <link>https://logread.cn/tags/stor/</link>
-      <pubDate>Thu, 05 Oct 2023 10:11:49 +0800</pubDate>
-      
-      <guid>https://logread.cn/tags/stor/</guid>
       <description></description>
     </item>
     
@@ -76,15 +85,6 @@
       <pubDate>Sun, 17 Sep 2023 10:44:13 +0800</pubDate>
       
       <guid>https://logread.cn/tags/libfabric/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>net</title>
-      <link>https://logread.cn/tags/net/</link>
-      <pubDate>Sun, 17 Sep 2023 10:44:13 +0800</pubDate>
-      
-      <guid>https://logread.cn/tags/net/</guid>
       <description></description>
     </item>
     

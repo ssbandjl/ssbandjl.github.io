@@ -6,7 +6,16 @@
     <description>Recent content in stor on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Thu, 05 Oct 2023 10:11:49 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/stor/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 06 Oct 2023 14:43:38 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/stor/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>统一通信X(UCX)实现高性能便携式网络加速</title>
+      <link>https://logread.cn/post/net/net_ucx_stor_ucp_uct/</link>
+      <pubDate>Fri, 06 Oct 2023 14:43:38 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/net/net_ucx_stor_ucp_uct/</guid>
+      <description>统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022 UCX参考链接 官网: https://openucx.org/ 官方文档: https://openucx.readthedocs.io/en/master/ 设计文档及设计思想(以传输层为例): https://github.com/openucx/ucx/wiki/UCT-Design 项目主页: https://github.com/openucx/ucx 观看 SC&#39;19 会议上的 UCX 演示，了解有关 UCX 及其最新发展状况的更多信息: https://www.youtube.com/watch?v=H2d1CkGXJ64 演讲: https://ucfconsortium.org/presentations/ 视频链接: https://www.youtube.com/watch?v=Yv9nW0Qyjys&amp;amp;t=2713s 术语 UCF Unified Communication Framework 统一通信框架, https://ucfconsortium.org/, 统一通信框架 - 行业、</description>
+    </item>
+    
     <item>
       <title>DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</title>
       <link>https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/</link>

@@ -4,7 +4,57 @@
   
   <url>
     <loc>https://logread.cn/categories/</loc>
-    <lastmod>2023-10-05T10:11:49+08:00</lastmod>
+    <lastmod>2023-10-06T14:43:38+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/linux/</loc>
+    <lastmod>2023-10-06T14:43:38+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/net/</loc>
+    <lastmod>2023-10-06T14:43:38+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/</loc>
+    <lastmod>2023-10-06T14:43:38+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/stor/</loc>
+    <lastmod>2023-10-06T14:43:38+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/stor/</loc>
+    <lastmod>2023-10-06T14:43:38+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/</loc>
+    <lastmod>2023-10-06T14:43:38+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</loc>
+    <lastmod>2023-10-06T14:43:38+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/</loc>
+    <lastmod>2023-10-06T14:43:38+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/net/net_ucx_stor_ucp_uct/</loc>
+    <lastmod>2023-10-06T14:43:38+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/%E7%BD%91%E7%BB%9C/</loc>
+    <lastmod>2023-10-06T14:43:38+08:00</lastmod>
   </url>
   
   <url>
@@ -18,52 +68,12 @@
   </url>
   
   <url>
-    <loc>https://logread.cn/tags/linux/</loc>
-    <lastmod>2023-10-05T10:11:49+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/post/</loc>
-    <lastmod>2023-10-05T10:11:49+08:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://logread.cn/tags/rdma/</loc>
     <lastmod>2023-10-05T10:11:49+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/categories/rdma/</loc>
-    <lastmod>2023-10-05T10:11:49+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/stor/</loc>
-    <lastmod>2023-10-05T10:11:49+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/stor/</loc>
-    <lastmod>2023-10-05T10:11:49+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/</loc>
-    <lastmod>2023-10-05T10:11:49+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</loc>
-    <lastmod>2023-10-05T10:11:49+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/</loc>
-    <lastmod>2023-10-05T10:11:49+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/%E7%BD%91%E7%BB%9C/</loc>
     <lastmod>2023-10-05T10:11:49+08:00</lastmod>
   </url>
   
@@ -104,11 +114,6 @@
   
   <url>
     <loc>https://logread.cn/categories/libfabric/</loc>
-    <lastmod>2023-09-17T10:44:13+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/net/</loc>
     <lastmod>2023-09-17T10:44:13+08:00</lastmod>
   </url>
   
