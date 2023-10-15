@@ -156,6 +156,7 @@
 
   <ul>
     <li><a href="#rdma">rdma</a></li>
+    <li><a href="#ucx">ucx</a></li>
   </ul>
 
   <ul>
@@ -285,6 +286,7 @@ IEEE Hot Interconnects 是最先进的硬件和软件架构以及各种规模互
 <p>ceph管理手册(红帽): <a href="https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/1.3/html/administration_guide/index">https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/1.3/html/administration_guide/index</a></p>
 <p>ceph原理_rocksdb_bluestor_两阶段2PC_事务_WAL等: <a href="https://www.zhihu.com/people/allincache/posts">https://www.zhihu.com/people/allincache/posts</a></p>
 <p>ceph内部原理(读写详细流程): <a href="https://bean-li.github.io/tags/#ceph">https://bean-li.github.io/tags/#ceph</a></p>
+<p>Ceph学习——Librbd块存储库与RBD读写流程源码分析(RBD): <a href="https://blog.csdn.net/CSND_PAN/article/details/78728743">https://blog.csdn.net/CSND_PAN/article/details/78728743</a></p>
 <h2 id="daos">daos</h2>
 <p>项目计划: <a href="https://daosio.atlassian.net/wiki/spaces/DC/pages/4836661105/Roadmap">https://daosio.atlassian.net/wiki/spaces/DC/pages/4836661105/Roadmap</a></p>
 <p>设计文档: <a href="https://daosio.atlassian.net/wiki/spaces/DC/pages/4806836263/Resources">https://daosio.atlassian.net/wiki/spaces/DC/pages/4806836263/Resources</a></p>
@@ -295,6 +297,7 @@ IEEE Hot Interconnects 是最先进的硬件和软件架构以及各种规模互
 <th>主题</th>
 <th>时间</th>
 <th>链接</th>
+<th>备注</th>
 </tr>
 </thead>
 <tbody>
@@ -302,26 +305,37 @@ IEEE Hot Interconnects 是最先进的硬件和软件架构以及各种规模互
 <td>晓兵技术杂谈1-intel_daos项目简介_高性能分布式存储_RDMA_SPDK_NVME_HPC_对象存储_源码分析_c语言</td>
 <td>2023-09-02 00:22:15</td>
 <td><a href="https://www.bilibili.com/video/BV1mz4y1M7GN">https://www.bilibili.com/video/BV1mz4y1M7GN</a></td>
+<td>分布式异步对象存储 (DAOS) 是一种开源对象存储，专为大规模分布式非易失性内存 (NVM) 而设计。DAOS 利用下一代 NVM 技术，如 Intel © Optane ™ Persistent Memory 和 NVM express (NVMe)，同时在商用硬件之上提供键值存储接口，提供事务性非阻塞 I/O 等功能，具有自我修复、端到端数据完整性、细粒度数据控制和弹性存储的高级数据保护，以优化性能和成本, 参考: <a href="https://github.com/ssbandjl/daos">https://github.com/ssbandjl/daos</a></td>
 </tr>
 <tr>
 <td>晓兵技术杂谈2-daos用户态文件系统io路径_dfuse_io全路径_io栈_分布式存储_c语言</td>
 <td>2023-09-03 17:21:31</td>
 <td><a href="https://www.bilibili.com/video/BV1gu411P71a">https://www.bilibili.com/video/BV1gu411P71a</a></td>
+<td>分布式异步对象存储（DAOS，Distributed Asynchronous Object Storage）是一个开源的可扩展存储系统，从根本上设计用于在用户空间支持SCM和NVMe存储。DAOS在IO500基准测试中展现出领先的性能 DAOS从头开始设计，以利用现代化存储硬件（SCM、NVMe和CXL SSD）。其先进的低级键值API使其具有比传统基于POSIX的并行文件系统更高的IOPS和可扩展性，DAOS的IO500结果 [2] 也证实了这一点。需要注意的是，虽然DAOS提供了POSIX抽象层，但它也可以直接与自定义I/O中间件（如MPI-IO、HDF和几个AI/分析框架）集成，以提供比POSIX更多的功能。本研究仅在DAOS POSIX容器之上使用DAOS DFS API 参考: <!-- raw HTML omitted --><a href="https://logread.cn/post/daos/daos_dfuse_fs_io_path/">https://logread.cn/post/daos/daos_dfuse_fs_io_path/</a> <!-- raw HTML omitted --><a href="https://blog.csdn.net/ssbandjl/article/details/132651510">https://blog.csdn.net/ssbandjl/article/details/132651510</a> <!-- raw HTML omitted --><a href="https://cloud.tencent.com/developer/article/2322705">https://cloud.tencent.com/developer/article/2322705</a></td>
 </tr>
 <tr>
 <td>晓兵技术杂谈3-分布式存储系统-daos的rdma通信框架_verbs_rpc_cart_mercury_libfabric_c语言</td>
 <td>2023-09-08 23:16:22</td>
 <td><a href="https://www.bilibili.com/video/BV1fp4y1L7VZ">https://www.bilibili.com/video/BV1fp4y1L7VZ</a></td>
+<td>晓兵技术杂谈3-分布式存储系统-daos与rdma通信框架_verbs_rpc_cart_mercury_libfabric_c语言 CaRT（集体和 RPC 传输）与Mercury CaRT 是用于大数据和 百亿级 HPC 的开源 RPC 传输层。 它支持传统的 P2P RPC 和集体 RPC，后者通过可扩展的基于树的消息传播在一组目标服务器上调用 RPC。Cart将Mercury封装，对应用程序提供初始化上下文，创建请求，发送请求，请求回调等数据通道接口，典型的上层应用如心跳swim，rank管理, 持久内存和Nvme读写IO, 底层通过libfabric或ucx封装RDMA的发送SEND/接收RECV和READ读/WRITE写接口 参考: <!-- raw HTML omitted --><a href="https://blog.csdn.net/ssbandjl/article/details/130448137">https://blog.csdn.net/ssbandjl/article/details/130448137</a> <!-- raw HTML omitted --><a href="https://blog.csdn.net/ssbandjl/article/details/130655867">https://blog.csdn.net/ssbandjl/article/details/130655867</a><!-- raw HTML omitted --> <a href="https://github.com/ssbandjl/libfabric/blob/main/ofi_guide.md">https://github.com/ssbandjl/libfabric/blob/main/ofi_guide.md</a> <!-- raw HTML omitted --><a href="https://github.com/ssbandjl/mercury.git">https://github.com/ssbandjl/mercury.git</a> <!-- raw HTML omitted --><a href="https://github.com/ssbandjl/daos/tree/master/src/cart">https://github.com/ssbandjl/daos/tree/master/src/cart</a></td>
 </tr>
 <tr>
 <td>晓兵技术杂谈4-分布式存储系统-daos的异步任务调度引擎框架TSE_task_schedule_engine_c语言编程</td>
 <td>2023-09-16 22:01:48</td>
 <td><a href="https://www.bilibili.com/video/BV18u411c7Mg">https://www.bilibili.com/video/BV18u411c7Mg</a></td>
+<td>晓兵技术杂谈4-分布式存储系统-daos的异步任务调度引擎框架TSE_task_schedule_engine_c语言编程 任务调度引擎: <a href="https://blog.csdn.net/ssbandjl/article/details/132178633">https://blog.csdn.net/ssbandjl/article/details/132178633</a> 事件和事件队列,网络上下文即EV/EQ/CartContext <!-- raw HTML omitted --><a href="https://blog.csdn.net/ssbandjl/article/details/132385609">https://blog.csdn.net/ssbandjl/article/details/132385609</a></td>
 </tr>
 <tr>
 <td>晓兵技术杂谈5-分布式存储系统-daos底层通信rdma接口_libfabric教程_gpu数据dma_socket_大块数据bulk传输原理_rdma_单边读写_c语言编程.mp4</td>
 <td>2023-09-24 23:41:08</td>
 <td><a href="https://www.bilibili.com/video/BV1nr4y1f7kE">https://www.bilibili.com/video/BV1nr4y1f7kE</a></td>
+<td>晓兵技术杂谈5-分布式存储系统-daos底层通信rdma接口libfabric教程gpu数据dma_socket大块数据bulk传输原理rdma单边读写c语言编程_ai_intel_panda_熊猫博士 <a href="https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/">https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/</a> <a href="https://blog.csdn.net/ssbandjl/article/details/133248887">https://blog.csdn.net/ssbandjl/article/details/133248887</a></td>
+</tr>
+<tr>
+<td>晓兵技术杂谈6-分布式存储系统-daos底层通信rdma接口分层调用详解_libfabric_mercury_高性能网络_通信_c语言编程_云计算_存储.mp4</td>
+<td>2023-10-13 21:24:52</td>
+<td><a href="https://www.bilibili.com/video/BV1iN411b7qS">https://www.bilibili.com/video/BV1iN411b7qS</a></td>
+<td>晓兵技术杂谈6_分布式存储系统DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解_c语言_代码走读_通信_rpc, DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解 ,<!-- raw HTML omitted --><a href="https://cloud.tencent.com/developer/article/2335208">https://cloud.tencent.com/developer/article/2335208</a> <!-- raw HTML omitted --><a href="https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/">https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/</a> <!-- raw HTML omitted -->常用学习链接(随时更新): <!-- raw HTML omitted --><a href="https://logread.cn/post/study/summary/">https://logread.cn/post/study/summary/</a></td>
 </tr>
 </tbody>
 </table>
@@ -336,6 +350,7 @@ IEEE Hot Interconnects 是最先进的硬件和软件架构以及各种规模互
 <p>rdma杂谈_技术原理: <a href="https://www.zhihu.com/column/c_1231181516811390976">https://www.zhihu.com/column/c_1231181516811390976</a></p>
 <p>nvidia_mlx_RDMA编程指导: <a href="https://docs.nvidia.com/networking/display/RDMAAwareProgrammingUM/Glossary">https://docs.nvidia.com/networking/display/RDMAAwareProgrammingUM/Glossary</a></p>
 <p><a href="https://docs.nvidia.com/networking/display/RDMAAwareProgrammingUM/Programming+Examples+Using+IBV+Verbs">https://docs.nvidia.com/networking/display/RDMAAwareProgrammingUM/Programming+Examples+Using+IBV+Verbs</a></p>
+<h2 id="ucx">ucx</h2>
 <h1 id="编码">编码</h1>
 <p>google c++编码规范: <a href="https://google.github.io/styleguide/cppguide.html">https://google.github.io/styleguide/cppguide.html</a></p>
 <h1 id="计算机">计算机</h1>
@@ -352,7 +367,11 @@ IEEE Hot Interconnects 是最先进的硬件和软件架构以及各种规模互
 <p>单元测试框架对比: <a href="http://www.throwtheswitch.org/comparison-of-unit-test-frameworks">http://www.throwtheswitch.org/comparison-of-unit-test-frameworks</a></p>
 <h2 id="晓兵">晓兵</h2>
 <p><a href="https://logread.cn/post/study/summary/">https://logread.cn/post/study/summary/</a></p>
-<p>博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a></p>
+<p>博客:</p>
+<p><a href="https://cloud.tencent.com/developer/user/5060293/articles">https://cloud.tencent.com/developer/user/5060293/articles</a></p>
+<p><a href="https://cloud.tencent.com/developer/user/5060293/video">https://cloud.tencent.com/developer/user/5060293/video</a></p>
+<p><a href="https://logread.cn/">https://logread.cn</a></p>
+<p><a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a></p>
 <p>weixin: ssbandjl</p>
 <p>公众号: 云原生云</p>
 <p>
