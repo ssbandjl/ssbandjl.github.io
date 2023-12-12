@@ -78,6 +78,60 @@
     <article class="post">
         <header>
             <h1 class="post-title">
+                <a href="https://logread.cn/post/stor/ceph/ceph_msg/" title="MSGR2 协议（MSGR2.0 和 MSGR2.1）">MSGR2 协议（MSGR2.0 和 MSGR2.1）</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年5月10日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            Author 晓兵 weixin: ssbandjl 公众号: 云原生云 ceph文档 MSGR2 协议（MSGR2.0 和 MSGR2.1） 这是由 SimpleMessenger 实现的遗留 Ceph 在线协议的修订版。它解决了性能和安全问题。 目标 相对于原始协议，此协议修订版有几个目标： 灵活的握手。原始协议没有足够灵活的协议协商来允许不需要的功能。 加密。我们将通过网络整合加密。 表……
+        </div>
+        <p class="readmore"><a href="https://logread.cn/post/stor/ceph/ceph_msg/">阅读全文</a></p>
+    </article>
+    
+    
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://logread.cn/post/linux/trace/linux_google_trace_dapper/" title="Linux_google_trace_dapper">Linux_google_trace_dapper</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年5月9日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            Author 晓兵 weixin: ssbandjl 公众号: 云原生云 title 另一个设计目标是跟踪数据在生成后可快速用于分析：最好是在一分钟内。 尽管对数小时前的数据运行的跟踪分析系统仍然非常有价值，但可用的最新信息可以更快地对生产异常做出反应。 真正的应用程序级透明性，可能是我们最具挑战性的设计目标，是通过将 Dapper 的核心跟踪工具限制在……
+        </div>
+        <p class="readmore"><a href="https://logread.cn/post/linux/trace/linux_google_trace_dapper/">阅读全文</a></p>
+    </article>
+    
+    
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
                 <a href="https://logread.cn/post/ofa/ofa_librabric/" title="OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织">OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织</a>
             </h1>
         </header>
@@ -293,64 +347,6 @@
     
     
     
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://logread.cn/post/compile/makefile/makefile/" title="Makefile">Makefile</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2022年4月22日
-        </date>
-        
-        <div class="post-meta">
-            <span>|</span>
-            
-            <span class="meta-category"><a href='/categories/%E7%BC%96%E8%AF%91'>编译</a></span>
-            
-            <span class="meta-category"><a href='/categories/%E9%93%BE%E6%8E%A5'>链接</a></span>
-            
-            <span class="meta-category"><a href='/categories/Makefile'>Makefile</a></span>
-            
-        </div>
-        
-        <div class="post-content">
-            Author 晓兵 weixin: ssbandjl 公众号: 云原生云 Makefile 简介 参考链接: https://www.gnu.org/software/make/manual/make.html#Introduction 您需要一个名为 makefile 的文件来告诉 make 要做什么。 大多数情况下，makefile 告诉 make 如何编译和链接程序。 在本章中，我们将讨论一个简单的 makefile，它描述了如何编译和链接一个由 8 个 C 源文件和 3 个头文件组成的文本编辑器。 makefile 还可以告诉 make 在明确要……
-        </div>
-        <p class="readmore"><a href="https://logread.cn/post/compile/makefile/makefile/">阅读全文</a></p>
-    </article>
-    
-    
-    
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://logread.cn/post/storage/cache/bcache/" title="Bcache">Bcache</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2022年4月18日
-        </date>
-        
-        <div class="post-meta">
-            <span>|</span>
-            
-            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
-            
-            <span class="meta-category"><a href='/categories/%E7%BC%93%E5%AD%98'>缓存</a></span>
-            
-            <span class="meta-category"><a href='/categories/bcache'>bcache</a></span>
-            
-        </div>
-        
-        <div class="post-content">
-            Author 晓兵 weixin: ssbandjl 公众号: 云原生云 A block layer cache (bcache) What is bcache? Bcache is a Linux kernel block layer cache. It allows one or more fast disk drives such as flash-based solid state drives (SSDs) to act as a cache for one or more slower hard disk drives. Hard drives are cheap and big, SSDs are fast but small and expensive. Wouldn&rsquo;t it be nice if you could transparently get the advantages of both? With Bcache, you can have your cake and eat it too. Bcache patches for the Linux kernel allow one to use SSDs to cache other block devices. It&rsquo;s analogous to L2Arc for ZFS, but Bcache also does writeback caching (besides just write through caching), and it&rsquo;s filesystem agnostic. It&rsquo;s designed to be switched on with a minimum……
-        </div>
-        <p class="readmore"><a href="https://logread.cn/post/storage/cache/bcache/">阅读全文</a></p>
-    </article>
-    
-    
-    
 
 
 
@@ -521,6 +517,10 @@
     
     <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
     
+    <li><a href="https://logread.cn/categories/iscsi/">iscsi (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/kernel/">kernel (2)</a></li>
+    
     <li><a href="https://logread.cn/categories/libfabric/">libfabric (1)</a></li>
     
     <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
@@ -541,9 +541,9 @@
     
     <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
     
-    <li><a href="https://logread.cn/categories/stor/">stor (23)</a></li>
+    <li><a href="https://logread.cn/categories/stor/">stor (25)</a></li>
     
-    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (28)</a></li>
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (30)</a></li>
     
     <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
     
@@ -585,6 +585,10 @@
   <a href="https://logread.cn/tags/golang/">golang</a>
   
   <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/iscsi/">iscsi</a>
+  
+  <a href="https://logread.cn/tags/kernel/">kernel</a>
   
   <a href="https://logread.cn/tags/libfabric/">libfabric</a>
   

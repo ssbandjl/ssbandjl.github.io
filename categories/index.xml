@@ -107,6 +107,24 @@
     </item>
     
     <item>
+      <title>iscsi</title>
+      <link>https://logread.cn/categories/iscsi/</link>
+      <pubDate>Tue, 20 Jun 2023 11:51:19 +0800</pubDate>
+      
+      <guid>https://logread.cn/categories/iscsi/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>kernel</title>
+      <link>https://logread.cn/categories/kernel/</link>
+      <pubDate>Tue, 20 Jun 2023 11:51:19 +0800</pubDate>
+      
+      <guid>https://logread.cn/categories/kernel/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>dpdk</title>
       <link>https://logread.cn/categories/dpdk/</link>
       <pubDate>Sun, 18 Jun 2023 12:41:32 +0800</pubDate>
