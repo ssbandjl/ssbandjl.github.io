@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7571343657358120"
+     crossorigin="anonymous"></script>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>Virtio | 晓兵</title>
+    <meta property="og:title" content="Virtio - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2023-12-15T19:45:07&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2023-12-15T19:45:07&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储,ceph,分布式块存储,云计算,daos,rdma,spdk,nvmeof,linux,kernel,内核,分布式存储,dpdk,rpc">
+    <meta name="description" content="Virtio">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/linux/virtio/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#简介">简介</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#虚拟化与仿真">虚拟化与仿真：</a></li>
+    <li><a href="#为什么或者为什么不virtio-续">为什么（或者为什么不）VirtIO？ （续）</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#virtio-驱动程序前端">VirtIO 驱动程序（前端）：</a></li>
+    <li><a href="#virtio-设备后端">VirtIO 设备（后端）：</a></li>
+    <li><a href="#虚拟队列">虚拟队列：</a></li>
+    <li><a href="#vr环">VR环：</a>
+      <ul>
+        <li><a href="#描述符环描述符区域">描述符环（描述符区域）：</a></li>
+        <li><a href="#可用环驾驶员区域">可用环（驾驶员区域）：</a></li>
+        <li><a href="#使用过的环设备区域">使用过的环（设备区域）：</a></li>
+        <li><a href="#vr环总结">VR环总结：</a></li>
+      </ul>
+    </li>
+    <li><a href="#荣誉奖vhost">荣誉奖：VHost</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#virtio-scsi">Virtio-SCSI：</a>
+      <ul>
+        <li><a href="#命令-virtqueue">命令 VirtQueue：</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#晓兵">晓兵</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Virtio</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年12月15日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+            <span class="meta-category"><a href='/categories/virtio'>virtio</a></span>
+            
+            <span class="meta-category"><a href='/categories/qemu'>qemu</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="virtio简介">VirtIO简介</h1>
+<h2 id="简介">简介</h2>
+<ul>
+<li><a href="https://blogs.oracle.com/linux/category/lnx-technologies">技术，</a></li>
+<li><a href="https://blogs.oracle.com/linux/category/lnx-linux-kernel-development">Linux内核开发</a></li>
+</ul>
+<p>2022 年 5 月 24 日 | 阅读时间 33 分钟
+(<a href="https://blogs.oracle.com/authors/jonah-palmer">https://blogs.oracle.com/authors/jonah-palmer</a>)</p>
+<h1 id="概述">概述：</h1>
+<p>在本文档中，我们将从技术角度了解 VirtIO 的基础知识，并深入探讨其一些关键领域。这篇 VirtIO 简介是在假设读者几乎没有 VirtIO 工作知识的情况下编写的，但对于那些已经熟悉 VirtIO 的人来说，这也应该是一个有用的复习。</p>
+<p>我们将首先了解 VirtIO 的实际含义以及我们使用它的原因。然后我们将获得更多技术知识并提供有关 VirtIO 关键领域（即 VirtIO 设备和虚拟机）的更多详细信息。驱动程序、VirtQueue 和 VRing（或“区域”）。最后，为了让一切完整，我们将看一下 Qemu 中 VirtIO 设备的 VirtQueue 的工作示例（带有一些代码），并了解 VirtIO 世界中的所有内容如何组合在一起。</p>
+<h1 id="什么是-virtio">什么是 VirtIO？</h1>
+<p>正式来说，VirtIO，或虚拟输入&amp;输出是虚拟机主机设备上的抽象层。但这到底意味着什么呢？本质上，它是一个接口，允许虚拟机通过称为 VirtIO 设备的最小化虚拟设备来使用其主机的设备。这些 VirtIO 设备规模很小，因为它们仅满足发送和接收数据的基本需求。这是因为，通过 VirtIO，我们让主机处理其实际物理硬件设备上的大部分设置、维护和处理。 VirtIO 设备的作用或多或少是从主机的实际物理硬件中获取数据。</p>
+<p>例如，假设我们有一个在主机上运行的 VM（虚拟机），并且该 VM 想要访问互联网。虚拟机没有自己的网卡来访问互联网，但主机有。为了让虚拟机访问主机的网卡，从而访问互联网，可以创建一个名为 <em>virtio-net</em> 的 VirtIO 设备。简而言之，它的主要目的是向主机发送和接收网络数据。换句话说，让 virtio-net 成为主机和来宾之间网络数据的联络人。</p>
+<p>
+        <img class="mx-auto" alt="virtio-net-simple-ex1" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONTFCEEC4E826B34C97A37799AFC55E9887/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    </p>
+<p>图1</p>
+<p>上图 1 概括地展示了虚拟机向主机请求和接收网络数据的过程。高级交互将类似于以下内容：</p>
+<ol>
+<li>**虚拟机：**我想要访问 google.com。你好 virtio-net，你能告诉主机帮我检索这个网页吗？</li>
+<li>**Virtio-net：**好的。您好，楼主，您能帮我们拉一下这个网页吗？</li>
+<li>**主持人：**好的。我现在正在抓取网页数据。</li>
+<li>**主持人：**这是请求的网页数据。</li>
+<li><strong>Virtio-net：</strong> 谢谢。嘿 VM，这是您请求的网页。</li>
+</ol>
+<p>虽然这是一个过于简化的示例，但核心思想仍然完好无损。也就是说，让主机硬件承担尽可能多的工作，并让 VirtIO 处理发送和接收数据。例如，与<em>模拟</em>设备相比，将大量工作转移到主机可以使虚拟机上的执行速度更快、效率更高。&lt; /span&gt;</p>
+<p>VirtIO 的另一个重要方面是其核心框架已标准化为官方 VirtIO 规范。 VirtIO 规范定义了 VirtIO 设备和驱动程序必须满足的标准要求（例如功能位、状态、配置、常规操作等）。这一点很重要，因为这意味着，无论使用 VirtIO 的环境或操作系统如何，其实现的核心框架都必须相同。</p>
+<p>虽然 VirtIO 实现具有一致性，但在组织和设置方面也存在一些余地。例如，Linux 内核中的 <code>virtqueue</code> 结构与 Qemu 的 <code>VirtQueue</code> 结构的组织方式不同。然而，一旦您了解 VirtIO 的一种实现（例如在 Qemu 中），理解其他实现就会容易得多。</p>
+<h1 id="为什么或者为什么不virtio">为什么（或者为什么不）VirtIO？</h1>
+<p>在上面的示例中，我们使用主机的网络设备让虚拟机访问互联网，但是<em>模拟</em>网络设备又如何呢？我们的虚拟机呢？通过仿真，我们可以模仿任何设备，甚至是我们的主机硬件物理上不支持的设备。那么，如果我们可以为虚拟机模拟任何设备，为什么还要将自己限制在主机的设备和功能上呢？要回答这个问题，我们首先要了解虚拟化和仿真之间的区别。</p>
+<h2 id="虚拟化与仿真">虚拟化与仿真：</h2>
+<p>在仿真中，软件会替代硬件并发挥作用，就好像它是真实的硬件一样。回想一下，在前面的示例中，我们的虚拟机使用 virtio-net 设备与主机的 NIC 进行通信。如果我们希望虚拟机使用主机没有且不支持的 NIC（即某些旧设备），该怎么办？在这种情况下，我们可以使用仿真并获取软件来填补缺少的硬件支持。我们还可以使用仿真让虚拟机在适用于其他硬件的完全不同的操作系统上运行（例如 Windows PC 上的 MacOS）。</p>
+<p>当您需要使用主机硬件不具备或不支持的设备或软件时，首选仿真。然而，仿真并不是没有成本的，因为填补缺失硬件的软件是主机 CPU 必须处理的额外代码。拥有专用硬件总是会更快！</p>
+<p>在虚拟化中，软件会分割主机的物理硬件以供来宾虚拟机使用。将主机的硬件分配给每个来宾虚拟机本质上是将这部分硬件“专用”给该虚拟机，使该虚拟机认为它拥有自己的硬件（实际上它只是从主机“借用”它）。这里虚拟化的关键思想是每个来宾都可以直接访问主机硬件的该部分。请注意，此处的“专用”<em>并不</em>意味着主机将被剥夺所述设备。这更像是共享，而不是授予特定硬件的全部所有权。</p>
+<p>当然，由于虚拟化分割了主机的资源，因此我们的来宾自然会受到主机硬件支持的限制。对于 VirtIO 设备，这就是它的输入/输出（NIC、块、内存等）虚拟化。换句话说，它是主机和客户机之间 I/O 设备的通信框架。</p>
+<h2 id="为什么或者为什么不virtio-续">为什么（或者为什么不）VirtIO？ （续）</h2>
+<p>很明显，虚拟化和仿真都是通过软件模仿硬件的技术。然而，这些技术用于满足不同的期望。简而言之，如果您需要满足以下条件，您可以选择<strong>仿真</strong>而不是虚拟化：</p>
+<ul>
+<li>运行适用于不同硬件的操作系统（例如 PC 上的 MacOS、PC 上基于游戏机的游戏等）</li>
+<li>运行适用于其他操作系统的软件（例如 MacOS 上的 Microsoft Word）</li>
+<li>在不受支持的硬件上运行旧设备</li>
+</ul>
+<p>相比之下，如果您符合以下条件，您会选择<strong>虚拟化</strong>而不是模拟：</p>
+<ul>
+<li>关心主机和访客性能（专用硬件）</li>
+<li>不需要对遗留软件或硬件的支持</li>
+<li>需要运行多个来宾实例并有效利用主机资源</li>
+</ul>
+<h1 id="virtio架构">VirtIO架构</h1>
+<p>VirtIO 的架构由三个关键部分组成：前端驱动程序、后端设备及其 VirtQueues 和 VirtQueues。 VR 环。在下图中，我们可以看到每个部分在使用 VirtIO 的典型主机和来宾设置中的位置（例如，无 VHost、SR-IOV 等）。</p>
+<p>
+        <img class="mx-auto" alt="Virtio架构" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONT4FCF86F243514632B4117AD41E683DC4/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    </p>
+<p>图2</p>
+<p>在图 2 中，我们可以看到前端 VirtIO 驱动程序存在于 guest 虚拟机内核中，后端 VirtIO 设备存在于虚拟机管理程序 (Qemu) 中，它们之间的通信通过 VirtQueues 和 VirtQueues 在数据平面中处理。 VR 环。我们还可以看到来自 VirtIO 驱动程序和设备的通知（例如 VMExits、vCPU IRQ），这些通知被路由到 KVM 中断。我们不会在本文档中详细介绍这些通知，但现在知道它们的存在就足够了。</p>
+<h2 id="virtio-驱动程序前端">VirtIO 驱动程序（前端）：</h2>
+<p>在使用 VirtIO 的典型主机和客户机设置中，VirtIO 驱动程序存在于客户机的内核中。在来宾操作系统中，每个 VirtIO 驱动程序都被视为一个内核模块。 VirtIO 驱动程序的核心职责是：</p>
+<ul>
+<li>接受来自用户进程的 I/O 请求</li>
+<li>将这些 I/O 请求传输到相应的后端 VirtIO 设备</li>
+<li>从 VirtIO 设备对应方检索已完成的请求</li>
+</ul>
+<p>例如，来自 virtio-scsi 的 I/O 请求可能是用户想要从存储中检索文档。 virtio-scsi 驱动程序接受检索所述文档的请求，并将该请求发送到 virtio-scsi 设备（后端）。一旦 VirtIO 设备完成请求，该文档就可供 VirtIO 驱动程序使用。 VirtIO 驱动程序检索文档并将其提供给用户。</p>
+<h2 id="virtio-设备后端">VirtIO 设备（后端）：</h2>
+<p>此外，在使用 VirtIO 的典型主机和来宾设置中，VirtIO 设备也存在于虚拟机管理程序中。在上面的图 2 和本文档中，我们将使用 Qemu 作为我们的（类型 2）虚拟机管理程序。这意味着我们的 VirtIO 设备将存在于 Qemu 进程中。 VirtIO 设备的核心职责是：</p>
+<ul>
+<li>接受来自相应前端 VirtIO 驱动的 I/O 请求</li>
+<li>通过将 I/O 操作卸载到主机的物理硬件来处理请求</li>
+<li>使处理后的请求数据可供 VirtIO 驱动程序使用</li>
+</ul>
+<p>返回 virtio-scsi 示例； virtio-scsi 驱动程序通知其对应的设备，让设备知道它需要去检索实际物理硬件上存储的所请求的文档。 virtio-scsi 设备接受此请求并执行必要的调用以从物理硬件检索数据。最后，设备将检索到的数据放入其共享 <em>VirtQueue</em> 中，从而使数据可供驱动程序使用。</p>
+<h2 id="虚拟队列">虚拟队列：</h2>
+<p>VirtIO 架构的最后一个关键部分是 VirtQueue，它是本质上协助设备和驱动程序执行各种 VRing 操作的数据结构。 VirtQueue 在来宾物理内存中共享，这意味着每个 VirtIO 驱动程序和虚拟机都可以使用 VirtQueue。设备对访问 RAM 中的同一页面。换句话说，驱动程序和设备的 VirtQueue <strong>不是</strong>同步的两个不同区域。</p>
+<p>关于 VirtQueue 的描述，网上有很多不一致的地方。有些人将其与 VRing（或 virtio 环）同义使用，而另一些人则单独描述它们。这是因为 VRing 是 VirtQueue 的主要功能，因为 VRing 是促进 VirtIO 设备和驱动程序之间数据传输的实际数据结构。我们将在这里单独描述它们，因为 VirtQueue 不仅仅是它的 VRing。</p>
+<p>下面的图 3 显示了 Qemu 版本的 VirtQueue 和 VRing 数据结构。</p>
+<p>
+        <img class="mx-auto" alt="VirtQueue&#43;VRing结构图" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONT4CA15EE4F36D42C6AC02985772BD7C5E/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    </p>
+<p>图3</p>
+<p>在Qemu的VirtIO框架中，我们可以清楚地看到<code>VirtQueue</code>数据结构与其VRing的数据结构之间的区别和关系（例如<code>VRing</code>、） a&gt;）。、<code>VRingDesc</code>、<code>VRingAvail``VRingUsed</code></p>
+<p>除了 VRing 本身之外，VirtQueue 还便于使用各种标志、索引和处理程序（或回调函数），所有这些都以一种或另一种方式用于 VRing 操作。不过，需要注意的是，VirtQueue 的组织特定于来宾操作系统，以及我们讨论的是用户空间（例如 Qemu）还是内核 VirtIO 框架。此外，VirtQueue 的操作特定于 VirtIO 配置（例如拆分 VirtQueue 与打包 VirtQueue）。</p>
+<p>例如，下图 4 显示了 Linux 内核版本的 VirtQueue 和 VRing 数据结构。</p>
+<p>
+        <img class="mx-auto" alt="VirtQueue&#43;VRing-结构图2" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONT99EFB40A9E514401A3D2426DBA134DE9/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    </p>
+<p>图4</p>
+<p>将 Linux 内核的 VirtIO 框架与图 3 中的 Qemu 进行比较，我们可以清楚地看到它们组织上的差异。然而，由于 VirtIO 规范，我们也可以看到它们的 VRing 结构（描述、可用、使用）有相似之处。</p>
+<p>目前，了解每个结构体的字段如何对 VirtQueue 和 VRing 操作做出贡献并不重要。这里的要点是要知道 VirtQueues 和 VRings 是两种不同的数据结构，VirtQueue 的组织会根据操作系统以及我们谈论的是用户态还是内核 VirtIO 框架而有所不同。</p>
+<h2 id="vr环">VR环：</h2>
+<p>正如我们刚才提到的，VRing 是 VirtQueue 的主要功能，也是保存实际传输数据的核心数据结构。它们被称为“环”的原因是因为它本质上是一个数组，一旦写入最后一个条目，它就会回绕到其自身的开头。这些 VRing 现在开始被称为“区域”，但由于 Qemu 仍然在其源代码中使用 VRing 术语，我们在这里将继续使用该名称。</p>
+<p>每个 VirtQueue 最多可以有（通常有）三种类型的 VRing（或区域）：</p>
+<ul>
+<li>描述符环（描述符区域）</li>
+<li>可用环（驱动区域）</li>
+<li>使用环（设备区域）</li>
+</ul>
+<h3 id="描述符环描述符区域">描述符环（描述符区域）：</h3>
+<p>描述符环（或描述符表、描述符区域）本质上是一个描述符的循环数组<strong>描述符</strong>，其中描述符是一种数据结构，描述数据缓冲区。描述符保存有关其数据缓冲区的以下信息：</p>
+<ul>
+<li><code>addr</code>：客人实际地址</li>
+<li><code>len</code>：数据缓冲区的长度</li>
+<li><code>flags</code>：标志（<code>NEXT</code>、<code>WRITE</code>、<code>INDIRECT</code>）</li>
+<li><code>next</code>：下一个链接描述符的索引（在描述环中）</li>
+</ul>
+<p>标志通知设备或驱动程序 (a) 下一个描述符中是否有更多相关数据 (<code>NEXT</code>)，(b) 该缓冲区是否为只写（设备可写）（ <code>WRITE</code>），以及 (c) 缓冲区是否包含间接描述符表 (<code>INDIRECT</code>)？为了简单起见，我们不会在这里讨论间接描述符表。</p>
+<p>对于 <code>NEXT</code> 标志，当当前描述符缓冲区中的数据继续进入“下一个”描述符缓冲区时，会设置此标志。当一个或多个描述符以这种方式链接在一起时，这称为“描述符链接”。 <code>next</code> 字段指的是下一个链式描述符的索引（在描述符环中）。关于描述符链值得注意的一件事是，它们可以由<em>两者</em>只写和只读描述符组成。</p>
+<p>最后，只有驱动程序可以将描述符添加（写入）到描述符环，并且如果描述符的标志表明缓冲区可写，则设备只能写入设备可写缓冲区。缓冲区可以是只写的或只读的，但不能同时是两者。</p>
+<p>
+        <img class="mx-auto" alt="描述符表" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONTE98509C064EC4C4C8F81040B575E794B/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    </p>
+<p>图5</p>
+<p>在上面的图 5 中，我们可以看到一个具有四个描述符条目的描述符环，其中两个条目链接在一起。索引 <code>[0]</code> 处的第一个描述符条目告诉我们数据缓冲区位于 <code>0x600</code> 的 GPA（客户物理地址），它的数据缓冲区是 长度为 <code>0x100</code> 个字节，并且被标记为设备可写 (<code>W</code>)。我们知道该条目不是描述符链的头部，因为没有下一个 (<code>N</code>) 标志，并且下一个字段设置为 <code>0</code>。</p>
+<p>第二个描述符条目 (<code>[1]</code>) 告诉我们其数据缓冲区位于 GPA <code>0x810</code>，数据缓冲区长度为 &lt; a i=3&gt; 字节，并标记为设备可写和下一个。由于下一个标志被提出，我们知道这个描述符是描述符链的头部。 字段告诉我们该链中的下一个描述符位于描述符环索引。<code>0x200``next``[2]</code></p>
+<p>第三个描述符条目 (<code>[2]</code>) 的数据缓冲区继续以 GPA <code>0xA10</code> 继续存储 <code>0x200</code> 个字节，并且缓冲区也是设备可写的。由于没有引发下一个标志，描述符链在此结束。</p>
+<p>最后，第四个描述符条目 (<code>[3]</code>) 告诉我们其数据缓冲区位于 GPA <code>0x525</code>，数据缓冲区长度为 <code>0x50</code> 字节，并且没有标志（设备只读，无描述符链）。</p>
+<p>请注意，在描述符环中，缓冲区的 GPA 和长度<em>不得</em>与另一个条目的内存范围重叠，并且缓冲区开头的 GPA下一个缓冲区不一定要高于前一个缓冲区（例如描述符条目<code>[3]</code>）。</p>
+<h3 id="可用环驾驶员区域">可用环（驾驶员区域）：</h3>
+<p>可用环（或可用环、驱动区域）是描述符环中可用描述符的引用的循环数组。换句话说，可用环中的每个条目都指向描述符环中的一个描述符（或描述符链的头部）。</p>
+<p>包括可用环数组在内，可用环还有以下字段：</p>
+<ul>
+<li><code>flags</code>：配置标志</li>
+<li><code>idx</code>：下一个可用的可用环条目的索引</li>
+<li><code>ring[]</code>：实际可用的环形阵列</li>
+</ul>
+<p>标志字段表示可用环的配置及其一些操作。索引字段表示可用环中的下一个<em>可用</em>条目，驱动程序将在其中放置对描述符（或描述符链的头）的下一个引用。最后，ring 字段表示实际可用的环数组，其中驱动程序存储描述符环引用。</p>
+<p>只有驱动程序可以配置并向可用环添加条目，而相应的设备只能从中读取。最初，在驱动程序将其第一个条目添加到可用环之前，没有标志的可用环将类似于下面的图 6：</p>
+<p>
+        <img class="mx-auto" alt="可用环初始化" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONT62ACFF9D69834BB69C270B241685DEA5/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    </p>
+<p>图6</p>
+<p>在图 6 中，我们可以看到一个没有条目且没有设置标志的可用环。索引 (<code>idx</code>) 为 <code>0</code>，因为可用环数组的下一个可用条目为 <code>ring[0]</code>。</p>
+<p>现在，使用图 5 作为我们的描述符环，假设驱动程序在描述符环上添加（或使其可用）第一个描述符条目。可用的环将如下图 7 所示：</p>
+<p>
+        <img class="mx-auto" alt="描述-可用-ring1" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONT7D01578376D342C9BB6A4FAB68DC74EB/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    </p>
+<p>图7</p>
+<p>在这里我们可以看到，驱动程序通过将<em>描述符表的索引</em>添加到第一个描述符条目，使第一个描述符条目可供设备使用。可用环中的可用条目 (<code>ring[0]</code>)。我们还可以看到 <code>idx</code> 现在是 <code>1</code>，因为 <code>ring[1]</code> 现在是环上的下一个可用条目。在这种状态下，设备只能读取描述符环的第一个条目，而无法访问其他描述符。</p>
+<p>现在假设驱动程序将下一个描述符条目添加到其可用环中。请注意，下一个描述符条目是描述符链的头部。可用的环将如图 8 所示：</p>
+<p>
+        <img class="mx-auto" alt="描述符表&#43;可用环2" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONTBC7F794866BA48ADA8F6038B88C35E9D/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    图8</p>
+<p>在这里，我们看到驱动程序使第二个<em>和</em>第三个描述符条目可用（链接描述符）。现在 <code>ring[1]</code> 指向描述符链的头部，使设备可以访问其所有链式描述符。 <code>idx</code> 设置为 <code>2</code>，因为 <code>ring[2]</code> 现在是可用环上的下一个可用条目。</p>
+<p>最后，假设驱动程序将下一个描述符条目添加到可用环中。现在可用的环如下图 9 所示：</p>
+<p>
+        <img class="mx-auto" alt="描述-可用-ring3" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONTE7237D45D05B4D83B99AD44BCD28D747/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    </p>
+<p>图9</p>
+<p>在这里，我们看到驱动程序通过将其描述符环的索引添加到可用环上的下一个可用条目 (<code>ring[2]</code>)，使第四个描述符条目可供设备使用。请注意，在 <code>ring[2]</code> 中，描述符环的索引为 <code>3</code>。这是因为 <code>ring[1]</code> 包括描述符环索引 1 和 2。 2（链式）。最后，可用环的 <code>idx</code> 现在为 <code>3</code>，因为可用环上的下一个可用条目为 <code>ring[3]</code>。</p>
+<p>总之，<em>驱动程序</em>是唯一能够分别向描述符和可用环添加描述符条目和可用环条目的驱动程序。然而，<em>设备</em>无法访问此数据，直到驱动程序将相应的描述符环索引添加到可用环中。</p>
+<h3 id="使用过的环设备区域">使用过的环（设备区域）：</h3>
+<p>已使用环（或设备区域）与可用环类似，不同之处在于它是对 <em>已使用</em> 描述符条目的引用的循环数组描述符环（即设备写入或读取描述符的数据缓冲区）。</p>
+<p>以下字段组成了已使用的环：</p>
+<ul>
+<li>
+<p><code>flags</code>：配置标志</p>
+</li>
+<li>
+<p><code>idx</code>：下一个可用的已使用环条目的索引</p>
+</li>
+<li>
+<pre><code>ring[]
+</code></pre><p>：实际使用的环形数组（数据对结构）</p>
+<ul>
+<li><code>id</code>：该元素引用的描述符环的索引</li>
+<li><code>len</code>：写入描述符缓冲区的数据长度</li>
+</ul>
+</li>
+</ul>
+<p>与可用环数组不同，使用环上的每个条目都是数据对（表示为“使用元素”结构），描述 (1) 的索引 (<code>id</code>)描述符环中的描述符（或链式描述符的头部）引用已使用（读取或写入）的缓冲区和 (2) 写入描述符缓冲区的总写入长度 (<code>len</code>) (或描述符链中所有缓冲区的总写入长度）。</p>
+<p>与可用环类似，已用环也使用<code>flags</code>和<code>idx</code>字段。索引字段与可用环的索引字段相同，但对于已使用的环，它表示已使用的环数组中的下一个可用条目。</p>
+<p>与可用环相反，只有设备可以配置并向已用环添加条目，而相应的驱动程序只能从中读取。</p>
+<p>最初，在设备开始处理来自可用环的数据之前，使用的环（没有标志）将如下图 10 所示：</p>
+<p>
+        <img class="mx-auto" alt="使用环初始化" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONTFFED562B6FD544E9B8243041361D0EEA/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    </p>
+<p>图10</p>
+<p>在这里，我们看到一个空的已用环，其中下一个可用的已用环索引 (<code>idx</code>) 设置为 <code>0</code>，对于 <code>ring[0]</code>，这里没什么特别的。</p>
+<p>现在让我们看看当设备处理完第一个可用环条目并向其使用的环添加一个条目时会发生什么（使用上面的图 10）。回想一下，第一个描述符的数据缓冲区被标记为设备可写，因此假设设备将 <code>0x50</code> 字节写入描述符的设备可写缓冲区。最终使用的戒指如下所示：</p>
+<p>
+        <img class="mx-auto" alt="描述符表&#43;可用环&#43;已用环1" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONT2C39B3F0D14F448DAFA1680562097416/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    </p>
+<p>图11</p>
+<p>在上面的图 11 中，我们可以看到所使用的环条目的数据对：<code>0 | 0x50</code>。 <code>0</code> (<code>id</code>) 表示设备在描述符环上使用（在本例中为写入）描述符的数据缓冲区和 <code>0x50</code> (<code>len</code>) 是写入描述符数据缓冲区的总字节数。最后，已用环的 <code>idx</code> 设置为 1，因为它现在是已用环上的下一个可用条目。</p>
+<p>让我们看看在设备处理第二个可用环条目后，已用环上的下一个条目看起来如何。回想一下，可用环的第二个条目指向描述符链，其中两个描述符都是设备可写的。我们还假设设备在第一个描述符的数据缓冲区中写入 <code>0x200</code> 字节，并在第二个描述符的数据缓冲区中写入 <code>0x150</code> 字节。最终使用的环如下图12所示：</p>
+<p>
+        <img class="mx-auto" alt="描述符表&#43;可用环&#43;已用环2" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONTC0074DF680124947887291ADFACB85E1/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    </p>
+<p>图12</p>
+<p>在这里，我们可以看到使用的环条目在给定写入了多个数据缓冲区的描述符链的情况下是什么样子。使用的环条目的索引总是指向单个描述符或描述符链的头部。在这种情况下，使用的<code>ring[1]</code>指向描述符环索引处的描述符链的头部<code>1</code>。</p>
+<p>描述符链所用环条目的长度表示写入每个链式描述符数据缓冲区的字节总数。由于设备将 <code>0x200</code> 字节写入第一个链接描述符的数据缓冲区，并将 <code>0x150</code> 字节写入第二个链接描述符的数据缓冲区，这意味着所有描述符的总写入长度链接描述符的数量将为 <code>0x350</code>。</p>
+<p>最后，让设备处理可用环的第三个条目并添加其对应的已用环条目。请注意，可用环的第三个条目指向没有标志的描述符，这意味着它是单个描述符，并且其数据缓冲区对于设备来说是只读的。使用的环如下图 13 所示：</p>
+<p>
+        <img class="mx-auto" alt="描述符表&#43;可用环&#43;已用环3" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONT9428498C4FF84433B370B29E62B01BCA/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    </p>
+<p>图13</p>
+<p>在这里，我们可以看到给定单个只读描述符时使用的环条目的外观。这里值得注意的是所使用的环条目数据对中的长度<code>0x0</code>。这里它的值为零只是因为没有向该缓冲区写入任何内容（对于设备来说是只读的）。最后，正如预期的那样，所用环条目中的索引为 <code>3</code>，因为描述符环的索引 <code>2</code> 是描述符链的一部分。</p>
+<h3 id="vr环总结">VR环总结：</h3>
+<p>在本节中，我们通过示例描述符环数据集介绍了描述符、可用和已使用的环。这里需要强调的是，上面的示例非常简单，没有显示通知的作用，也没有显示其他 VRing 配置（例如间接描述符、使用的缓冲区通知抑制、打包 VirtQueue 等）。但是，它确实显示了三个环背后的一般用途以及它们如何与设备和驱动程序一起工作。</p>
+<p>总之，VRing 是访客与其主机之间交换数据的一种方式。在上面的示例中，我们看到了 VirtIO 驱动程序如何以可用环上的描述符引用的形式向设备发出请求，设备通过可用环访问请求，以及设备如何通过已使用的环向驱动程序提供已处理的请求。戒指。</p>
+<p>在下一节中，我们将查看 Qemu 中的 VirtIO 设备示例，了解它如何使用 VirtQueue 以及 VirtQueue 如何使用 VRing。</p>
+<h2 id="荣誉奖vhost">荣誉奖：VHost</h2>
+<p>在本文中，我们不会深入了解 VHost，但任何开始了解 VirtIO 的人可能已经看到了提到的“VHost”术语。因此，对于那些还不熟悉它的人来说，值得在这里简单描述一下。</p>
+<p>与 VirtIO 驱动程序不同对于数据平面存在于 Qemu 进程中的设备，VHost 可以将数据平面卸载到另一个主机用户进程（VHost-User）或主机的内核（VHost，作为内核模块）。这样做的动机是性能。也就是说，在如图 2 所示的纯 VirtIO 解决方案中，每次驱动程序请求主机在其物理硬件上执行某些处理时，都会发生上下文切换。这些上下文切换是昂贵的操作，会在请求之间增加大量延迟。通过将数据平面卸载到另一个主机用户进程或其内核，我们基本上绕过了 Qemu 进程，从而通过减少延迟来提高性能。</p>
+<p>然而，虽然它确实提高了性能，但考虑到数据路径现在直接进入主机内核，因此也增加了一定程度的安全问题。</p>
+<p>下面的图 14 显示了示例 VHost (VHost-SCSI) 的总体布局：</p>
+<p>
+        <img class="mx-auto" alt="虚拟主机架构" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONTAFDE3146FCA448DCBFF0E83C24119D25/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    </p>
+<p>图14</p>
+<p>如果我们将图 14 中的 VHost 总体框架与图 2 中的纯 VirtIO 框架进行比较，我们会发现一些关键差异：</p>
+<ul>
+<li>传输层（或数据平面）现在是从来宾内核到主机内核</li>
+<li>VirtIO 设备<em>模型</em> 存在，但其功能仅限于处理控制平面任务</li>
+<li>主机内核中存在VHost-SCSI内核模块</li>
+</ul>
+<p>这只是 VHost 配置和纯 VirtIO 配置之间组织的概括。关于 VHost 和 VHost 还有更多可说的。 VHost-User 及其带来的功能。然而，在本文中，我们将仅关注类似于图 2 的纯 VirtIO 实现。</p>
+<h1 id="qemu-中的-virtio">Qemu 中的 VirtIO</h1>
+<p>在本节中，我们将看一下 Qemu 中的 VirtIO 设备示例，并了解其中一个 VirtQueue 的工作原理。这里的目标不仅是了解 VirtIO 设备的大致工作原理，而且还了解 VirtQueue 和 VRing 在标准 VirtIO 设备中的作用。对于我们的示例设备，让我们看一下使用拆分 VirtQueue 配置和协商的 <code>VIRTIO_VRING_F_EVENT_IDX</code> 功能位的 virtio-SCSI。</p>
+<h2 id="virtio-scsi">Virtio-SCSI：</h2>
+<p>virtio-SCSI 设备用于将虚拟逻辑单元（例如硬盘驱动器）分组在一起，并允许通过 SCSI 协议与它们进行通信。对于我们的示例，假设我们仅使用该设备连接到硬盘驱动器。该设备（使用 HDD）的 Qemu 调用参数可能包括如下内容：</p>
+<p><a href="https://blogs.oracle.com/linux/post/introduction-to-virtio#copy">复制代码片段</a></p>
+<p>已复制到剪贴板</p>
+<p>错误：无法复制</p>
+<p>已复制到剪贴板</p>
+<p>错误：无法复制</p>
+<pre><code>-device virtio-scsi-pci
+-device scsi-hd,drive=hd0,bootindex=0
+-drive file=/home/qemu-imgs/test.img,if=none,id=hd0
+</code></pre><p>在Qemu源代码中，如果我们看一下<code>hw/scsi/virtio-scsi.c</code>，我们可以看到与设备操作相关的各种功能。让我们看一下这个设备是如何设置的，特别是它的 VirtQueues。</p>
+<p>在 Qemu 中，术语“realize”用于表示 VirtIO 设备的初始设置和配置（“unrealize”用于表示拆除设备）。在函数<code>virtio_scsi_common_realize()</code>中，我们可以看到为virtio-SCSI设备设置了三种不同类型的VirtQueue：</p>
+<p><a href="https://blogs.oracle.com/linux/post/introduction-to-virtio#copy">复制代码片段</a></p>
+<p>已复制到剪贴板</p>
+<p>错误：无法复制</p>
+<p>已复制到剪贴板</p>
+<p>错误：无法复制</p>
+<pre><code>// In hw/scsi/virtio-scsi.c
+void virtio_scsi_common_realize(DeviceState *dev,
+                                VirtIOHandleOutput ctrl,
+                                VirtIOHandleOutput evt,
+                                VirtIOHandleOutput cmd,
+                                Error **errp)
+{
+    ...
+    s-&gt;ctrl_vq = virtio_add_queue(vdev, s-&gt;conf.virtqueue_size, ctrl);
+    s-&gt;event_vq = virtio_add_queue(vdev, s-&gt;conf.virtqueue_size, evt);
+    for (i = 0; i &lt; s-&gt;conf.num_queues; i++) {
+        s-&gt;cmd_vqs[i] = virtio_add_queue(vdev, s-&gt;conf.virtqueue_size, cmd);
+    }
+}
+</code></pre><p>大多数 VirtIO 设备都会有多个 VirtQueue，每个 VirtQueue 都有自己独特的功能。在 virtio-SCSI 情况下，我们有一个控制 VirtQueue (<code>ctrl_vq</code>)、一个事件 VirtQueue (<code>event_vq</code>) 和一个或多个命令（或请求）VirtQueues ( <code>cmd_vqs</code>）。</p>
+<p>控件 VirtQueue 用于任务管理功能 (TMF)，例如启动、关闭、重置 virtio-SCSI 设备等。它还用于订阅和查询异步通知。</p>
+<p>事件 VirtQueue 用于报告来自连接到 virtio-SCSI 的逻辑单元上的主机的信息（事件）。这些事件包括传输事件（例如设备重置、重新扫描、热插拔等）、异步通知和逻辑单元号 (LUN) 参数更改。</p>
+<p>最后，命令或请求 VirtQueues 用于典型的 SCSI 传输命令（例如，读写文件）。在本节中，我们将重点关注 VirtQueue 命令的操作，因为与其他两个命令相比，它更有趣并且使用得更多。</p>
+<h3 id="命令-virtqueue">命令 VirtQueue：</h3>
+<p>命令（或请求）VirtQueue 是我们本节将重点关注的 VirtQueue。 VirtQueue 用于传输有关典型 SCSI 传输命令（例如读取和写入文件）的信息。 Virtio-SCSI 可以有一个或多个这样的命令 VirtQueue。</p>
+<p>如前所述，Qemu 中的 VirtQueues 结构有一个用于处理输出的回调函数字段，称为 <code>VirtIOHandleOutput handle_output</code>。对于virtio-SCSI的命令VirtQueue来说，该回调函数字段将指向virtio-SCSI的命令VirtQueue处理函数<code>virtio_scsi_handle_cmd()</code>：</p>
+<p><a href="https://blogs.oracle.com/linux/post/introduction-to-virtio#copy">复制代码片段</a></p>
+<p>已复制到剪贴板</p>
+<p>错误：无法复制</p>
+<p>已复制到剪贴板</p>
+<p>错误：无法复制</p>
+<pre><code>// In hw/scsi/virtio-scsi.c
+static void virtio_scsi_device_realize(DeviceState *dev,
+                                       Error **errp)
+{
+    VirtIODevice *vdev = VIRTIO_DEVICE(dev);
+    VirtIOSCSI *s = VIRTIO_SCSI(dev);
+    Error *err = NULL;
+
+    virtio_scsi_common_realize(dev,
+                               virtio_scsi_handle_ctrl,
+                               virtio_scsi_handle_event,
+                               virtio_scsi_handle_cmd, &lt;----*
+                               &amp;err);
+    ...
+}
+
+// In hw/virtio/virtio.c
+VirtQueue *virtio_add_queue(VirtIODevice *vdev, int queue_size,
+                            VirtIOHandleOutput handle_output)
+{
+    ...
+
+    vdev-&gt;vq[i].vring.num = queue_size;
+    vdev-&gt;vq[i].vring.num_default = queue_size;
+    vdev-&gt;vq[i].vring.align = VIRTIO_PCI_VRING_ALIGN;
+    vdev-&gt;vq[i].handle_output = handle_output; &lt;----*
+    vdev-&gt;vq[i].used_elems = g_malloc0(sizeof(VirtQueueElement)
+                                       * queue_size);
+    return &amp;vdev-&gt;vq[i];
+}
+</code></pre><p>VirtQueue 的输出处理函数的调用方式取决于 VirtIO 设备以及 VirtQueue 在该设备中的角色。对于 virtio-SCSI 的命令 VirtQueue，当 <em>通知</em> 从 virtio-SCSI 驱动程序发送到 Qemu 时，会调用它的输出处理函数，告诉 Qemu通知其对应设备有 SCSI 命令数据可供处理，<em>可用 VRing</em>。</p>
+<p>回想一下图 2，我们正在查看 Qemu 的源代码，更具体地说是 VirtIO 设备代码。还记得前面的 VRing 部分，VirtIO 设备不会开始参与 VRing 操作，直到其相应的 VirtIO 驱动程序 (1) 将新描述符添加到描述符环，(2) 通过添加描述符引用使这些描述符可供设备使用(3) 通知其设备可用环已准备好进行处理。</p>
+<p>换句话说，当执行到<code>virtio_scsi_handle_cmd()</code>函数时，意味着virtio-SCSI设备已经收到了来自其驱动程序的通知，并开始开始处理来自其命令VirtQueue的数据可用环。您可以认为可用环和描述符环的当前状态类似于图 9。</p>
+<p><code>virtio_scsi_handle_cmd()</code> 函数或多或少是以下 <code>virtio_scsi_handle_cmd_vq()</code> 函数的包装器：</p>
+<p><a href="https://blogs.oracle.com/linux/post/introduction-to-virtio#copy">复制代码片段</a></p>
+<p>已复制到剪贴板</p>
+<p>错误：无法复制</p>
+<p>已复制到剪贴板</p>
+<p>错误：无法复制</p>
+<pre><code>// In hw/scsi/virtio-scsi.c
+bool virtio_scsi_handle_cmd_vq(VirtIOSCSI *s, VirtQueue *vq)
+{
+    VirtIOSCSIReq *req, *next;
+    int ret = 0;
+    bool suppress_notifications =
+            virtio_queue_get_notification(vq);
+    bool progress = false;
+
+    QTAILQ_HEAD(, VirtIOSCSIReq) reqs =
+            QTAILQ_HEAD_INITIALIZER(reqs);
+
+    do {
+        if (suppress_notifications) {
+            virtio_queue_set_notification(vq, 0);
+        }
+        while ((req = virtio_scsi_pop_req(s, vq))) {
+            progress = true;
+            ret = virtio_scsi_handle_cmd_req_prepare(s, req);
+            if (!ret) {
+                QTAILQ_INSERT_TAIL(&amp;reqs, req, next);
+            } else if (ret == -EINVAL) {
+                /* The device is broken and shouldn't
+                   process any request */
+                while (!QTAILQ_EMPTY(&amp;reqs)) {
+                    ...
+                }
+            }
+        }
+        if (suppress_notifications) {
+            virtio_queue_set_notification(vq, 1);
+        }
+    } while (ret != -EINVAL &amp;&amp; !virtio_queue_empty(vq));
+
+    QTAILQ_FOREACH_SAFE(req, &amp;reqs, next, next) {
+        virtio_scsi_handle_cmd_req_submit(s, req);
+    }
+    return progress;
+}
+</code></pre><p>这里的这个函数告诉我们virtio-SCSI的命令VirtQueue将如何处理和处理其可用环上的数据。</p>
+<p>对于以下场景，请回想一下<code>VIRTIO_VRING_F_EVENT_IDX</code> 功能位已协商。对于设备来说，这意味着只有当 <em>使用的环</em>中的<code>idx</code>等于位于<em>可用环</em>中。<code>idx</code></p>
+<p>换句话说，如果驱动程序在可用环上提供从索引 0 到 19 的 20 个条目，则可用环的 <code>idx</code> 将在 <code>20</code> 之后将最后一个描述符引用添加到可用的<code>ring[19]</code>。设备处理完最后一个可用环条目并将其对应的已使用环条目放在已使用的<code>ring[19]</code>上后，已使用环的<code>idx</code>也将是<code>20</code>.当发生这种情况时，几乎在添加最后使用的环条目之后，设备必须立即通知其驱动程序。</p>
+<p>在<code>virtio_scsi_handle_cmd_vq()</code>开始执行之前，假设其命令 VirtQueue 的描述符和可用环如下图 15 所示：</p>
+<p>
+        <img class="mx-auto" alt="Virtio-scsi-ex1" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONTC7273FA15325470F86E9EA802A9088D3/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    </p>
+<p>图15</p>
+<p>回顾一下<code>virtio_scsi_handle_cmd_vq()</code>，让我们浏览一下这个函数，看看 virtio-SCSI 设备如何处理刚刚收到通知的数据。</p>
+<p>首先，在函数的开头，初始化 virtio-SCSI 请求 (<code>VirtIOSCSIReq</code>) 的队列数据结构，称为 <code>reqs</code>：</p>
+<p><a href="https://blogs.oracle.com/linux/post/introduction-to-virtio#copy">复制代码片段</a></p>
+<p>已复制到剪贴板</p>
+<p>错误：无法复制</p>
+<p>已复制到剪贴板</p>
+<p>错误：无法复制</p>
+<pre><code>QTAILQ_HEAD(, VirtIOSCSIReq) reqs = QTAILQ_HEAD_INITIALIZER(reqs);
+</code></pre><p>对于 virtio-SCSI 的命令 VirtQueue，其可用环上的每个条目都被制作成一个 <code>VirtIOSCSIReq</code> 对象，该对象附加在 <code>reqs</code> 的末尾队列。我们可以看到紧随其后的 do-while 循环就是这种情况：</p>
+<p><a href="https://blogs.oracle.com/linux/post/introduction-to-virtio#copy">复制代码片段</a></p>
+<p>已复制到剪贴板</p>
+<p>错误：无法复制</p>
+<p>已复制到剪贴板</p>
+<p>错误：无法复制</p>
+<pre><code>// virtio_scsi_handle_cmd_vq
+do {
+    /* Turn off notifications if we're suppressing them */
+    if (suppress_notifications) {
+        virtio_queue_set_notification(vq, 0);
+    }
+    while ((req = virtio_scsi_pop_req(s, vq))) {
+        progress = true;
+        ret = virtio_scsi_handle_cmd_req_prepare(s, req);
+        if (!ret) {
+            QTAILQ_INSERT_TAIL(&amp;reqs, req, next);
+        } else if (ret == -EINVAL) {
+        /* The device is broken and shouldn't
+           process any request */
+            ...
+        }
+    }
+    /* Turn on notifications if we've been suppressing them */
+    if (suppress_notifications) {
+        virtio_queue_set_notification(vq, 1);
+    }
+} while (ret != -EINVAL &amp;&amp; !virtio_queue_empty(vq));
+</code></pre><p>在开始读取可用环之前，我们首先抑制设备向驱动程序发送的任何通知 (<code>VIRTIO_VRING_F_EVENT_IDX</code>)。然后我们进入第二个while循环<code>while ((req = virtio_scsi_pop_req(s, vq)))</code>。在此 while 循环中，我们将遍历可用环，对于每个条目，我们将其数据放入 <code>VirtIOSCSIReq</code> 对象中。然后，每个 <code>VirtIOSCSIReq</code> 对象都会附加到 <code>reqs</code> 队列的末尾。</p>
+<p>在 while 循环结束时，我们将得到如下图 16 所示的结果，其中 <code>Req1</code> 指的是通过读取可用环条目创建的 <code>VirtIOSCSIReq</code> 对象&lt; /span&gt;，类似：来自可用环条目对象是读取可用环条目<code>ring[0]</code>，<code>Req2``VirtIOSCSIReq``ring[1]``Req3``ring[2]</code></p>
+<p>
+        <img class="mx-auto" alt="Virtio-scsi-ex2" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONTA95F24F63B1F49CDA69427571C8027DB/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    </p>
+<p>图16</p>
+<p>从可用环中读取所有数据后，我们会重新启用通知，以便设备在处理完请求并将其放入已用环上后可以通知驱动程序已使用的数据。请注意，这仅启用通知，而不发送通知。在我们的场景中（使用 <code>VIRTIO_VRING_F_EVENT_IDX</code>），这只是让我们在将所有已处理请求的数据放入使用的环上后通知我们的设备。</p>
+<p>在我们实际提交请求之前，您会注意到我们仍然处于 do-while 循环中，如果设备损坏或我们尚未从可用环中读取所有数据，该循环就会终止。这是为了防止在我们从中读取最后一个条目后立即将更多数据添加到可用环中。</p>
+<p>现在设备已从可用环中读取所有内容并将每个条目转换为自己的 <code>VirtIOSCSIReq</code> 对象，然后我们循环遍历 <code>reqs</code>排队并提交每个请求<em>单独</em>以供实际物理 SCSI 设备处理：</p>
+<p><a href="https://blogs.oracle.com/linux/post/introduction-to-virtio#copy">复制代码片段</a></p>
+<p>已复制到剪贴板</p>
+<p>错误：无法复制</p>
+<p>已复制到剪贴板</p>
+<p>错误：无法复制</p>
+<pre><code>QTAILQ_FOREACH_SAFE(req, &amp;reqs, next, next) {
+    virtio_scsi_handle_cmd_req_submit(s, req);
+}
+</code></pre><p>一旦主机的 SCSI 设备满足请求，执行就会转到 <code>virtio_scsi_command_complete()</code>，然后是 <code>virtio_scsi_complete_cmd_req()</code>，最后是 &lt; a i=3&gt;.这三个函数中更有趣的是，因为这是设备将使用过的数据放入使用过的环上的函数。<code>virtio_scsi_complete_req()``virtio_scsi_complete_req()</code></p>
+<p>我们来看一下：</p>
+<p><a href="https://blogs.oracle.com/linux/post/introduction-to-virtio#copy">复制代码片段</a></p>
+<p>已复制到剪贴板</p>
+<p>错误：无法复制</p>
+<p>已复制到剪贴板</p>
+<p>错误：无法复制</p>
+<pre><code>// In hw/scsi/virtio-scsi.c
+static void virtio_scsi_complete_req(VirtIOSCSIReq *req)
+{
+    VirtIOSCSI *s = req-&gt;dev;
+    VirtQueue *vq = req-&gt;vq;
+    VirtIODevice *vdev = VIRTIO_DEVICE(s);
+
+    qemu_iovec_from_buf(&amp;req-&gt;resp_iov, 0, &amp;req-&gt;resp,
+                        req-&gt;resp_size);
+    /* Push used request data onto used ring */
+    virtqueue_push(vq, &amp;req-&gt;elem,
+                   req-&gt;qsgl.size + req-&gt;resp_iov.size);
+    /* Determine if we need to notify the driver */
+    if (s-&gt;dataplane_started &amp;&amp; !s-&gt;dataplane_fenced) {
+        virtio_notify_irqfd(vdev, vq);
+    } else {
+        virtio_notify(vdev, vq);
+    }
+
+    if (req-&gt;sreq) {
+        req-&gt;sreq-&gt;hba_private = NULL;
+        scsi_req_unref(req-&gt;sreq);
+    }
+    virtio_scsi_free_req(req);
+}
+</code></pre><p>要完成请求，virtio-SCSI 设备必须将处理后的数据放在使用的环上 (<code>virtqueue_push()</code>)，以使驱动程序可以访问已处理的数据。请记住，此时实际数据已经写入描述符的缓冲区（或从链接的可写描述符写入多个缓冲区）。我们现在要做的就是告诉驱动程序在描述符环中查找位置以及我们向其数据缓冲区写入了多少内容（如果有的话）。</p>
+<p>向已使用的环添加条目<code>Req1</code>后，我们的命令 VirtQueue 的 VRing 将如下图 17 所示：</p>
+<p>
+        <img class="mx-auto" alt="Virtio-scsi-ex3" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONT262A7347058041F2838604251884E5C2/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    </p>
+<p>图17</p>
+<p>第一个请求引用设备只读缓冲区，因此描述符索引为 0，写入长度为 0。<code>idx</code> 也递增到 <code>1</code>。 <code>virtqueue_push()</code>之后，我们会检查是否应该通知司机。</p>
+<p>回想一下，我们的设备正在使用<code>VIRTIO_VRING_F_EVENT_IDX</code> 功能。在我们的示例中，一旦我们使用的环<code>idx</code> 为<code>3</code>，设备就会通知驱动程序。因此，对于此请求，不会向驱动程序发送任何通知。</p>
+<p>接下来的两个请求涉及设备可写缓冲区。为了保持一致性，假设 <code>Req2</code> 的书写长度为 <code>0x200</code>，<code>Req3</code> 的书写长度为 <code>0x500</code>。从 <code>virtqueue_push()</code> 返回 <code>Req3</code> 后，所使用的环将如下图 18 所示：</p>
+<p>
+        <img class="mx-auto" alt="Virtio-scsi-ex4" src="https://blogs.oracle.com/content/published/api/v1.1/assets/CONT66F37675B1B64AA7A08407AF53714D8B/Medium?cb=_cache_f281&amp;channelToken=3189ef66cf584820b5b19e6b10792d6f&amp;format=jpg" />   
+    </p>
+<p>图18</p>
+<p>现在设备<em>将</em>通知驱动程序所使用的环的内容，因为设备功能的条件<code>VIRTIO_VRING_F_EVENT_IDX</code> 已满足。也就是说，已用环的<code>idx</code>等于可用环的<code>idx</code>。一旦驱动程序收到通知，驱动程序就会进入已使用的环，在描述符环上查找已处理的数据，并对这些数据执行任何它想要的操作。</p>
+<p>在通知驱动程序并进行一些清理工作之后，virtio-SCSI 设备的工作就完成了，并返回等待驱动程序通知它要在其可用环上处理的新数据。</p>
+<h1 id="virtio-总结">VirtIO 总结</h1>
+<p>在本文中，我们讨论了 VirtIO 是什么、为什么我们应该关心它、它的替代方案（例如仿真）以及设备和虚拟机等关键概念。驱动程序、VirtQueue 和 VRing。然后，我们查看了一个标准 VirtIO 设备（在 Qemu 中），并跟踪其中一个 VirtQueue 的执行情况，以推断 VirtQueue 和 VRing 在 VirtIO 设备中的作用。</p>
+<p>应该指出的是，本文仅仅涉及 VirtIO 的表面，因为我们只介绍了最基本的知识并使用了简单的示例。在我们的示例中，我们仅假设了拆分 VirtQueue 配置，并且仅使用了 <code>VIRTIO_RING_F_EVENT_IDX</code> 功能位。例如，我们没有详细介绍通知、VirtIO 驱动程序端代码（在内核中）或修改 VirtQueue 及其 VRing 操作的其他功能（例如“打包”VirtQueue、间接描述符、有序描述符使用） 、SR-IOV 等）。</p>
+<p>无论如何，本文应该创建一个扎实的 VirtIO 实用知识，以便更容易学习其他 VirtIO 设备或概念。</p>
+<h1 id="参考">参考</h1>
+<p><a href="https://blogs.oracle.com/linux/post/introduction-to-virtio">https://blogs.oracle.com/linux/post/introduction-to-virtio</a></p>
+<ul>
+<li><a href="https://www.linux-kvm.org/images/archive/f/f5/20110823142849!2011-forum-virtio-scsi.pdf">https://www.linux-kvm.org/images/archive/f/f5/20110823142849!2011-forum-virtio-scsi.pdf</a></li>
+<li><a href="https://projectacrn.github.io/latest/developer-guides/hld/hld-virtio-devices.html#">https://projectacrn.github.io/latest/developer-guides/hld/hld-virtio-devices.html#</a></li>
+<li><a href="https://insujang.github.io/2021-03-10/virtio-and-vhost-architecture-part-1/">https://insujang.github.io/2021-03-10/virtio-and-vhost-architecture-part-1/</a></li>
+<li><a href="https://www.cs.cmu.edu/~412/lectures/Virtio_2015-10-14.pdf">https://www.cs.cmu.edu/~412/lectures/Virtio_2015-10-14.pdf</a></li>
+<li><a href="https://www.redhat.com/en/blog/virtio-devices-and-drivers-overview-headjack-and-phone">https://www.redhat.com/en/blog/virtio-devices-and-drivers-overview-headjack-and-phone</a></li>
+<li><a href="https://www.redhat.com/en/blog/virtqueues-and-virtio-ring-how-data-travels">https://www.redhat.com/en/blog/virtqueues-and-virtio-ring-how-data-travels</a></li>
+<li><a href="https://www.redhat.com/en/blog/introduction-virtio-networking-and-vhost-net">https://www.redhat.com/en/blog/introduction-virtio-networking-and-vhost-net</a></li>
+<li><a href="https://www.redhat.com/en/blog/journey-vhost-users-realm">https://www.redhat.com/en/blog/journey-vhost-users-realm</a></li>
+<li><a href="https://www.dell.com/en-us/blog/emulation-or-virtualization-what-s-the-difference/">https://www.dell.com/en-us/blog/emulation-or-virtualization-what-s-the-difference/</a></li>
+<li><a href="https://www.hitechnectar.com/blogs/virtualization-emulation/">https://www.hitechnectar.com/blogs/virtualization-emulation/</a></li>
+<li><a href="https://developer.ibm.com/articles/l-virtio/">https://developer.ibm.com/articles/l-virtio/</a></li>
+<li><a href="https://www.linaro.org/blog/virtio-work/">https://www.linaro.org/blog/virtio-work/</a></li>
+<li><a href="https://docs.oasis-open.org/virtio/virtio/v1.1/csprd01/virtio-v1.1-csprd01.html">https://docs.oasis-open.org/virtio/virtio/v1.1/csprd01/virtio-v1.1-csprd01.html</a></li>
+<li><a href="https://developpaper.com/original-kvm-qemu-analysis-of-linux-virtualization-11-virtqueue/">https://developpaper.com/original-kvm-qemu-analysis-of-linux-virtualization-11-virtqueue/</a></li>
+</ul>
+<h4 id="乔纳帕尔默">乔纳·帕尔默</h4>
+<h2 id="晓兵">晓兵</h2>
+<p>博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a> | <a href="https://cloud.tencent.com/developer/user/5060293/articles">https://cloud.tencent.com/developer/user/5060293/articles</a></p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/linux/virtio/">https://logread.cn/post/linux/virtio/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/net/net_ucx_stor_ucp_uct/">统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022</a></li>
+        
+        <li><a href="/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/">DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</a></li>
+        
+        <li><a href="/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/">英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda</a></li>
+        
+        <li><a href="/post/net/libfabric_hpc_net_api_rdma_daos_mercury/">OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</a></li>
+        
+        <li><a href="/post/daos/daos_dfuse_fs_io_path/">DAOS用户态文件系统IO路径(dfuse io全路径)</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+                <li><a href='/tags/virtio'>virtio</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2023
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/linux/virtio/" title="Virtio">Virtio</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/net_ucx_stor_ucp_uct/" title="统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022">统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/" title="DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解">DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/" title="英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda">英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/" title="OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)">OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_dfuse_fs_io_path/" title="DAOS用户态文件系统IO路径(dfuse io全路径)">DAOS用户态文件系统IO路径(dfuse io全路径)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_docker/" title="DAOS-在docker中搭建daos开发调试环境">DAOS-在docker中搭建daos开发调试环境</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_eq_and_event/" title="DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析">DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_tse/" title="DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析">DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/" title="Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/iscsi/">iscsi (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/kernel/">kernel (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/libfabric/">libfabric (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/multipath/">multipath (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/network/">network (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvmeof/">nvmeof (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/qemu/">qemu (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (6)</a></li>
+    
+    <li><a href="https://logread.cn/categories/roce/">roce (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (25)</a></li>
+    
+    <li><a href="https://logread.cn/categories/virtio/">virtio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (30)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/iscsi/">iscsi</a>
+  
+  <a href="https://logread.cn/tags/kernel/">kernel</a>
+  
+  <a href="https://logread.cn/tags/libfabric/">libfabric</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/network/">network</a>
+  
+  <a href="https://logread.cn/tags/nvmeof/">nvmeof</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/roce/">roce</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/virtio/">virtio</a>
+  
+  <a href="https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/">多路径</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://github.com/ssbandjl/golang-design-pattern" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
