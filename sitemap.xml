@@ -4,41 +4,61 @@
   
   <url>
     <loc>https://logread.cn/categories/</loc>
-    <lastmod>2023-12-15T19:45:07+08:00</lastmod>
+    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/tags/linux/</loc>
-    <lastmod>2023-12-15T19:45:07+08:00</lastmod>
+    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/post/</loc>
-    <lastmod>2023-12-15T19:45:07+08:00</lastmod>
+    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://logread.cn/categories/qemu/</loc>
-    <lastmod>2023-12-15T19:45:07+08:00</lastmod>
+    <loc>https://logread.cn/tags/rdma/</loc>
+    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/rdma/</loc>
+    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/tags/stor/</loc>
-    <lastmod>2023-12-15T19:45:07+08:00</lastmod>
+    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/categories/stor/</loc>
-    <lastmod>2023-12-15T19:45:07+08:00</lastmod>
+    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/tags/</loc>
-    <lastmod>2023-12-15T19:45:07+08:00</lastmod>
+    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://logread.cn/post/linux/virtio/</loc>
+    <loc>https://logread.cn/post/rdma/rdma_perf/</loc>
+    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</loc>
+    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/</loc>
+    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/qemu/</loc>
     <lastmod>2023-12-15T19:45:07+08:00</lastmod>
   </url>
   
@@ -53,12 +73,7 @@
   </url>
   
   <url>
-    <loc>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</loc>
-    <lastmod>2023-12-15T19:45:07+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/</loc>
+    <loc>https://logread.cn/post/linux/virtio/</loc>
     <lastmod>2023-12-15T19:45:07+08:00</lastmod>
   </url>
   
@@ -84,16 +99,6 @@
   
   <url>
     <loc>https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/</loc>
-    <lastmod>2023-10-05T10:11:49+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/rdma/</loc>
-    <lastmod>2023-10-05T10:11:49+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/rdma/</loc>
     <lastmod>2023-10-05T10:11:49+08:00</lastmod>
   </url>
   

@@ -6,9 +6,18 @@
     <description>Recent content in stor on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Fri, 15 Dec 2023 19:45:07 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/stor/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 19 Dec 2023 18:47:02 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/stor/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Virtio</title>
+      <title>优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</title>
+      <link>https://logread.cn/post/rdma/rdma_perf/</link>
+      <pubDate>Tue, 19 Dec 2023 18:47:02 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/rdma/rdma_perf/</guid>
+      <description>优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南 RDMA 被用在很多地方，主要是因为它可以实现高性能。在这篇文章中，我将提供有关如何从多个方面优化 RDMA 代码的建议和技巧 简单的科普下RDMA 什么是RDMA？ DMA 代表直接内存访问。这意味着应用程序可以在 CPU 干预的情况下直接访问（读/写）主机内存</description>
+    </item>
+    
+    <item>
+      <title>VirtIO简介</title>
       <link>https://logread.cn/post/linux/virtio/</link>
       <pubDate>Fri, 15 Dec 2023 19:45:07 +0800</pubDate>
       

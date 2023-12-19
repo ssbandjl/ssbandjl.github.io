@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7571343657358120"
+     crossorigin="anonymous"></script>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南 | 晓兵</title>
+    <meta property="og:title" content="优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南 - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2023-12-19T18:47:02&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2023-12-19T18:47:02&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储,ceph,分布式块存储,云计算,daos,rdma,spdk,nvmeof,linux,kernel,内核,分布式存储,dpdk,rpc">
+    <meta name="description" content="优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/rdma/rdma_perf/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#cpu-卸载旁路">CPU 卸载/旁路</a></li>
+        <li><a href="#传输协议加速">传输协议加速</a></li>
+      </ul>
+    </li>
+    <li><a href="#为什么我们需要它">为什么我们需要它？</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#1-避免在数据路径中使用控制操作">1. 避免在数据路径中使用控制操作</a></li>
+    <li><a href="#2-发布多条-wr-时一次调用将它们发布到列表中">2. 发布多条 WR 时，一次调用将它们发布到列表中</a></li>
+    <li><a href="#3-使用工作完成事件时在一次调用中确认多个事件">3. 使用工作完成事件时，在一次调用中确认多个事件</a></li>
+    <li><a href="#4-避免使用许多分散聚集条目">4. 避免使用许多分散/聚集条目</a></li>
+    <li><a href="#5-避免使用围栏fence">5. 避免使用围栏(Fence)</a></li>
+    <li><a href="#6-避免使用原子操作">6. 避免使用原子操作</a></li>
+    <li><a href="#7-一次读取多个工作完成情况">7. 一次读取多个工作完成情况</a></li>
+    <li><a href="#8-设置特定任务或进程的处理器关联性">8. 设置特定任务或进程的处理器关联性</a></li>
+    <li><a href="#9-使用本地-numa-节点">9. 使用本地 NUMA 节点</a></li>
+    <li><a href="#10-使用缓存行对齐的缓冲区">10. 使用缓存行对齐的缓冲区</a></li>
+    <li><a href="#11-避免进入重传流">11. 避免进入重传流</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#1-找到最适合-rdma-设备的-mtu">1. 找到最适合 RDMA 设备的 MTU</a></li>
+    <li><a href="#2-使用大消息">2. 使用大消息</a></li>
+    <li><a href="#3-处理多个未完成的发送请求">3. 处理多个未完成的发送请求</a></li>
+    <li><a href="#4-配置队列对以允许并行进行多个-rdma-读取和原子操作">4. 配置队列对以允许并行进行多个 RDMA 读取和原子操作</a></li>
+    <li><a href="#5-使用发送队列中的选择性信号">5. 使用发送队列中的选择性信号</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#1-使用轮询polling读取工作完成情况">1. 使用轮询(polling)读取工作完成情况</a></li>
+    <li><a href="#2-以内嵌方式发送小消息">2. 以内嵌方式发送小消息</a></li>
+    <li><a href="#3-在-qp-的超时和-min_rnr_timer-中使用较低的值">3. 在 QP 的超时和 min_rnr_timer 中使用较低的值</a></li>
+    <li><a href="#4-如果使用立即数据请使用-rdma-write-with立即而不是-send-with立即">4. 如果使用立即数据，请使用 RDMA Write with立即而不是 Send with立即</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#1-使用共享接收队列-srq">1. 使用共享接收队列 (SRQ)</a></li>
+    <li><a href="#2-注册物理连续内存">2. 注册物理连续内存</a></li>
+    <li><a href="#3-将使用的队列大小减少到最小">3. 将使用的队列大小减少到最小</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#1-处理工作完成事件">1. 处理工作完成事件</a></li>
+    <li><a href="#2-在响应者端处理请求的事件">2. 在响应者端处理请求的事件</a></li>
+    <li><a href="#3-与多个队列共享同一个cq">3. 与多个队列共享同一个CQ</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#1-使用集体算法collective-algorithms-可参考daos中cart的k项树算法">1. 使用集体算法(collective algorithms), 可参考DAOS中CART的k项树算法</a></li>
+    <li><a href="#2-使用不可靠数据报-ud-qp">2. 使用不可靠数据报 (UD) QP</a>
+      <ul>
+        <li><a href="#heading-4"></a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#heading-5"></a></li>
+    <li><a href="#晓兵ssbandjl"><strong>晓兵(ssbandjl)</strong></a></li>
+    <li><a href="#晓兵技术杂谈系列"><strong>晓兵技术杂谈(系列)</strong></a></li>
+    <li><a href="#晓兵">晓兵</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年12月19日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+            <span class="meta-category"><a href='/categories/rdma'>rdma</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="优化-rdma-代码的建议和技巧-rdma性能优化技巧-避坑指南">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</h1>
+<h1 id="rdma-被用在很多地方主要是因为它可以实现高性能在这篇文章中我将提供有关如何从多个方面优化-rdma-代码的建议和技巧">RDMA 被用在很多地方，主要是因为它可以实现高性能。在这篇文章中，我将提供有关如何从多个方面优化 RDMA 代码的建议和技巧</h1>
+<h1 id="简单的科普下rdma">简单的科普下RDMA</h1>
+<h1 id="什么是rdma">什么是RDMA？</h1>
+<p>DMA 代表直接内存访问。这意味着应用程序可以在 CPU 干预的情况下直接访问（读/写）主机内存。如果您在主机之间执行此操作，它将成为远程直接内存访问 (RDMA)</p>
+<p>在阅读有关 RDMA 的内容时，您会注意到一些用于描述其优点的术语。 “零复制 Zero Copy”、“内核绕过 Kernel Bypass”、“协议卸载 Protocol Offload”和“协议加速 Protocol Acceleration”等术语</p>
+<h1 id="rdma-的工作原理">RDMA 的工作原理</h1>
+<p>RDMA 的工作原理是通过硬件路径（NIC 和网络）将数据从一台主机上的用户应用程序内存直接复制到另一台主机上的用户应用程序内存中。RDMA是下图中的蓝线（图 3）。绿线描绘了您早已了解的传统 TCP/IP 流量</p>
+<p>
+        <img class="mx-auto" alt="image-20231219184952991" src="../image-20231219184952991.png" />   
+    </p>
+<p>请注意，如果应用程序驻留在内核空间中，它“仅”绕过操作系统堆栈和系统驱动程序，但这仍然提供了显著的性能提升</p>
+<h1 id="零复制和内核绕过">零复制和内核绕过</h1>
+<p>这些术语指的是 RDMA 提供的速度增益，因为与正常的 TCP/IP 行为相比，数据不必多次从应用程序内存缓冲区复制到内核内存缓冲区。RDMA通过其他复制操作传递到 NIC，NIC 通过网络将其发送到其他主机。在另一台主机上，必须发生相反的过程。 NIC 内存缓冲区中的数据被复制到内核空间，并在内核空间中再次复制并发送到用户空间到应用程序内存缓冲区。</p>
+<p>您会注意到正在进行大量复制，这是 RDMA 避免的开销（零复制）。通过这样做，还可以避免用户空间和内核空间之间的上下文切换（内核绕过）。这极大地加快了速度。</p>
+<h3 id="cpu-卸载旁路">CPU 卸载/旁路</h3>
+<p>该工作实际上被卸载到 NIC，因此它绕过了主机的 CPU（CPU Offload 或 Bypass）。这样做有两个优点：</p>
+<p>\1. 应用程序可以访问（远程）内存，而无需内核和用户空间进程消耗任何主机 CPU 周期进行读写。</p>
+<p>\2. CPU 中的缓存不会被访问的内存内容填充。</p>
+<p>CPU 周期和缓存可用于实际的应用程序工作负载，而不是用于移动数据。其好处通常是 CPU 开销减少 20% 到 25%</p>
+<h3 id="传输协议加速">传输协议加速</h3>
+<p>最后，RDMA 可以执行称为协议加速的操作。基于消息的事务以及进行收集/分散(SGL)的能力（读取多个缓冲区并将它们作为一个整体发送，同时将它们写入多个接收缓冲区）加快了实际数据移动的速度。这有很多细节。 <a href="https://www.snia.org/">SNIA</a>（存储网络行业协会）和学术研究人员的演示文稿和出版物很容易在互联网上获得，并且可能变得相当技术性</p>
+<p>结论是 RDMA 协议本质上是很快的。</p>
+<h2 id="为什么我们需要它">为什么我们需要它？</h2>
+<p>除了高性能计算之外，过去十年中我们还看到各种东西方流量持续大幅增长。这始于虚拟化，它与虚拟机移动性一起带来了性能和性能的提升。可扩展性对许多资源（网络、存储、计算）提出了挑战。最重要的是，我们看到超融合基础设施（HCI）、存储复制和其他用例等趋势消耗了更多的带宽。与此同时，随着我们获得更快的存储选项（NVMe、各种类型的 NVDIMM（N、F、P）或英特尔的 3D XPoint），对超低延迟的需求也随之增加，这导致了围绕其功能的新架构。</p>
+<p>
+        <img class="mx-auto" alt="image-20231219185034569" src="../image-20231219185034569.png" />   
+    </p>
+<p><em>图 4：毫无疑问，非易失性 DIMM（及其所有变体）将进一步推动对 RDMA 的需求</em><a href="https://www.dell.com/support/manuals/be/nl/bebsdt1/poweredge-r740xd/nvdimm-n-module-details_ug_pub/nvdimm-n?guid=guid-6f1227ce-819b-41c7-8673-85d5f882b22d&amp;lang=en-us">（图片由 DELL 提供）</a></p>
+<h1 id="一般建议">一般建议</h1>
+<h2 id="1-避免在数据路径中使用控制操作">1. 避免在数据路径中使用控制操作</h2>
+<p>与保留在调用它们的同一上下文中（即不执行上下文切换）并且以优化方式编写的数据操作不同，控制操作（所有创建/销毁/查询/修改）操作非常昂贵, 因为：</p>
+<ul>
+<li>大多数时候，他们执行上下文切换</li>
+<li>有时他们分配或释放动态内存</li>
+<li>有时他们参与访问 RDMA 设备</li>
+</ul>
+<p>作为一般经验法则，应避免调用控制操作或减少其在数据路径中的使用。</p>
+<p>以下动词(verbs接口)被视为数据操作：</p>
+<ul>
+<li>ibv_post_send() 发送</li>
+<li>ibv_post_recv() 接收</li>
+<li>ibv_post_srq_recv() 共享接收队列</li>
+<li>ibv_poll_cq() 轮询完成队列</li>
+<li>ibv_req_notify_cq 通知完成</li>
+</ul>
+<h2 id="2-发布多条-wr-时一次调用将它们发布到列表中">2. 发布多条 WR 时，一次调用将它们发布到列表中</h2>
+<p>当用verbs接口ibv_post_*()中的一个, 来发送工作请求WR时，在一次调用中将多个工作请求作为链表发布，而不是每次使用一个工作请求进行多次调用，将提供更好的性能，因为它允许低级驱动程序执行优化。</p>
+<h2 id="3-使用工作完成事件时在一次调用中确认多个事件">3. 使用工作完成事件时，在一次调用中确认多个事件</h2>
+<p>使用事件处理工作完成时，在一个调用中确认多个完成而不是每次调用多个调用将提供更好的性能，因为执行的互斥锁较少。</p>
+<h2 id="4-避免使用许多分散聚集条目">4. 避免使用许多分散/聚集条目</h2>
+<p>在工作请求（发送请求或接收请求）中使用多个分散/聚集条目意味着 RDMA 设备将读取这些条目并将读取它们引用的内存。使用一个分散/聚集条目比使用多个分散/聚集条目提供更好的性能。</p>
+<h2 id="5-避免使用围栏fence">5. 避免使用围栏(Fence)</h2>
+<p>设置了栅栏标志的发送请求将被阻止，直到所有先前的 RDMA 读取和原子发送请求完成。这会降低带宽。</p>
+<h2 id="6-避免使用原子操作">6. 避免使用原子操作</h2>
+<p>原子操作允许以原子方式执行读取-修改-写入。这通常会降低性能，因为这样做通常涉及锁定对内存的访问（取决于实现）。</p>
+<h2 id="7-一次读取多个工作完成情况">7. 一次读取多个工作完成情况</h2>
+<p>ibv_poll_cq()允许一次读取多个完成。如果CQ中的工作完成数小于尝试读取的工作完成数，则意味着CQ为空，无需检查其中是否还有更多工作完成。</p>
+<h2 id="8-设置特定任务或进程的处理器关联性">8. 设置特定任务或进程的处理器关联性</h2>
+<p>当使用对称多处理 (SMP) 机器时，将进程绑定到特定的 CPU/核心可以更好地利用 CPU/核心，从而提供更好的性能。按照机器中 CPU/核心的数量执行进程并将进程分布到每个 CPU/核心可能是一个很好的做法。这可以通过“taskset”实用程序来完成。</p>
+<h2 id="9-使用本地-numa-节点">9. 使用本地 NUMA 节点</h2>
+<p>在非统一内存访问 (NUMA) 计算机上工作时，将进程绑定到被视为 RDMA 设备的本地 NUMA 节点的 CPU/核心可能会因为更快的 CPU 访问而提供更好的性能。将进程分布到所有本地 CPU/核心可能是一个很好的做法。</p>
+<h2 id="10-使用缓存行对齐的缓冲区">10. 使用缓存行对齐的缓冲区</h2>
+<p>与使用未对齐的内存缓冲区相比，使用缓存行对齐的缓冲区（在 S/G 列表、发送请求、接收请求和数据中）将提高性能；它将减少 CPU 周期数和内存访问次数。</p>
+<h2 id="11-避免进入重传流">11. 避免进入重传流</h2>
+<p>重传是性能杀手。RDMA中重传的主要原因有2个：</p>
+<ul>
+<li>传输重传 - 远程 QP 未处于可以处理传入消息的状态，即至少未达到 RTR 状态，或移至错误状态</li>
+<li>RNR重传-响应方有一条消息应该消耗一个接收请求，但接收队列中没有任何接收请求</li>
+</ul>
+<p>有些 RDMA 设备提供计数器来指示重试流发生，但并非全部。</p>
+<p>当QP进入这些流时，将QP.retry_cnt和QP.rnr_retry设置为零将导致失败（即，带有错误的完成）。</p>
+<p>但是，如果无法避免重试流，请在重传之间使用较低（尽可能）的延迟。</p>
+<h1 id="提高带宽的手段">提高带宽的手段</h1>
+<h2 id="1-找到最适合-rdma-设备的-mtu">1. 找到最适合 RDMA 设备的 MTU</h2>
+<p>MTU 值指定可以发送的最大数据包有效负载大小（即不包括数据包标头）。根据经验，由于所有 MTU 值的数据包标头大小都相同，因此使用最大可用 MTU 大小将降低每个数据包的“支付价格(负载开销)”；有效负载数据占总使用带宽的百分比将会增加。但是，有些 RDMA 设备可以为低于最大支持值的 MTU 值提供最佳性能。人们应该执行一些测试，以便为他使用的特定设备找到最佳的 MTU。</p>
+<h2 id="2-使用大消息">2. 使用大消息</h2>
+<p>发送几条大消息比发送大量小消息更有效。在应用程序级别，第一级应该通过 RDMA 收集数据并发送大消息。</p>
+<h2 id="3-处理多个未完成的发送请求">3. 处理多个未完成的发送请求</h2>
+<p>处理多个未完成的发送请求并保持发送队列始终满（即，对于每个轮询的工作完成发布一个新的发送请求）将使 RDMA 设备保持忙碌并防止其闲置。</p>
+<h2 id="4-配置队列对以允许并行进行多个-rdma-读取和原子操作">4. 配置队列对以允许并行进行多个 RDMA 读取和原子操作</h2>
+<p>如果使用 RDMA 读取或原子操作，建议将 QP 配置为与运行中的多个 RDMA 读取和原子操作配合使用，因为它将提供更高的 BW。</p>
+<h2 id="5-使用发送队列中的选择性信号">5. 使用发送队列中的选择性信号</h2>
+<p>在发送队列中使用选择性信号意味着并非每个发送请求在结束时都会产生工作完成，这将减少应处理的工作完成的数量。</p>
+<h1 id="heading"></h1>
+<h1 id="降低延迟的手段">降低延迟的手段</h1>
+<h2 id="1-使用轮询polling读取工作完成情况">1. 使用轮询(polling)读取工作完成情况</h2>
+<p>为了在工作完成添加到完成队列后立即读取它们，轮询将提供最佳结果（而不是使用工作完成事件）。</p>
+<h2 id="2-以内嵌方式发送小消息">2. 以内嵌方式发送小消息</h2>
+<p>在支持内联发送数据的 RDMA 设备中，内联发送小消息将提供更好的延迟，因为它消除了 RDMA 设备（通过 PCIe 总线）执行额外读取以读取消息有效负载的需要。</p>
+<h2 id="3-在-qp-的超时和-min_rnr_timer-中使用较低的值">3. 在 QP 的超时和 min_rnr_timer 中使用较低的值</h2>
+<p>在 QP 的超时和 min_rnr_timer 中使用较低的值意味着，如果出现错误并且需要重试（无论是因为远程 QP 没有应答还是没有未完成的接收请求），重传之前的等待时间将简短一点。</p>
+<h2 id="4-如果使用立即数据请使用-rdma-write-with立即而不是-send-with立即">4. 如果使用立即数据，请使用 RDMA Write with立即而不是 Send with立即</h2>
+<p>当发送仅包含立即数据的消息时，带有立即数的 RDMA 写入将比带有立即的发送提供更好的性能，因为后者会导致未完成的已发布接收请求被读取（在响应方），而不仅仅是被消耗。</p>
+<h1 id="heading-1"></h1>
+<h1 id="减少内存消耗的手段">减少内存消耗的手段</h1>
+<h2 id="1-使用共享接收队列-srq">1. 使用共享接收队列 (SRQ)</h2>
+<p>使用 SRQ 可以节省未完成的接收请求的总数，从而减少消耗的总内存，而不是为每个队列对发布许多接收请求。</p>
+<h2 id="2-注册物理连续内存">2. 注册物理连续内存</h2>
+<p>寄存器物理连续内存（例如大页）可以允许低级驱动程序执行优化，因为需要较少量的内存地址转换（与 4KB 内存页缓冲区相比）。</p>
+<h2 id="3-将使用的队列大小减少到最小">3. 将使用的队列大小减少到最小</h2>
+<p>创建各种队列（队列对、共享接收队列、完成队列）可能会消耗大量内存。人们应该将它们的大小设置为其应用程序所需的最小值。</p>
+<h1 id="heading-2"></h1>
+<h1 id="减少cpu消耗的手段">减少CPU消耗的手段</h1>
+<h2 id="1-处理工作完成事件">1. 处理工作完成事件</h2>
+<p>使用事件读取工作完成将消除在 CQ 上执行持续轮询的需要，因为当工作完成添加到 CQ 时，RDMA 设备将发送事件。</p>
+<h2 id="2-在响应者端处理请求的事件">2. 在响应者端处理请求的事件</h2>
+<p>当在响应者端读取工作完成时，请求事件可以是向请求者提供提示的好方法，表明现在是读取完成的好时机。这减少了已处理的工作完成总数。</p>
+<h2 id="3-与多个队列共享同一个cq">3. 与多个队列共享同一个CQ</h2>
+<p>对多个队列使用相同的 CQ 并减少 CQ 的总数将消除检查多个 CQ 的需要，以便了解未完成的工作请求是否已完成。这可以通过与多个发送队列、多个接收队列或它们的混合共享相同的 CQ 来完成。</p>
+<h1 id="heading-3"></h1>
+<h1 id="提高可扩展性的手段">提高可扩展性的手段</h1>
+<h2 id="1-使用集体算法collective-algorithms-可参考daos中cart的k项树算法">1. 使用集体算法(collective algorithms), 可参考DAOS中CART的k项树算法</h2>
+<p>使用集体算法将减少通过线路的消息总数，并减少集群中每个节点将使用的消息和资源总数。有些 RDMA 设备提供特殊的集体卸载操作，有助于降低 CPU 利用率。</p>
+<h2 id="2-使用不可靠数据报-ud-qp">2. 使用不可靠数据报 (UD) QP</h2>
+<p>如果每个节点都需要能够接收消息或向子网中的任何其他节点发送消息，则使用连接的 QP（可靠或不可靠）可能是一个糟糕的解决方案，因为将在每个节点中创建许多 QP。使用 UD QP 更好，因为它可以从子网中的任何其他 UD QP 发送和接收消息。</p>
+<h3 id="heading-4"></h3>
+<h1 id="参考">参考</h1>
+<p>Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制_动态连接等详解-一文入门RDMA和RoCE有损无损: <a href="https://cloud.tencent.com/developer/article/2304247">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制_动态连接等详解-一文入门RDMA和RoCE有损无损-腾讯云开发者社区-腾讯云</a></p>
+<ul>
+<li><a href="https://www.rdmamojo.com/2013/06/08/tips-and-tricks-to-optimize-your-rdma-code/#">分享</a> 撰文： <a href="https://www.rdmamojo.com/author/admin/">Dotan Barak</a> ，2013年6月8日。2019年3月9日。</li>
+</ul>
+<p><a href="https://www.rdmamojo.com/2013/06/08/tips-and-tricks-to-optimize-your-rdma-code/">Tips and tricks to optimize your RDMA code - RDMAmojo RDMAmojo</a></p>
+<h2 id="heading-5"></h2>
+<h2 id="晓兵ssbandjl"><strong>晓兵(ssbandjl)</strong></h2>
+<p>博客: <a href="https://cloud.tencent.com/developer/user/5060293/articles?from_column=20421&amp;from=20421">https://cloud.tencent.com/developer/user/5060293/articles</a> | <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Flogread.cn%2F&amp;from_column=20421&amp;from=20421">https://logread.cn</a> | <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fblog.csdn.net%2Fssbandjl&amp;from_column=20421&amp;from=20421">https://blog.csdn.net/ssbandjl</a></p>
+<p>欢迎对高性能<a href="https://cloud.tencent.com/product/cos?from_column=20421&amp;from=20421">分布式存储</a>PureFlash, SPDK, RDMA, 等高性能技术感兴趣的朋友加入PureFlash技术交流(群)</p>
+<h2 id="晓兵技术杂谈系列"><strong>晓兵技术杂谈(系列)</strong></h2>
+<p><a href="https://cloud.tencent.com/developer/user/5060293/video?from_column=20421&amp;from=20421">https://cloud.tencent.com/developer/user/5060293/video</a></p>
+<p>欢迎对DAOS, SPDK, RDMA等高性能技术感兴趣的朋友加我WX(ssbandjl)进入DAOS技术交流(群)</p>
+<p>DAOS汇总: <a href="https://cloud.tencent.com/developer/article/2344030?from_column=20421&amp;from=20421">https://cloud.tencent.com/developer/article/2344030</a></p>
+<h2 id="晓兵">晓兵</h2>
+<p>博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a> | <a href="https://cloud.tencent.com/developer/user/5060293/articles">https://cloud.tencent.com/developer/user/5060293/articles</a></p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/rdma/rdma_perf/">https://logread.cn/post/rdma/rdma_perf/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/">DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</a></li>
+        
+        <li><a href="/post/net/libfabric_hpc_net_api_rdma_daos_mercury/">OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</a></li>
+        
+        <li><a href="/post/rdma/rdma_rocev2_lossless_lossy/">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</a></li>
+        
+        <li><a href="/post/linux/nvmf/">NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析</a></li>
+        
+        <li><a href="/post/ofa/ofa_librabric/">OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+                <li><a href='/tags/rdma'>rdma</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2023
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_perf/" title="优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/virtio/" title="VirtIO简介">VirtIO简介</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/net_ucx_stor_ucp_uct/" title="统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022">统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/" title="DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解">DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/" title="英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda">英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/" title="OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)">OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_dfuse_fs_io_path/" title="DAOS用户态文件系统IO路径(dfuse io全路径)">DAOS用户态文件系统IO路径(dfuse io全路径)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_docker/" title="DAOS-在docker中搭建daos开发调试环境">DAOS-在docker中搭建daos开发调试环境</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_eq_and_event/" title="DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析">DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_tse/" title="DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析">DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/iscsi/">iscsi (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/kernel/">kernel (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/libfabric/">libfabric (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/multipath/">multipath (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/network/">network (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvmeof/">nvmeof (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/qemu/">qemu (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (7)</a></li>
+    
+    <li><a href="https://logread.cn/categories/roce/">roce (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (26)</a></li>
+    
+    <li><a href="https://logread.cn/categories/virtio/">virtio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (31)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/iscsi/">iscsi</a>
+  
+  <a href="https://logread.cn/tags/kernel/">kernel</a>
+  
+  <a href="https://logread.cn/tags/libfabric/">libfabric</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/network/">network</a>
+  
+  <a href="https://logread.cn/tags/nvmeof/">nvmeof</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/roce/">roce</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/virtio/">virtio</a>
+  
+  <a href="https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/">多路径</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://github.com/ssbandjl/golang-design-pattern" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
