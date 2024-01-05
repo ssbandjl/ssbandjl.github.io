@@ -142,6 +142,18 @@
     <div class="post-toc-content">
         <nav id="TableOfContents">
   <ul>
+    <li><a href="#ib">IB</a></li>
+    <li><a href="#带宽"><strong>带宽</strong></a>
+      <ul>
+        <li></li>
+        <li><a href="#延迟">延迟</a></li>
+        <li><a href="#向后兼容性"><strong>向后兼容性</strong></a></li>
+        <li><a href="#电缆"><strong>电缆</strong></a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
     <li>
       <ul>
         <li><a href="#cpu-卸载旁路">CPU 卸载/旁路</a></li>
@@ -194,15 +206,10 @@
 
   <ul>
     <li><a href="#1-使用集体算法collective-algorithms-可参考daos中cart的k项树算法">1. 使用集体算法(collective algorithms), 可参考DAOS中CART的k项树算法</a></li>
-    <li><a href="#2-使用不可靠数据报-ud-qp">2. 使用不可靠数据报 (UD) QP</a>
-      <ul>
-        <li><a href="#heading-4"></a></li>
-      </ul>
-    </li>
+    <li><a href="#2-使用不可靠数据报-ud-qp">2. 使用不可靠数据报 (UD) QP</a></li>
   </ul>
 
   <ul>
-    <li><a href="#heading-5"></a></li>
     <li><a href="#晓兵ssbandjl"><strong>晓兵(ssbandjl)</strong></a></li>
     <li><a href="#晓兵技术杂谈系列"><strong>晓兵技术杂谈(系列)</strong></a></li>
     <li><a href="#晓兵">晓兵</a></li>
@@ -270,6 +277,29 @@
 <h1 id="什么是rdma">什么是RDMA？</h1>
 <p>DMA 代表直接内存访问。这意味着应用程序可以在 CPU 干预的情况下直接访问（读/写）主机内存。如果您在主机之间执行此操作，它将成为远程直接内存访问 (RDMA)</p>
 <p>在阅读有关 RDMA 的内容时，您会注意到一些用于描述其优点的术语。 “零复制 Zero Copy”、“内核绕过 Kernel Bypass”、“协议卸载 Protocol Offload”和“协议加速 Protocol Acceleration”等术语</p>
+<p>使用 RDMA 通常需要实现 InfiniBand、Omni-Path、RoCE 或 iWARP 协议的专用网络硬件。Soft-RoCE 通过标准以太网 NIC 提供 RDMA 功能。</p>
+<p>内核中的上层协议（ULP）实现RDMA加速服务，例如IP（例如IPoIB）和存储（例如iSER、SRP）。应用程序不需要感知 RDMA 即可从这些内核提供的 RDMA 服务中受益。</p>
+<p>应用软件可以通过使用RDMA API（例如libibverbs、libfabrics）或RDMA感知框架（例如openmpi）来感知RDMA。这些应用程序将从实施 RDMA 的网络中获益最多</p>
+<h2 id="ib">IB</h2>
+<p>InfiniBand（缩写为IB）是以太网和光纤通道的替代方案。IB 提供高带宽和低延迟。IB 可以直接在一台计算机上的存储设备与另一台计算机上的用户空间之间传输数据，从而绕过并避免系统调用的开销。IB 适配器可以处理网络协议，这与在 CPU 上运行的以太网网络协议不同。这使得操作系统和 CPU 在进行高带宽传输时保持空闲，这对于 10Gb+ 以太网来说可能是一个真正的问题。</p>
+<p>IB 硬件由 Mellanox（与 Voltaire 合并，并得到 Oracle 的大力支持）和 Intel（于 2012 年收购了 QLogic 的 IB 部门）制造。IB 最常用于超级计算机、集群和数据中心。IBM、HP 和 Cray 也是 InfiniBand 指导委员会的成员。Facebook、Twitter、eBay、YouTube 和 PayPal 是 IB 用户的示例。</p>
+<p>IB 软件是在<a href="https://www.openfabrics.org/"><strong>OpenFabrics 开源联盟下开发的</strong></a></p>
+<h2 id="带宽"><strong>带宽</strong></h2>
+<h4 id="信号传输率"><strong>信号传输率</strong></h4>
+<p>IB传输速率一开始对应的是PCI Express（简称PCIe）支持的最大传输速率，后来随着PCIe进步的幅度越来越小，传输速率对应了其他I/O技术，并且每个端口的PCIe通道数量反而增加了。它推出时使用 SDR（单数据速率），每通道信号速率为 2.5Gb/s（对应 PCI Express v1.0），并添加了：5Gb/s 的 DDR（双数据速率）（PCI Express v2.0） ）；10Gb/s 的 QDR（四倍数据速率）（通过改进 PCIe 3.0 的编码而不是信令速率来匹配 PCI Express 3.0 的吞吐量）；以及 14.0625Gbps 的 FDR（14 数据速率）（与 16GFC 光纤通道匹配）。IB 现在提供 25Gb/s 的 EDR（增强型数据速率）（与 25Gb 以太网相匹配）。计划在 2017 年左右实现 50Gb/s 的 HDR（高数据速率）。</p>
+<h4 id="有效吞吐量"><strong>有效吞吐量</strong></h4>
+<p>由于 SDR、DDR 和 QDR 版本使用 8/10 编码（8 位数据需要 10 位信令），因此这些版本的有效吞吐量降低至 80%：SDR 为 2Gb/s/链路；DDR 速度为 4Gb/s/链路；和 8Gb/s/链路的 QDR。从 FDR 开始，IB 使用 64/66 编码，允许更高的有效吞吐量与信令速率比为 96.97%：FDR 为 13.64Gb/s/link；EDR 为 24.24Gb/s/通道；以及 48.48Gb/s/链路的 HDR。</p>
+<p>IB 设备能够通过多个链路发送数据，尽管商业产品标准化为每条电缆 4 个链路。</p>
+<p>当使用常见的 4X 链路设备时，这可以有效地实现以下总有效吞吐量： 8Gb/s 的 SDR；DDR 16Gb/s；32Gb/s 的 QDR；FDR 为 54.54Gb/s；EDR 为 96.97Gb/s；和 193.94Gb/s 的 HDR。</p>
+<h3 id="延迟">延迟</h3>
+<p>IB的延迟非常小：SDR（5us）；DDR（2.5us）；QDR（1.3us）；FDR（0.7us）；EDR（0.5us）；和 HDR（&lt; 0.5us）。相比之下，10Gb 以太网更像是 7.22us，是 FDR 延迟的十倍。</p>
+<h3 id="向后兼容性"><strong>向后兼容性</strong></h3>
+<p>IB 设备几乎总是向后兼容。应以最低的共同标准建立联系。适用于 PCI Express 8x 插槽的 DDR 适配器应可在 PCI Express 4x 插槽中工作（带宽为一半）。</p>
+<h3 id="电缆"><strong>电缆</strong></h3>
+<p>使用 QDR 时，IB 无源铜缆最长可达 7 米；使用 FDR 时，IB 无源铜缆可达 3 米。</p>
+<p>使用 FDR 时，IB 有源光纤（光）电缆的长度可达 300 米（FDR10 上仅为 100 米）。</p>
+<p>Mellanox MetroX 设备允许长达 80 公里的连接。每公里延迟增加约 5us。</p>
+<p>一根IB线可以直接连接两台电脑，无需交换机；IB 交叉电缆不存在。</p>
 <h1 id="rdma-的工作原理">RDMA 的工作原理</h1>
 <p>RDMA 的工作原理是通过硬件路径（NIC 和网络）将数据从一台主机上的用户应用程序内存直接复制到另一台主机上的用户应用程序内存中。RDMA是下图中的蓝线（图 3）。绿线描绘了您早已了解的传统 TCP/IP 流量</p>
 <p>
@@ -380,14 +410,90 @@
 <p>使用集体算法将减少通过线路的消息总数，并减少集群中每个节点将使用的消息和资源总数。有些 RDMA 设备提供特殊的集体卸载操作，有助于降低 CPU 利用率。</p>
 <h2 id="2-使用不可靠数据报-ud-qp">2. 使用不可靠数据报 (UD) QP</h2>
 <p>如果每个节点都需要能够接收消息或向子网中的任何其他节点发送消息，则使用连接的 QP（可靠或不可靠）可能是一个糟糕的解决方案，因为将在每个节点中创建许多 QP。使用 UD QP 更好，因为它可以从子网中的任何其他 UD QP 发送和接收消息。</p>
-<h3 id="heading-4"></h3>
+<h1 id="查看内核模块">查看内核模块</h1>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ lsmod | grep <span style="color:#d14">&#39;\(^ib\|^rdma\)&#39;</span>
+rdma_ucm               <span style="color:#099">24576</span>  <span style="color:#099">0</span>
+ib_uverbs              <span style="color:#099">65536</span>  <span style="color:#099">1</span> rdma_ucm
+ib_iser                <span style="color:#099">49152</span>  <span style="color:#099">0</span>
+rdma_cm                <span style="color:#099">57344</span>  <span style="color:#099">3</span> ib_iser,rpcrdma,rdma_ucm
+ib_umad                <span style="color:#099">24576</span>  <span style="color:#099">0</span>
+ib_ipoib              <span style="color:#099">114688</span>  <span style="color:#099">0</span>
+ib_cm                  <span style="color:#099">45056</span>  <span style="color:#099">2</span> rdma_cm,ib_ipoib
+rdmavt                 <span style="color:#099">57344</span>  <span style="color:#099">1</span> hfi1
+ib_core               <span style="color:#099">208896</span>  <span style="color:#099">11</span> ib_iser,ib_cm,rdma_cm,ib_umad,ib_uverbs,rpcrdma,ib_ipoib,iw_cm,rdmavt,rdma_ucm,hfi1
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="debian-rdma-软件包">Debian RDMA 软件包</h1>
+<p><a href="https://wiki.debian.org/DebianKernel">对 RDMA 的内核支持由DebianKernel</a>团队维护。内核为许多型号的 RDMA 硬件提供驱动程序，以及提供 ULP 支持的模块。</p>
+<p>rdma-core: <a href="https://wiki.debian.org/Teams/HPC">RDMA 的核心用户空间包由Debian HPC</a>维护。</p>
+<p>从历史上看，核心 RDMA 包的上游来源是 Open Fabrics Enterprise Distribution (OFED)。最近，这项工作的很大一部分已迁移到 rdma-core 项目</p>
+<h1 id="启动内核的-rdma-模块位于libmodulesuname--r下的如下位置">启动内核的 RDMA 模块位于/lib/modules/<code>uname -r</code>下的如下位置</h1>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">kernel/drivers/infiniband/hw/ - hardware device drivers 硬件设备驱动
+kernel/drivers/infiniband/sw/ - software drivers <span style="color:#000;font-weight:bold">(</span>e.g. Soft-RoCE<span style="color:#000;font-weight:bold">)</span> 软件驱动
+kernel/drivers/infiniband/ulp/ - ULP modules 上层协议模块
+kernel/drivers/staging/ - new drivers/modules, may be RDMA-related. 新驱动/模块
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="查看链路速率">查看链路速率</h1>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ ibstat
+<span style="color:#000;font-weight:bold">(</span>look at the Rate shown on the port you are using<span style="color:#000;font-weight:bold">)</span>
+or
+
+<span style="color:#998;font-style:italic"># iblinkinfo</span>
+<span style="color:#000;font-weight:bold">(</span>look at the middle part formatted like <span style="color:#d14">&#34;4X     5.0 Gbps&#34;</span><span style="color:#000;font-weight:bold">)</span>
+or
+
+$ cat /sys/class/infiniband/&lt;kernel module&gt;/ports/&lt;port number&gt;/rate
+<span style="color:#099">20</span> Gb/sec <span style="color:#000;font-weight:bold">(</span>4X DDR<span style="color:#000;font-weight:bold">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="heading-4"></h1>
 <h1 id="参考">参考</h1>
 <p>Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制_动态连接等详解-一文入门RDMA和RoCE有损无损: <a href="https://cloud.tencent.com/developer/article/2304247">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制_动态连接等详解-一文入门RDMA和RoCE有损无损-腾讯云开发者社区-腾讯云</a></p>
-<ul>
-<li><a href="https://www.rdmamojo.com/2013/06/08/tips-and-tricks-to-optimize-your-rdma-code/#">分享</a> 撰文： <a href="https://www.rdmamojo.com/author/admin/">Dotan Barak</a> ，2013年6月8日。2019年3月9日。</li>
-</ul>
-<p><a href="https://www.rdmamojo.com/2013/06/08/tips-and-tricks-to-optimize-your-rdma-code/">Tips and tricks to optimize your RDMA code - RDMAmojo RDMAmojo</a></p>
-<h2 id="heading-5"></h2>
+<p>分享 撰文： <a href="https://www.rdmamojo.com/author/admin/">Dotan Barak</a> ，2013年6月8日。2019年3月9日。 Tips and tricks to optimize your RDMA code - RDMAmojo RDMAmojo</p>
+<p><a href="https://blog.csdn.net/ssbandjl/article/details/134987145">https://blog.csdn.net/ssbandjl/article/details/134987145</a></p>
+<p>RDMA性能优化经验浅谈（一）https://zhuanlan.zhihu.com/p/522332998</p>
+<p>NSDI2023论文:SRNIC可扩展架构分析 <a href="https://www.ctyun.cn/developer/article/416756725661765">https://www.ctyun.cn/developer/article/416756725661765</a></p>
+<p>从PCIe事务微观角度看RDMA操作的性能损耗(PCIE事务/门铃/内联/迈络思网卡特性等): <a href="https://mp.weixin.qq.com/s/gtG3vZ-p-H-XE9IIVvRp9g">https://mp.weixin.qq.com/s/gtG3vZ-p-H-XE9IIVvRp9g</a></p>
+<p>RDMA资源: <a href="https://gist.github.com/aagontuk/705315c94eeaf657b3f35b011c233c19">https://gist.github.com/aagontuk/705315c94eeaf657b3f35b011c233c19</a></p>
+<p>DEBIAN RDMA WiKi: <a href="https://wiki.debian.org/RDMA">https://wiki.debian.org/RDMA</a></p>
+<p>ArchLinux IB WiKi: <a href="https://wiki.archlinux.org/title/InfiniBand">https://wiki.archlinux.org/title/InfiniBand</a></p>
 <h2 id="晓兵ssbandjl"><strong>晓兵(ssbandjl)</strong></h2>
 <p>博客: <a href="https://cloud.tencent.com/developer/user/5060293/articles?from_column=20421&amp;from=20421">https://cloud.tencent.com/developer/user/5060293/articles</a> | <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Flogread.cn%2F&amp;from_column=20421&amp;from=20421">https://logread.cn</a> | <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fblog.csdn.net%2Fssbandjl&amp;from_column=20421&amp;from=20421">https://blog.csdn.net/ssbandjl</a></p>
 <p>欢迎对高性能<a href="https://cloud.tencent.com/product/cos?from_column=20421&amp;from=20421">分布式存储</a>PureFlash, SPDK, RDMA, 等高性能技术感兴趣的朋友加入PureFlash技术交流(群)</p>
