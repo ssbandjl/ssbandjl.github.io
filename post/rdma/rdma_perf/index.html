@@ -271,7 +271,7 @@
         
         
         <div class="post-content">
-            <h1 id="优化-rdma-代码的建议和技巧-rdma性能优化技巧-避坑指南">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</h1>
+            <h1 id="优化-rdma-代码的建议和技巧-rdma性能优化技巧-避坑指南-rdma资源">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南-RDMA资源</h1>
 <h1 id="rdma-被用在很多地方主要是因为它可以实现高性能在这篇文章中我将提供有关如何从多个方面优化-rdma-代码的建议和技巧">RDMA 被用在很多地方，主要是因为它可以实现高性能。在这篇文章中，我将提供有关如何从多个方面优化 RDMA 代码的建议和技巧</h1>
 <h1 id="简单的科普下rdma">简单的科普下RDMA</h1>
 <h1 id="什么是rdma">什么是RDMA？</h1>
@@ -483,7 +483,37 @@ $ cat /sys/class/infiniband/&lt;kernel module&gt;/ports/&lt;port number&gt;/rate
 <span style="color:#099">20</span> Gb/sec <span style="color:#000;font-weight:bold">(</span>4X DDR<span style="color:#000;font-weight:bold">)</span>
 </code></pre></td></tr></table>
 </div>
-</div><h1 id="heading-4"></h1>
+</div><h1 id="api参考">API参考</h1>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">include/rdma/ib_verbs.h
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="内核模块及源码位置">内核模块及源码位置</h1>
+<pre><code>•	 CM: Communication manager (drivers/infiniband/core/cm.c)
+•	 IPoIB: IP over InfiniBand (drivers/infiniband/ulp/ipoib/)
+•	 iSER: iSCSI extension for RDMA (drivers/infiniband/ulp/iser/)
+•	 RDS: Reliable Datagram Socket (net/rds/)
+•	 SRP: SCSI RDMA protocol (drivers/infiniband/ulp/srp/)
+•	 Hardware low-level drivers of different vendors (drivers/infiniband/hw)
+•	 verbs: Kernel verbs (drivers/infiniband/core/verbs.c)
+•	 uverbs: User verbs (drivers/infiniband/core/uverbs_*.c)
+•	 MAD: Management datagram (drivers/infiniband/core/mad.c) 
+</code></pre><h1 id="linux-ib-软件栈">Linux IB 软件栈</h1>
+<p>
+        <img class="mx-auto" alt="image-20240105213840041" src="../linux_rdma_stack.png" />   
+    </p>
+<h1 id="rdma资源及关系">RDMA资源及关系</h1>
+<p>
+        <img class="mx-auto" alt="image-20240105213955799" src="../image-20240105213840041.png" />   
+    </p>
+<h1 id="qp状态机">QP状态机</h1>
+<p>
+        <img class="mx-auto" alt="image-20240105214110083" src="../image-20240105214110083.png" />   
+    </p>
 <h1 id="参考">参考</h1>
 <p>Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制_动态连接等详解-一文入门RDMA和RoCE有损无损: <a href="https://cloud.tencent.com/developer/article/2304247">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制_动态连接等详解-一文入门RDMA和RoCE有损无损-腾讯云开发者社区-腾讯云</a></p>
 <p>分享 撰文： <a href="https://www.rdmamojo.com/author/admin/">Dotan Barak</a> ，2013年6月8日。2019年3月9日。 Tips and tricks to optimize your RDMA code - RDMAmojo RDMAmojo</p>
