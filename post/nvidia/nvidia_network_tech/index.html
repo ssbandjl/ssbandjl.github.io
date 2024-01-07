@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7571343657358120"
+     crossorigin="anonymous"></script>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>Nvidia网络技术-端到端网络解决方案 | 晓兵</title>
+    <meta property="og:title" content="Nvidia网络技术-端到端网络解决方案 - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2024-01-06T17:55:53&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2024-01-06T17:55:53&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储,ceph,分布式块存储,云计算,daos,rdma,spdk,nvmeof,linux,kernel,内核,分布式存储,dpdk,rpc">
+    <meta name="description" content="Nvidia网络技术-端到端网络解决方案">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/nvidia/nvidia_network_tech/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#术语">术语</a></li>
+    <li><a href="#适用于现代工作负载的加速网络-强大安全的基础设施的蓝图">适用于现代工作负载的加速网络-强大、安全的基础设施的蓝图</a>
+      <ul>
+        <li><a href="#简介">简介</a></li>
+      </ul>
+    </li>
+    <li><a href="#人工智能时代的网络网络定义数据中心-nvidia-spectrum-x-光谱">人工智能时代的网络：网络定义数据中心-NVIDIA Spectrum-X (光谱)</a>
+      <ul>
+        <li><a href="#简介-1">简介</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#专业数据中心ai工厂ai云">专业数据中心：AI工厂、AI云</a></li>
+    <li><a href="#人工智能和分布式计算">人工智能和分布式计算</a></li>
+    <li><a href="#infiniband-推动-ai-性能">InfiniBand 推动 AI 性能</a></li>
+    <li><a href="#导航以太网进行人工智能部署">导航以太网进行人工智能部署</a></li>
+    <li><a href="#概括">概括</a></li>
+    <li><a href="#相关资源">相关资源</a></li>
+    <li><a href="#标签">标签</a></li>
+    <li><a href="#关于作者">关于作者</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#历史编辑httpsenwikipediaorgwindexphptitlenvidia_gtcactioneditsection1">历史[<a href="https://en.wikipedia.org/w/index.php?title=Nvidia_GTC&amp;action=edit&amp;section=1">编辑</a>]</a></li>
+    <li><a href="#参考">参考</a></li>
+    <li><a href="#晓兵">晓兵</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Nvidia网络技术-端到端网络解决方案</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2024年1月6日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+            <span class="meta-category"><a href='/categories/nvidia'>nvidia</a></span>
+            
+            <span class="meta-category"><a href='/categories/dpu'>dpu</a></span>
+            
+            <span class="meta-category"><a href='/categories/network'>network</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="nvidia网络技术-端到端网络解决方案">Nvidia网络技术-端到端网络解决方案</h1>
+<h2 id="术语">术语</h2>
+<p>performance per watt 每瓦性能</p>
+<h2 id="适用于现代工作负载的加速网络-强大安全的基础设施的蓝图">适用于现代工作负载的加速网络-强大、安全的基础设施的蓝图</h2>
+<h3 id="简介">简介</h3>
+<p>每年出货的 3000 万台数据中心服务器中，有三分之一用于运行软件定义的数据中心堆栈。企业需要发展其网络基础设施，以支持现代数据中心工作负载导致的呈指数级增长的数据处理量。</p>
+<p>我们的加速网络解决方案提供 InfiniBand 和以太网的选择，为企业提供支持跨所有现代工作负载和存储要求的开发部署实施的基础设施，从而开启加速计算的新时代，从而最大限度地提高人工智能投资</p>
+<h2 id="人工智能时代的网络网络定义数据中心-nvidia-spectrum-x-光谱">人工智能时代的网络：网络定义数据中心-NVIDIA Spectrum-X (光谱)</h2>
+<p>
+        <img class="mx-auto" alt="image-20240106202106203" src="../nvdia_spx_dpu3.png" />   
+    </p>
+<h3 id="简介-1">简介</h3>
+<p>专为以太网 AI 云而构建, NVIDIA Spectrum™-X 以太网平台专为提高基于以太网的 AI 云的性能和效率而设计。 这项突破性技术实现了 1.6 倍的 AI 网络性能提升，并在多租户环境中实现了一致、可预测的性能。 Spectrum-X 建立在由 NVIDIA Spectrum-4 紧密耦合提供支持的网络创新之上
+以太网交换机和 NVIDIA® BlueField®-3 SuperNIC。 Spectrum-X 网络优化可减少基于 Transformer 的大规模生成 AI 模型的运行时间，并提供更快的洞察时间</p>
+<p>增强人工智能云的以太网
+AI 工作负载需要具有高、有效带宽的低延迟网络，该网络还与 NVIDIA Collective 等集合库兼容
+通讯库（NCCL）。 对于多个作业同时运行的云环境，性能隔离对于防止在同一计算基础设施上运行的租户之间的干扰至关重要。 为了满足人工智能云对高性能网络和云多租户的需求，Spectrum-X 利用融合以太网 (RoCE) 扩展上的远程直接内存访问 (RDMA)。 这些扩展构建在传统以太网之上，可提高有效带宽并确保工作负载之间的性能隔离</p>
+<p>Spectrum-X的优势</p>
+<ul>
+<li>提升AI云性能：Spectrum-X将AI云网络性能提升1.6倍，加速AI工作负载的处理、分析和执行，进而加速AI解决方案的开发和部署。</li>
+<li>标准以太网连接：在增强以太网功能的同时，Spectrum-X 完全基于标准，并且与基于以太网的堆栈完全可互操作。</li>
+<li>提高能效：通过提高性能，NVIDIA Spectrum-X 有助于打造更节能的 AI 环境。 这可以降低人工智能集群的功耗和运营成本。</li>
+<li>增强的多租户性能：多租户环境中的性能隔离可确保每个租户的工作负载以最佳且一致的方式执行，从而提高客户满意度并提高服务质量。</li>
+<li>更好的 AI 结构可见性：通过对流经多个交换机的流的可见性，可以识别性能瓶颈，并且是现代自动化结构验证解决方案的关键部分。</li>
+<li>更高的 AI 可扩展性：前所未有的单跳扩展至 256 个 200G 端口或两层叶/主干拓扑中的 16K 端口，支持 AI 云的扩展，同时保持高水平的性能，使其成为不断发展的组织的理想解决方案 人工智能基础设施需求。</li>
+<li>更快的网络设置：高级网络功能的自动化端到端配置针对 AI 工作负载进行了全面调整。</li>
+<li>更高的弹性：凭借更高的弹性，可以消除因链路丢失而发生的级联性能问题，从而限制该单个链路的带宽损失。</li>
+<li>强大的租户隔离：SpectrumX 利用 BlueField-3 SuperNIC，通过支持每个租户的安全虚拟私有云 (VPC) 提供增强的工作负载隔离</li>
+</ul>
+<h1 id="dell-technologieshewlett-packard-enterprise联想即将推出-nvidia-全新-ai-以太网网络平台">Dell Technologies、Hewlett Packard Enterprise、联想即将推出 NVIDIA 全新 AI 以太网网络平台</h1>
+<p>端到端平台采用最新的 NVIDIA Spectrum-X 网络，为客户利用 AI 实现业务转型奠定基础</p>
+<p>2023 年 11 月 20 日</p>
+<p>![image-20240106201836672](/Users/xb/Library/Application Support/typora-user-images/image-20240106201836672.png)</p>
+<p>NVIDIA 今天宣布，<a href="https://www.dell.com/en-us/blog/a-state-of-the-art-data-center-for-large-scale-ai/">戴尔科技集团</a>、惠普企业和<a href="https://nvidianews.nvidia.com/news/lenovo-nvidia-hybrid-ai">联想</a>将率先将适用于 AI 的<a href="https://www.nvidia.com/en-us/networking/spectrumx/">NVIDIA Spectrum-X™</a> 以太网<a href="https://www.nvidia.com/en-us/networking/spectrumx/">网络技术</a>集成到其服务器系列中，以帮助企业客户加快生成 AI 工作负载的速度。</p>
+<p>Spectrum-X 专为生成式 AI 打造，为企业提供了新型以太网网络，与传统以太网产品相比，其 AI 通信网络性能可提高 1.6 倍。</p>
+<p>来自三大顶级系统制造商的新系统将 Spectrum-X 与 NVIDIA Tensor Core GPU、<a href="https://www.nvidia.com/en-us/data-center/products/ai-enterprise/">NVIDIA AI Enterprise</a>软件和<a href="https://www.nvidia.com/en-us/deep-learning-ai/solutions/data-science/workbench/">NVIDIA AI Workbench</a>软件结合在一起，为企业提供通过生成式 AI 实现业务转型的构建模块。</p>
+<p>NVIDIA 创始人兼首席执行官黄仁勋表示：“随着企业升级数据中心以服务这些工作负载，生成式 AI 和加速计算正在推动代际过渡。” “加速网络是 NVIDIA 领先服务器制造商合作伙伴推出新一波系统的催化剂，可加速向生成式 AI 时代的转变。”</p>
+<p>戴尔科技集团董事长兼首席执行官迈克尔·戴尔表示：“加速计算和网络是构建满足大型语言模型和生成式人工智能应用需求的系统的关键。” “通过我们的合作，戴尔科技集团和 NVIDIA 正在为客户提供快速、安全地从数据中提取情报所需的基础设施和软件。”</p>
+<p>HPE 总裁兼首席执行官 Antonio Neri 表示：“生成式 AI 无疑将推动多个行业的创新。” “这些强大的新应用程序将需要一个完全不同的架构来支持各种动态工作负载。为了使客户能够充分发挥生成式 AI 的潜力，HPE 正在与 NVIDIA 合作，构建具有所需功能、效率和可扩展性的系统来支持这些应用程序。”</p>
+<p>联想董事长兼首席执行官杨元庆表示：“生成式人工智能可以推动前所未有的转型，但对企业基础设施提出了前所未有的要求。” “联想与 NVIDIA 密切合作，正在构建高效、加速的系统，并配备为现代人工智能应用提供动力所需的网络、计算和软件。”</p>
+<p><strong>专为加速人工智能而构建的网络为了实现人工智能工作负载的峰值效率，Spectrum-X 结合了</strong><a href="https://www.nvidia.com/en-us/networking/ethernet-switching/">Spectrum-4</a>
+以太网交换机 的极致性能；NVIDIA <a href="https://www.nvidia.com/en-us/networking/products/data-processing-unit/">BlueField®-3 SuperNIC</a>，一种新型网络加速器，用于增强超大规模人工智能工作负载；还有<a href="https://www.nvidia.com/en-us/networking/ethernet-switching/">加速软件</a>。Spectrum-X 是对 BlueField-3 DPU 的补充，BlueField-3 DPU 是世界上最先进的基础设施计算平台。</p>
+<p>Spectrum-4 是全球首款用于 AI 的 51Tb/秒 以太网交换机，可在大规模和负载下提供高效的数据吞吐量，同时最大限度地减少多租户、AI 云工作负载的网络拥塞。其智能、微调的路由技术始终能够最大限度地利用网络基础设施。</p>
+<p>BlueField-3 SuperNIC 专为网络密集型、大规模并行计算而设计，在 GPU 服务器之间提供高达 400Gb/s 的融合以太网 RDMA (RoCE) 网络连接，并提高人工智能训练和推理流量的性能。簇。它们还支持安全的多租户数据中心环境，确保租户作业之间的确定性和隔离性能。BlueField-3 SuperNIC 拥有高能效、半高、半长 PCIe 外形尺寸，是企业级服务器的理想选择。</p>
+<p>为 Spectrum-X 提供支持的加速软件采用 NVIDIA 软件开发套件（例如<a href="https://www.nvidia.com/en-us/networking/ethernet-switching/cumulus-linux/">Cumulus Linux</a>、Pure <a href="https://www.nvidia.com/en-us/networking/ethernet-switching/sonic/">SONiC</a>和<a href="https://www.nvidia.com/en-us/networking/ethernet-switching/netq/">NetQ</a>）（它们共同推动了平台的突破性性能）以及<a href="https://developer.nvidia.com/networking/doca">NVIDIA DOCA™ 软件框架（</a> BlueField 的核心）。</p>
+<p>NVIDIA AI Enterprise 为安全、稳定和受支持的生产 AI 提供框架、预训练模型和开发工具。NVIDIA AI Workbench 允许开发人员在 PC 或工作站上快速创建、测试和自定义预训练的生成式 AI 模型，然后将其扩展到几乎任何数据中心或云。</p>
+<p><strong>由 Spectrum-X 提供支持的 NVIDIA Israel-1 超级计算机</strong>
+Spectrum-X 还支持 NVIDIA Israel-1 超级计算机，这是下一代 AI 系统的参考架构。Israel-1 是与 Dell Technologies 的合作项目，使用由 NVIDIA HGX™ H100 八 GPU 平台以及 BlueField-3 DPU 和 SuperNIC 以及 Spectrum-4 交换机提供支持的 Dell PowerEdge XE9680 服务器。</p>
+<p>预计将于明年第一季度推出来自戴尔、HPE 和联想的具有完整 NVIDIA AI 堆栈的新系统</p>
+<h1 id="数据中心网络和人工智能时代">数据中心网络和人工智能时代</h1>
+<p><a href="https://developer.nvidia.com/blog/networking-for-data-centers-and-the-era-of-ai/">https://developer.nvidia.com/blog/networking-for-data-centers-and-the-era-of-ai/</a></p>
+<p>2023 年 10 月 12 日</p>
+<p>布莱恩·<a href="https://developer.nvidia.com/blog/author/bsparks/">斯帕克斯</a></p>
+<p>![image-20240106202249947](/Users/xb/Library/Application Support/typora-user-images/image-20240106202249947.png)</p>
+<p>十多年来，传统的云数据中心一直是计算基础设施的基石，满足各种用户和应用程序的需求。然而，数据中心近年来不断发展，以跟上技术的进步和人工智能驱动计算不断增长的需求。这篇文章探讨了网络在塑造数据中心的未来和促进人工智能时代方面发挥的关键作用。</p>
+<h2 id="专业数据中心ai工厂ai云">专业数据中心：AI工厂、AI云</h2>
+<p>目前正在出现两类不同的数据中心：人工智能工厂和人工智能云。这两者都是为了满足人工智能工作负载的独特需求而量身定制的，其特点是依赖加速计算。</p>
+<p>AI 工厂旨在处理大规模工作流程以及<a href="https://www.nvidia.com/en-us/glossary/data-science/large-language-models/">大型语言模型</a>(LLM) 和其他基础 AI 模型的开发。这些模型是构建更先进的人工智能系统的基石。为了实现跨数千个 GPU 的无缝扩展和高效利用资源，强大且高性能的网络势在必行。</p>
+<p>人工智能云扩展了传统云基础设施的能力，以支持大规模的<a href="https://www.nvidia.com/en-us/glossary/data-science/generative-ai/">生成式人工智能</a>应用。生成式人工智能超越了传统的人工智能系统，它根据经过训练的数据创建新的内容，例如图像、文本和音频。管理拥有数千名用户的人工智能云需要先进的管理工具和能够有效处理不同工作负载的网络基础设施。</p>
+<h2 id="人工智能和分布式计算">人工智能和分布式计算</h2>
+<p>AI 工作负载是计算密集型的，特别是涉及 ChatGPT 和 BERT 等大型复杂模型的工作负载。为了加快模型训练和处理大量数据集，人工智能从业者已转向分布式计算。此方法涉及将工作负载分配到通过高速、低延迟网络连接的多个互连服务器或节点。</p>
+<p>分布式计算对于人工智能的成功至关重要，而网络的可扩展性和处理越来越多节点的能力也至关重要。高度可扩展的网络使人工智能研究人员能够利用更多的计算资源，从而提高速度和性能。</p>
+<p>在构建人工智能数据中心的网络架构时，必须以分布式计算为首要任务，打造一体化的解决方案。数据中心架构师必须仔细考虑网络设计，并根据他们计划部署的人工智能工作负载的独特需求定制解决方案。</p>
+<p><a href="https://www.nvidia.com/en-us/networking/quantum2/">NVIDIA Quantum-2 InfiniBand</a>和<a href="https://www.nvidia.com/en-us/networking/spectrumx/">NVIDIA Spectrum-X</a>是两个专门设计和优化的网络平台，旨在应对 AI 数据中心的网络挑战，每个平台都有自己独特的功能和创新。</p>
+<h2 id="infiniband-推动-ai-性能">InfiniBand 推动 AI 性能</h2>
+<p>InfiniBand 技术一直是复杂分布式科学计算大规模超级计算部署的驱动力。它已成为人工智能工厂事实上的网络。凭借超低延迟，InfiniBand 已成为加速当今主流高性能计算 (HPC) 和 AI 应用的关键。高效 AI 系统所需的许多关键网络功能都是 NVIDIA Quantum-2 InfiniBand 平台原生的。</p>
+<p>网络内计算由InfiniBand驱动，将基于硬件的计算引擎集成到网络中。这可以大规模卸载复杂的操作，并利用 NVIDIA 可扩展分层聚合和缩减协议 (SHARP)（一种网络内聚合机制）。SHARP 支持多个并发集体操作，使数据带宽加倍，以减少数据并增强性能。</p>
+<p>InfiniBand 自适应路由以最佳方式分散流量，缓解拥塞并提高资源利用率。在子网管理器的指导下，InfiniBand 根据网络状况选择无拥塞路由，在不影响数据包到达顺序的情况下最大限度地提高效率。</p>
+<p>InfiniBand 拥塞控制架构可保证确定性的带宽和延迟。它使用三阶段流程来管理拥塞，防止人工智能工作负载出现性能瓶颈。</p>
+<p>这些固有的优化使 InfiniBand 能够满足人工智能应用的需求，最终推动卓越的性能和效率。</p>
+<h2 id="导航以太网进行人工智能部署">导航以太网进行人工智能部署</h2>
+<p>为人工智能基础设施部署以太网需要满足以太网协议的特定需求。随着时间的推移，以太网已经包含了广泛、全面且（有时）复杂的功能集，可以满足各种网络场景的需求。</p>
+<p>因此，开箱即用的或传统的以太网并不是专门为高性能而设计的。使用传统以太网作为计算结构的 AI 云只能实现优化网络性能的一小部分。</p>
+<p>在多个 AI 作业同时运行的多租户环境中，性能隔离对于防止性能进一步下降至关重要。如果出现链路故障，传统以太网结构会导致集群的AI性能下降一半。<a href="https://developer.nvidia.com/nccl">这是因为传统以太网主要针对日常企业工作流程进行了优化，并非旨在满足依赖NVIDIA 集体通信库 (NCCL) 的</a>高性能 AI 应用程序的需求。</p>
+<p>这些性能问题是由传统以太网固有的因素造成的，包括：</p>
+<ul>
+<li>较高的开关延迟，在商品 ASIC 中很常见</li>
+<li>分割缓冲交换机架构，可能导致带宽不公平</li>
+<li>针对 AI 工作负载生成的大流量进行了次优化的负载平衡</li>
+<li>性能隔离和嘈杂的邻居问题</li>
+</ul>
+<p>Spectrum-X 网络平台解决了这些问题以及更多问题。Spectrum-X 基于标准以太网协议，具有融合以太网 RDMA (RoCE) 扩展，可增强 AI 性能。这些扩展利用了 InfiniBand 本身的最佳实践，并为以太网带来了自适应路由和拥塞控制等创新。</p>
+<p>Spectrum-X 是唯一能够提供多租户生成式 AI 云所需的高效带宽和性能隔离的以太网平台，这得益于 Spectrum-4 与<a href="https://www.nvidia.com/en-us/networking/products/data-processing-unit/">NVIDIA BlueField-3 DPU 的</a>密切配合。</p>
+<h2 id="概括">概括</h2>
+<p>人工智能时代已经到来，网络是其成功的基石。为了充分发挥人工智能的潜力，数据中心架构师必须仔细考虑网络设计，并根据人工智能工作负载的独特需求定制这些设计。解决网络问题是释放人工智能技术全部潜力和推动数据中心行业创新的关键。</p>
+<p><a href="https://www.nvidia.com/en-us/networking/quantum2/">NVIDIA Quantum InfiniBand</a>凭借其超低延迟、可扩展性能和高级功能集，成为 AI 工厂的理想选择。<a href="https://www.nvidia.com/en-us/networking/spectrumx/">NVIDIA Spectrum-X</a>凭借其专门针对 AI 构建的技术创新，为构建基于以太网的 AI 云的组织提供了突破性的解决方案。</p>
+<p>要了解有关 AI 性能需求和网络要求的更多信息，请参阅<a href="https://nvdam.widen.net/s/bvpmlkbgzt/networking-overall-whitepaper-networking-for-ai-2911204">AI 时代的网络</a>白皮书。<a href="https://forums.developer.nvidia.com/c/infrastructure/369">加入NVIDIA 开发者基础设施和网络论坛</a>中的对话。</p>
+<h2 id="相关资源">相关资源</h2>
+<ul>
+<li>GTC 会议：<a href="https://www.nvidia.com/en-us/on-demand/session/gtcspring23-S52155/?ncid=em-even-124008-vt33">人工智能和云时代的网络安全转型（2023 年春季）</a></li>
+<li>GTC 会议：<a href="https://www.nvidia.com/en-us/on-demand/session/gtcspring23-S52390/?ncid=em-even-124008-vt33">构建 AI 就绪数据中心（由 Sterling 演讲）（2023 年春季）</a></li>
+<li>GTC 会议：<a href="https://www.nvidia.com/en-us/on-demand/session/gtcspring23-S51339/?ncid=em-even-124008-vt33">数据中心数字孪生自动化起步（2023 年春季）</a></li>
+<li>网络研讨会：<a href="https://gateway.on24.com/wcc/eh/1407606/lp/4436514/?embedUrl=https://www.nvidia.com/en-us/about-nvidia/webinar-portal/">人工智能时代的网络</a></li>
+<li>网络研讨会：<a href="https://gateway.on24.com/wcc/eh/1407606/lp/3347970/?embedUrl=https://www.nvidia.com/en-us/about-nvidia/webinar-portal/">利用 NVIDIA Spectrum-3 加速 AI、云、存储和安全性能</a></li>
+<li>网络研讨会：<a href="https://gateway.on24.com/wcc/eh/1407606/lp/2853661/?embedUrl=https://www.nvidia.com/en-us/about-nvidia/webinar-portal/">NVIDIA 和 VMware 合作将 AI 引入每个数据中心</a></li>
+</ul>
+<p><a href="https://developer.nvidia.com/blog/networking-for-data-centers-and-the-era-of-ai/#entry-content-comments">讨论 (0)</a></p>
+<p>+4</p>
+<p>喜欢</p>
+<h2 id="标签">标签</h2>
+<p><a href="https://developer.nvidia.com/blog/category/data-center-cloud/">数据中心/云</a>| <a href="https://developer.nvidia.com/blog/category/generative-ai/">生成式人工智能/法学硕士</a>| <a href="https://developer.nvidia.com/blog/category/networking/">网络</a>| <a href="https://developer.nvidia.com/blog/recent-posts/?industry=Hardware+%2F+Semiconductor">硬件/半导体</a>| <a href="https://developer.nvidia.com/blog/recent-posts/?products=BlueField+DPU">BlueField DPU</a> | <a href="https://developer.nvidia.com/blog/recent-posts/?products=InfiniBand">InfiniBand</a> | <a href="https://developer.nvidia.com/blog/recent-posts/?learning_levels=General+Interest">一般兴趣</a>| <a href="https://developer.nvidia.com/blog/recent-posts/?learning_levels=Beginner+Technical">初学者技术</a>| <a href="https://developer.nvidia.com/blog/recent-posts/?content_types=Best+practice">最佳实践</a>| <a href="https://developer.nvidia.com/blog/tag/best-practices/">最佳实践</a>| <a href="https://developer.nvidia.com/blog/tag/ethernet/">以太网</a>| <a href="https://developer.nvidia.com/blog/tag/featured/">精选</a>| <a href="https://developer.nvidia.com/blog/tag/large-language-models/">法学硕士</a>| <a href="https://developer.nvidia.com/blog/tag/nccl/">NCCL</a> | <a href="https://developer.nvidia.com/blog/tag/spectrum/">频谱以太网</a></p>
+<h2 id="关于作者">关于作者</h2>
+<p>
+        <img class="mx-auto" alt="布莱恩·斯帕克斯" src="https://developer-blogs.nvidia.com/wp-content/uploads/2023/10/brian-sparks-131x131.jpg" />   
+    </p>
+<p><strong>关于 Brian Sparks</strong>
+Brian Sparks 是 NVIDIA InfiniBand 和以太网网络平台的高级营销总监。他在数据中心网络和安全市场拥有 20 多年的经验，其职责包括担任各种营销和沟通领导角色，以及战略 HPC 和网络生态系统支持。他目前担任 InfiniBand 贸易协会 (IBTA) 和统一通信框架 (UCF) 联盟的营销工作组主席。Brian 拥有圣何塞州立大学传播学学士学位。</p>
+<p><a href="https://developer.nvidia.com/blog/author/bsparks/">查看布莱恩·斯帕克斯的所有帖子</a></p>
+<h1 id="oracle-云基础设施选择-nvidia-bluefield-数据中心加速平台">Oracle 云基础设施选择 NVIDIA BlueField 数据中心加速平台</h1>
+<p>Hyperscaler 将 BlueField-3 DPU 添加到其网络堆栈中，以减轻 CPU 上的数据中心任务负担</p>
+<p>2023 年 3 月 21 日</p>
+<p>![image-20240106202610087](/Users/xb/Library/Application Support/typora-user-images/image-20240106202610087.png)</p>
+<p><strong>GTC —</strong> NVIDIA 今天宣布 Oracle 云基础设施 (OCI) 已选择<a href="https://www.nvidia.com/en-us/networking/products/data-processing-unit/">NVIDIA BlueField®-3 DPU</a>作为其网络堆栈的最新成员，为 OCI 客户从 CPU 卸载数据中心任务提供了强大的新选项。</p>
+<p>BlueField-3 是 NVIDIA 的第三代数据处理单元，使企业能够构建从云到数据中心再到边缘的软件定义、硬件加速的 IT 基础设施。它通过卸载、加速和隔离基础设施工作负载来提高数据中心的性能、效率和安全性，从而释放昂贵的 CPU 内核来运行业务应用程序。</p>
+<p>OCI 为其客户提供广泛的云基础设施和平台服务，以便在云或本地构建和运行应用程序和服务。通过利用 BlueField-3，OCI 正在扩展其长期以来从 CPU 卸载数据中心基础设施任务的方法。</p>
+<p>NVIDIA 创始人兼首席执行官黄仁勋表示：“人工智能时代需要云数据中心基础设施来支持非凡的计算需求。” “NVIDIA 的 BlueField-3 DPU 实现了这一进步，将传统的云计算环境转变为加速、节能且安全的基础设施，以处理生成式 AI 的苛刻工作负载。”</p>
+<p>Oracle 云基础设施执行副总裁 Clay Magouyrk 表示：“Oracle 云基础设施为企业客户提供了几乎无与伦比的人工智能和科学计算基础设施访问能力，并具有改变行业的能力。” “NVIDIA BlueField-3 DPU 是我们提供最先进、可持续的云基础设施和极致性能战略的关键组成部分。”</p>
+<p><strong>BlueField-3 提升数据中心性能、效率和安全性</strong>
+BlueField-3 是提供云和人工智能服务的数据中心控制平面的基础。<a href="https://blogs.nvidia.com/blog/2022/11/03/bluefield-dpus-energy-efficiency/">测试显示，</a>与不使用 DPU 的服务器相比，使用 NVIDIA BlueField DPU 的服务器功耗最多可降低 24%。</p>
+<p>与上一代 BlueField 相比，DPU 支持高达 400 GB/秒的以太网和 InfiniBand 连接，并提供 4 倍以上的计算能力、高达 4 倍的加密加速速度、2 倍的存储处理速度和 4 倍的内存带宽。</p>
+<p><a href="https://developer.nvidia.com/networking/doca">BlueField 还通过NVIDIA DOCA™ 软件框架</a>提供完全的向后兼容性。DOCA 为开发人员提供了先进的零信任安全功能，包括创建计量云服务的能力，这些服务可以控制资源访问、验证每个应用程序和用户、隔离潜在受感染的机器以及帮助保护数据免遭泄露和盗窃。</p>
+<p>观看 Huang在 GTC 主题演讲中<a href="https://www.youtube.com/watch?v=DiGB5uAYKAg&amp;t=1835s">讨论 NVIDIA BlueField-3 DPU 。</a></p>
+<p>观看 NVIDIA 首席执行官黄仁勋 (Jensen Huang) 公布一系列加速计算突破——从人工智能培训到部署、半导体到软件库、系统到云服务——这将有助于每个行业的转型。</p>
+<p>DGX(大狗熊)</p>
+<p>![image-20240106205029520](/Users/xb/Library/Application Support/typora-user-images/image-20240106205029520.png)</p>
+<p>NvidiaCloud</p>
+<p>![image-20240106211857228](/Users/xb/Library/Application Support/typora-user-images/image-20240106211857228.png)</p>
+<h1 id="英伟达-gtc大会">英伟达 GTC大会</h1>
+<p>添加语言</p>
+<ul>
+<li>
+<p><a href="https://en.wikipedia.org/wiki/Nvidia_GTC">文章</a></p>
+</li>
+<li>
+<p><a href="https://en.wikipedia.org/wiki/Talk:Nvidia_GTC">讲话</a></p>
+</li>
+<li>
+<p><a href="https://en.wikipedia.org/wiki/Nvidia_GTC">读</a></p>
+</li>
+<li>
+<p><a href="https://en.wikipedia.org/w/index.php?title=Nvidia_GTC&amp;action=edit">编辑</a></p>
+</li>
+<li>
+<p><a href="https://en.wikipedia.org/w/index.php?title=Nvidia_GTC&amp;action=history">查看历史记录</a></p>
+</li>
+</ul>
+<p>工具</p>
+<p>维基百科，自由的百科全书</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">英伟达 GTC</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">日期）</td>
+<td>三月和十一月（4-5 天）</td>
+</tr>
+<tr>
+<td style="text-align:left">频率</td>
+<td>半年一次</td>
+</tr>
+<tr>
+<td style="text-align:left">场地</td>
+<td>2009–2019：<a href="https://en.wikipedia.org/wiki/San_Jose_Convention_Center">圣何塞会议中心</a>2020–2023：<a href="https://en.wikipedia.org/wiki/Virtual_event">在线</a></td>
+</tr>
+<tr>
+<td style="text-align:left">地点</td>
+<td>2009–2019：<a href="https://en.wikipedia.org/wiki/San_Jose,_California">加利福尼亚州圣何塞</a>2020–2023：<a href="https://en.wikipedia.org/wiki/Virtual_event">在线</a></td>
+</tr>
+<tr>
+<td style="text-align:left">成立</td>
+<td>2009 年 10 月 2 日</td>
+</tr>
+<tr>
+<td style="text-align:left">最近的</td>
+<td>2023 年 3 月 20 日；8个月前</td>
+</tr>
+<tr>
+<td style="text-align:left">出席率</td>
+<td>75,358 （预计）</td>
+</tr>
+<tr>
+<td style="text-align:left">举办</td>
+<td><a href="https://en.wikipedia.org/wiki/Nvidia">英伟达</a></td>
+</tr>
+<tr>
+<td style="text-align:left">网站</td>
+<td><a href="https://www.nvidia.com/gtc/">www.nvidia.com/gtc/ _ _ _ _</a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>NVIDIA GTC</strong>（<strong>GPU 技术大会</strong>）是面向开发者的全球 AI 会议，汇聚了开发者、工程师、研究人员、发明家和 IT 专业人士。[<a href="https://en.wikipedia.org/wiki/Nvidia_GTC#cite_note-1">1]</a>主题集中于<a href="https://en.wikipedia.org/wiki/Artificial_intelligence">人工智能</a>(AI)、计算机图形学、<a href="https://en.wikipedia.org/wiki/Data_science">数据科学</a>、<a href="https://en.wikipedia.org/wiki/Machine_learning">机器学习</a>和<a href="https://en.wikipedia.org/wiki/Robotics">自主机器</a>。每次会议都以 Nvidia 首席执行官兼创始人<a href="https://en.wikipedia.org/wiki/Jensen_Huang">黄仁勋</a>的主题演讲开始，然后是与来自世界各地的专家举行的各种会议和对话。</p>
+<p>它于 2009 年起源于加利福尼亚州圣何塞，最初关注的是通过 GPU 解决计算挑战的潜力。[<a href="https://en.wikipedia.org/wiki/Nvidia_GTC#cite_note-2">2]</a>近年来，会议焦点已转向人工智能和深度学习的各种应用，包括：<a href="https://en.wikipedia.org/wiki/Self-driving_cars">自动驾驶汽车</a>、医疗保健、<a href="https://en.wikipedia.org/wiki/Supercomputer">高性能计算</a>、专业可视化以及 Nvidia 深度学习学院 (DLI) 培训。[<a href="https://en.wikipedia.org/wiki/Nvidia_GTC#cite_note-3">3]</a></p>
+<h2 id="历史编辑httpsenwikipediaorgwindexphptitlenvidia_gtcactioneditsection1">历史[<a href="https://en.wikipedia.org/w/index.php?title=Nvidia_GTC&amp;action=edit&amp;section=1">编辑</a>]</h2>
+<p>GTC 2018 吸引了超过 8,400 名与会者。由于 2020 年新冠疫情大流行，GTC 2020 改为数字活动，吸引了大约 59,000 名注册者。<a href="https://en.wikipedia.org/wiki/YouTube">2021 年 GTC 主题演讲于 4 月 12 日在YouTube</a>上直播，其中一部分是使用 Nvidia Omniverse<a href="https://en.wikipedia.org/wiki/Real-time_rendering">实时渲染</a>平台通过 CGI 制作的。由于该活动的照片真实感，包括首席执行官<a href="https://en.wikipedia.org/wiki/Jensen_Huang">黄仁勋</a>的模型，新闻媒体报道称无法辨别主题演讲的一部分是<a href="https://en.wikipedia.org/wiki/Computer-generated_imagery">CGI</a>，直到后来在 8 月 11 日的一篇博客文章中披露。</p>
+<h2 id="参考">参考</h2>
+<p>Nvidia网络技术汇总: <a href="https://www.nvidia.com/en-us/networking">https://www.nvidia.com/en-us/networking</a></p>
+<p>NvidiaAI网络: <a href="https://resources.nvidia.com/en-us-networking-ai">https://resources.nvidia.com/en-us-networking-ai</a></p>
+<p>巴塞罗那-边缘云技术大会: <a href="https://www.hpe.com/us/en/discover-more-network/events/discover-barcelona-2023.html">https://www.hpe.com/us/en/discover-more-network/events/discover-barcelona-2023.html</a></p>
+<p>戴尔+惠普+联想+Nvidia推出全新AI以太网网络平台: <a href="https://nvidianews.nvidia.com/news/nvidias-new-ethernet-networking-platform-for-ai-available-soon-from-dell-technologies-hewlett-packard-enterprise-lenovo">https://nvidianews.nvidia.com/news/nvidias-new-ethernet-networking-platform-for-ai-available-soon-from-dell-technologies-hewlett-packard-enterprise-lenovo</a></p>
+<p>Nvidia技术博客: <a href="https://developer.nvidia.com/blog/">https://developer.nvidia.com/blog/</a></p>
+<p>2023 年最受欢迎的 NVIDIA 技术博客文章：生成式 AI、法学硕士、机器人技术和虚拟世界的突破: <a href="https://developer.nvidia.com/blog/year-in-review-trending-posts-of-2023/">https://developer.nvidia.com/blog/year-in-review-trending-posts-of-2023/</a></p>
+<p>全方位宇宙(Omniverse)术语: <a href="https://docs.omniverse.nvidia.com/extensions/latest/common/glossary-of-terms.html">https://docs.omniverse.nvidia.com/extensions/latest/common/glossary-of-terms.html</a></p>
+<h2 id="晓兵">晓兵</h2>
+<p>博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a> | <a href="https://cloud.tencent.com/developer/user/5060293/articles">https://cloud.tencent.com/developer/user/5060293/articles</a></p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/nvidia/nvidia_network_tech/">https://logread.cn/post/nvidia/nvidia_network_tech/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/">英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda</a></li>
+        
+        <li><a href="/post/nvidia/gpu_direct_rdma/">Nvidia 迈络思 OFED GPU直接RDMA</a></li>
+        
+        <li><a href="/post/rdma/rdma_perf/">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</a></li>
+        
+        <li><a href="/post/linux/virtio/">VirtIO简介</a></li>
+        
+        <li><a href="/post/net/net_ucx_stor_ucp_uct/">统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+                <li><a href='/tags/nvidia'>nvidia</a></li>
+                
+                <li><a href='/tags/dpu'>dpu</a></li>
+                
+                <li><a href='/tags/network'>network</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2024
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/stor/beegfs_storage/" title="Beegfs存储">Beegfs存储</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/nvidia/nvidia_network_tech/" title="Nvidia网络技术-端到端网络解决方案">Nvidia网络技术-端到端网络解决方案</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/nvidia/gpu_direct_rdma/" title="Nvidia 迈络思 OFED GPU直接RDMA">Nvidia 迈络思 OFED GPU直接RDMA</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_perf/" title="优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/virtio/" title="VirtIO简介">VirtIO简介</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/net_ucx_stor_ucp_uct/" title="统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022">统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/" title="DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解">DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/" title="英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda">英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/" title="OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)">OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_dfuse_fs_io_path/" title="DAOS用户态文件系统IO路径(dfuse io全路径)">DAOS用户态文件系统IO路径(dfuse io全路径)</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpu/">dpu (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/gpu/">gpu (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/iscsi/">iscsi (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/kernel/">kernel (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/libfabric/">libfabric (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/multipath/">multipath (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/network/">network (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvidia/">nvidia (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvmeof/">nvmeof (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/qemu/">qemu (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (8)</a></li>
+    
+    <li><a href="https://logread.cn/categories/roce/">roce (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (29)</a></li>
+    
+    <li><a href="https://logread.cn/categories/virtio/">virtio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (34)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/dpu/">dpu</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/gpu/">gpu</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/iscsi/">iscsi</a>
+  
+  <a href="https://logread.cn/tags/kernel/">kernel</a>
+  
+  <a href="https://logread.cn/tags/libfabric/">libfabric</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/network/">network</a>
+  
+  <a href="https://logread.cn/tags/nvidia/">nvidia</a>
+  
+  <a href="https://logread.cn/tags/nvmeof/">nvmeof</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/roce/">roce</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/virtio/">virtio</a>
+  
+  <a href="https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/">多路径</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://github.com/ssbandjl/golang-design-pattern" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

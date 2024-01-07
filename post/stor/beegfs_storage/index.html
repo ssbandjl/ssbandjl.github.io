@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7571343657358120"
+     crossorigin="anonymous"></script>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>Beegfs存储 | 晓兵</title>
+    <meta property="og:title" content="Beegfs存储 - 晓兵">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2024-01-07T08:57:15&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2024-01-07T08:57:15&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储,ceph,分布式块存储,云计算,daos,rdma,spdk,nvmeof,linux,kernel,内核,分布式存储,dpdk,rpc">
+    <meta name="description" content="Beegfs存储">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/stor/beegfs_storage/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵
+                    </a>
+                
+                <p class="description">存储</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#简介">简介</a></li>
+    <li><a href="#架构">架构</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#admon">admon</a></li>
+    <li><a href="#安装">安装</a>
+      <ul>
+        <li><a href="#图形化安装gui">图形化安装(GUI)</a></li>
+        <li><a href="#package-descriptions-包说明httpsdocbeegfsiolatestadvanced_topicsmanual_installationhtmlpackage-descriptions">Package Descriptions <a href="https://doc.beegfs.io/latest/advanced_topics/manual_installation.html#package-descriptions">包说明</a></a></li>
+      </ul>
+    </li>
+    <li><a href="#参考">参考</a></li>
+    <li><a href="#晓兵">晓兵</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Beegfs存储</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2024年1月7日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="beegfs">Beegfs</h1>
+<h2 id="简介">简介</h2>
+<p>BeeGFS 包含两个内置基准测试工具，可以分别帮助表征或评估网络或存储<a href="http://www.beegfs.io/wiki/Benchmark">NetBench 和 StorageBench</a>。当启用NetBench模式时，服务器将丢弃收到的写请求而不是写入数据。类似地，在读取请求的情况下，不会从底层文件系统读取，而是仅将内存缓冲区发送到客户端。NetBench 模式旨在测试独立于底层磁盘的网络流吞吐量。另一方面，StorageBench 旨在测量独立于网络性能的底层文件系统的流吞吐量。StorageBench 是不使用网络的存储目标基准测试。storage-bench 命令只是将请求发送到存储目标以开始写入/读取数据。通过这样做，我们消除了网络的影响。我们从存储平台得到的输出是在网络性能理想的情况下系统可以达到的最佳性能。本博客说明了如何使用 StorageBench 来比较不同存储目标的性能，从而识别有缺陷或配置错误的目标</p>
+<h2 id="架构">架构</h2>
+<p>![image-20240107101415221](/Users/xb/Library/Application Support/typora-user-images/image-20240107101415221.png)</p>
+<h1 id="beeondbeegfs-点播">BeeOND：BeeGFS 点播</h1>
+<p>BeeOND（“ <strong>Bee</strong> GFS <strong>On</strong> <strong>Demand</strong> ”，发音类似于“beyond”）的开发目的是为了能够轻松地动态创建一个或多个 BeeGFS 实例。此功能在许多不同的用例中非常有用，例如在云环境中，但特别是在创建临时工作文件系统时。BeeOND 通常用于在计算作业期间聚合计算节点中内部 SSD 或硬盘的性能和容量。这提供了额外的性能和一种非常优雅的突发缓冲方式</p>
+<p>参考: <a href="https://doc.beegfs.io/latest/advanced_topics/beeond.html">https://doc.beegfs.io/latest/advanced_topics/beeond.html</a></p>
+<p>大多数 HPC 集群系统使用基于专用服务器上并行文件系统的全局存储系统来实现高吞吐量。计算节点通常配备（或可以轻松配备）内部硬盘或 SSD，这可以提供额外的性能优势。计算节点中的内部驱动器的问题在于，它们既不提供跨多台机器的单一名称空间的优势，也不提供共享并行文件系统的灵活性和性能。BeeOND 通过在属于特定计算作业一部分的所有计算节点上基于“每个作业”创建共享并行文件系统来解决这个问题，并且完全针对作业的运行时。</p>
+<p>BeeOND 的使用与全局共享集群文件系统是基于 BeeGFS 还是其他技术无关。BeeOND 只是创建一个新的单独的安装点。任何标准工具（如<code>cp</code>或<code>rsync</code>）都可用于将数据传入和传出 BeeOND，但 BeeOND 软件包还包含一个并行复制工具，用于在 BeeOND 实例和另一个文件系统（例如永久全局 BeeGFS）之间传输数据。</p>
+<p>由于启动过程非常简单，因此可以轻松将 BeeOND 与工作负载管理器（例如 Torque 或 Slurm）集成。例如，Torque 提供序言和结尾脚本，这些脚本将在分配给作业的第一个节点上执行。由于 BeeOND 只需一个命令即可启动和停止新的 BeeGFS 实例，因此您可以轻松地将其添加到这些脚本中，以便在计算作业启动时启动 BeeOND，并在作业完成时停止它。请参阅工作负载管理器的文档以了解类似的机制</p>
+<h2 id="admon">admon</h2>
+<p>升级变化: <a href="https://groups.google.com/g/fhgfs-user/c/zVQrKgzTB3k">https://groups.google.com/g/fhgfs-user/c/zVQrKgzTB3k</a></p>
+<h2 id="安装">安装</h2>
+<h3 id="图形化安装gui">图形化安装(GUI)</h3>
+<ol>
+<li>修改配置脚本: admon/scripts/setup.defaults</li>
+<li>版本信息</li>
+</ol>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#0086b3">export</span> <span style="color:#008080">version</span><span style="color:#000;font-weight:bold">=</span><span style="color:#d14">&#34;7-beta&#34;</span>
+...
+<span style="color:#0086b3">export</span> <span style="color:#008080">base_repo_url</span><span style="color:#000;font-weight:bold">=</span><span style="color:#d14">&#34;http://www.beegfs.com/release/beegfs_</span><span style="color:#d14">${</span><span style="color:#008080">version</span><span style="color:#d14">}</span><span style="color:#d14">&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="package-descriptions-包说明httpsdocbeegfsiolatestadvanced_topicsmanual_installationhtmlpackage-descriptions">Package Descriptions <a href="https://doc.beegfs.io/latest/advanced_topics/manual_installation.html#package-descriptions">包说明</a></h3>
+<p>下表显示了运行 BeeGFS 需要定义的角色以及每个角色对应的包。 BeeGFS 的设计允许在同一节点上运行任意服务组合（例如元数据和存储服务器）。 有关 BeeGFS 节点角色的更多信息可以在体系结构中找到。</p>
+<p>BeeGFS Roles and Corresponding Packages</p>
+<table>
+<thead>
+<tr>
+<th>Management Server (one node)Manages configuration and group membershipHostname or IP address must be known by other nodes at service start time</th>
+<th>beegfs-mgmtd</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Metadata Server (at least one node)Stores directory information and allocates file space on storage servers</td>
+<td>beegfs-meta</td>
+</tr>
+<tr>
+<td>Storage Server (at least one node)Stores raw file contents</td>
+<td>beegfs-storage</td>
+</tr>
+<tr>
+<td>ClientKernel module to mount the file systemRequires userspace helper daemon for logging and hostname resolution</td>
+<td>beegfs-client, beegfs-helperd</td>
+</tr>
+<tr>
+<td>RDMA Supportlibraries for RDMA support for Metadata and Storage Services</td>
+<td>libbeegfs-ib</td>
+</tr>
+<tr>
+<td>Mon - InfluxDB based Monitoring Server (optional)Continuous monitoring of serversLive statistics</td>
+<td>beegfs-mon</td>
+</tr>
+<tr>
+<td>BeeGFS utilities for administrators<code>beegfs-ctl</code> tool for command-line administration<code>beegfs-fsck</code> tool for file system checkingSeveral small helper scripts</td>
+<td>beegfs-utils</td>
+</tr>
+<tr>
+<td>BeeGFS CommonCommon files for all packages</td>
+<td>beegfs-common</td>
+</tr>
+</tbody>
+</table>
+<h2 id="参考">参考</h2>
+<p>手动安装: <a href="https://doc.beegfs.io/latest/advanced_topics/manual_installation.html">https://doc.beegfs.io/latest/advanced_topics/manual_installation.html</a></p>
+<p>Beegfs基础: <a href="https://www.nas.nasa.gov/hecc/support/kb/beegfs-basics_625.html">https://www.nas.nasa.gov/hecc/support/kb/beegfs-basics_625.html</a></p>
+<p>适用于 HPC BeeGFS 存储的 Dell EMC Ready 解决方案的功能: <a href="https://www.dell.com/support/kbdoc/en-us/000128808/features-of-dell-emc-ready-solutions-for-hpc-beegfs-storage">https://www.dell.com/support/kbdoc/en-us/000128808/features-of-dell-emc-ready-solutions-for-hpc-beegfs-storage</a></p>
+<p>beegfs-ctl详解: <a href="https://blog.csdn.net/qq_22418329/article/details/79893623">https://blog.csdn.net/qq_22418329/article/details/79893623</a></p>
+<p><a href="https://www.cnblogs.com/luxf0/p/15798677.html">【beegfs相关】beegfs集群部署</a>: <a href="https://www.cnblogs.com/luxf0/p/15798677.html">https://www.cnblogs.com/luxf0/p/15798677.html</a></p>
+<ul>
+<li>如何在 AWS 上构建并行文件系统 BeeGFS：https://aws.amazon.com/cn/blogs/china/how-to-build-beegfs-on-aws-system/</li>
+<li>BeeGFS官方：https://www.beegfs.io/content/</li>
+<li>BeeGFS Mirroring：https://www.beegfs.io/wiki/AboutMirroring</li>
+<li>BeeGFS BuddyGroup：https://www.beegfs.io/wiki/BuddyGroups</li>
+<li>Management of Mirror Buddy Groups：https://www.beegfs.io/wiki/BuddyGroups</li>
+<li>StorageSynchronization：https://www.beegfs.io/wiki/StorageSynchronization</li>
+<li>BeeGFS FAQ：https://www.beegfs.io/wiki/FAQ</li>
+</ul>
+<h2 id="晓兵">晓兵</h2>
+<p>博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a> | <a href="https://cloud.tencent.com/developer/user/5060293/articles">https://cloud.tencent.com/developer/user/5060293/articles</a></p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/stor/beegfs_storage/">https://logread.cn/post/stor/beegfs_storage/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/nvidia/nvidia_network_tech/">Nvidia网络技术-端到端网络解决方案</a></li>
+        
+        <li><a href="/post/nvidia/gpu_direct_rdma/">Nvidia 迈络思 OFED GPU直接RDMA</a></li>
+        
+        <li><a href="/post/rdma/rdma_perf/">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</a></li>
+        
+        <li><a href="/post/linux/virtio/">VirtIO简介</a></li>
+        
+        <li><a href="/post/net/net_ucx_stor_ucp_uct/">统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2024
+    <a href="https://logread.cn"
+      >晓兵 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/stor/beegfs_storage/" title="Beegfs存储">Beegfs存储</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/nvidia/nvidia_network_tech/" title="Nvidia网络技术-端到端网络解决方案">Nvidia网络技术-端到端网络解决方案</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/nvidia/gpu_direct_rdma/" title="Nvidia 迈络思 OFED GPU直接RDMA">Nvidia 迈络思 OFED GPU直接RDMA</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_perf/" title="优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/virtio/" title="VirtIO简介">VirtIO简介</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/net_ucx_stor_ucp_uct/" title="统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022">统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/" title="DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解">DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/" title="英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda">英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/" title="OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)">OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_dfuse_fs_io_path/" title="DAOS用户态文件系统IO路径(dfuse io全路径)">DAOS用户态文件系统IO路径(dfuse io全路径)</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpu/">dpu (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/gpu/">gpu (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/iscsi/">iscsi (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/kernel/">kernel (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/libfabric/">libfabric (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/multipath/">multipath (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/network/">network (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvidia/">nvidia (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvmeof/">nvmeof (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/qemu/">qemu (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (8)</a></li>
+    
+    <li><a href="https://logread.cn/categories/roce/">roce (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (29)</a></li>
+    
+    <li><a href="https://logread.cn/categories/virtio/">virtio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (34)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/dpu/">dpu</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/gpu/">gpu</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/iscsi/">iscsi</a>
+  
+  <a href="https://logread.cn/tags/kernel/">kernel</a>
+  
+  <a href="https://logread.cn/tags/libfabric/">libfabric</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/network/">network</a>
+  
+  <a href="https://logread.cn/tags/nvidia/">nvidia</a>
+  
+  <a href="https://logread.cn/tags/nvmeof/">nvmeof</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/roce/">roce</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/virtio/">virtio</a>
+  
+  <a href="https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/">多路径</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://github.com/ssbandjl/golang-design-pattern" title="晓兵">晓兵</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

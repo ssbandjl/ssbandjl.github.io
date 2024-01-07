@@ -85,6 +85,85 @@
     <article class="post">
         <header>
             <h1 class="post-title">
+                <a href="https://logread.cn/post/daos/daos_docker/">DAOS-在docker中搭建daos开发调试环境</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年8月26日
+        </date>
+        
+        <div class="post-meta meta-category">
+            |
+            
+            <a href='/categories/stor'>stor</a>
+            
+            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
+            
+        </div>
+        
+        <div class="post-content">
+            DAOS-在docker中搭建daos开发调试环境 简介 本节介绍如何在 Docker 容器中构建和运行 DAOS 服务。 至少需要 4GB DRAM 和 16GB 磁盘空间。 在 Mac 上，请确保“Preferences/{Disk, Memory}”下的 Docker 设置已进行相应配置 步骤 拉取项目 1 git clone https://github.com/ssbandjl/daos.git 下载依赖包(缓存cache) 1 cd daos; wget http://rz2fg6ogr.hn-bkt.clouddn.com/cache_tgz 编译镜像或……
+            <p class="readmore"><a href="https://logread.cn/post/daos/daos_docker/">阅读全文</a></p>
+        </div>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://logread.cn/post/daos/daos_eq_and_event/">DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年8月19日
+        </date>
+        
+        <div class="post-meta meta-category">
+            |
+            
+            <a href='/categories/stor'>stor</a>
+            
+            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
+            
+            <a href='/categories/daos'>daos</a>
+            
+        </div>
+        
+        <div class="post-content">
+            DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析 简介 事件和事件队列 DAOS API 函数可以在阻塞或非阻塞模式下使用。 这是通过传递给每个 API 调用的指向 DAOS 事件的指针来确定的：如果 NULL 表示操作将被阻塞。 操作完成后会返回。 所有失败情况的错误码都将通过API……
+            <p class="readmore"><a href="https://logread.cn/post/daos/daos_eq_and_event/">阅读全文</a></p>
+        </div>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://logread.cn/post/daos/daos_tse/">DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年8月8日
+        </date>
+        
+        <div class="post-meta meta-category">
+            |
+            
+            <a href='/categories/stor'>stor</a>
+            
+            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
+            
+            <a href='/categories/daos'>daos</a>
+            
+        </div>
+        
+        <div class="post-content">
+            DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析 简介 TSE 是一个通用库，用于创建具有函数回调的通用任务，可选地添加这些任务之间的依赖关系，并将它们安排在一个引擎中，该引擎按照插入它们的依赖关系图确定的顺序执行这些任务。任务依赖图是调度程序的组成部分……
+            <p class="readmore"><a href="https://logread.cn/post/daos/daos_tse/">阅读全文</a></p>
+        </div>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
                 <a href="https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</a>
             </h1>
         </header>
@@ -279,83 +358,6 @@
         </div>
     </article>
     
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://logread.cn/post/daos/daos_server_engine_start/">DAOS引擎启动流程-源码分析</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2023年6月1日
-        </date>
-        
-        <div class="post-meta meta-category">
-            |
-            
-            <a href='/categories/stor'>stor</a>
-            
-            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
-            
-            <a href='/categories/daos'>daos</a>
-            
-        </div>
-        
-        <div class="post-content">
-            执行:daos_server start, server通过golang调用engine的c 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101……
-            <p class="readmore"><a href="https://logread.cn/post/daos/daos_server_engine_start/">阅读全文</a></p>
-        </div>
-    </article>
-    
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://logread.cn/post/fs/gfs_paper/">谷歌文件系统</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2023年5月30日
-        </date>
-        
-        <div class="post-meta meta-category">
-            |
-            
-            <a href='/categories/stor'>stor</a>
-            
-            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
-            
-        </div>
-        
-        <div class="post-content">
-            Google File System 谷歌文件系统 论文[译] The Google File System Sanjay Ghemawat, Howard Gobioff, and Shun Tak Leung Google 我们设计并实现了 Google 文件系统，这是一种可扩展的分布式文件系统，适用于大型分布式数据密集型应用程序。 它在廉价的商品硬件上运行时提供容错，并为大量客户端提供高聚合性能。虽然与以前的分布式文件系统有许多相同的目标，但我们的设计是由对我……
-            <p class="readmore"><a href="https://logread.cn/post/fs/gfs_paper/">阅读全文</a></p>
-        </div>
-    </article>
-    
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://logread.cn/post/daos/daos_spdk_bdev/">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2023年5月20日
-        </date>
-        
-        <div class="post-meta meta-category">
-            |
-            
-            <a href='/categories/stor'>stor</a>
-            
-            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
-            
-        </div>
-        
-        <div class="post-content">
-            基于DOAS文件系统(DFS后端)暴露的SPDK块设备 整体架构 步骤 编译daos, 记录daos安装目录, 比如/opt/daos, 启动daos_agent, daos_engine, daos_server 编译spdk git clone https://github.com/spdk/spdk.git git submodule update &ndash;init ./configure &ndash;with-daos #指定daos include目录和lib目录 make -j 16 启动spdk nvmf_tgt sudo HUGE_EVEN_ALLOC=yes scripts/setup.sh sudo ./build/bin/nvmf_tgt -m [21,22,23,24] 创建传输层 sudo ./scripts/rpc.py nvmf_create_transport……
-            <p class="readmore"><a href="https://logread.cn/post/daos/daos_spdk_bdev/">阅读全文</a></p>
-        </div>
-    </article>
-    
 
     
 
@@ -462,6 +464,18 @@
 <ul class="widget-list">
     
     <li>
+        <a href="https://logread.cn/post/stor/beegfs_storage/" title="Beegfs存储">Beegfs存储</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/nvidia/nvidia_network_tech/" title="Nvidia网络技术-端到端网络解决方案">Nvidia网络技术-端到端网络解决方案</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/nvidia/gpu_direct_rdma/" title="Nvidia 迈络思 OFED GPU直接RDMA">Nvidia 迈络思 OFED GPU直接RDMA</a>
+    </li>
+    
+    <li>
         <a href="https://logread.cn/post/rdma/rdma_perf/" title="优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</a>
     </li>
     
@@ -489,18 +503,6 @@
         <a href="https://logread.cn/post/daos/daos_dfuse_fs_io_path/" title="DAOS用户态文件系统IO路径(dfuse io全路径)">DAOS用户态文件系统IO路径(dfuse io全路径)</a>
     </li>
     
-    <li>
-        <a href="https://logread.cn/post/daos/daos_docker/" title="DAOS-在docker中搭建daos开发调试环境">DAOS-在docker中搭建daos开发调试环境</a>
-    </li>
-    
-    <li>
-        <a href="https://logread.cn/post/daos/daos_eq_and_event/" title="DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析">DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</a>
-    </li>
-    
-    <li>
-        <a href="https://logread.cn/post/daos/daos_tse/" title="DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析">DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</a>
-    </li>
-    
 </ul>
     </section>
 
@@ -520,7 +522,11 @@
     
     <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
     
+    <li><a href="https://logread.cn/categories/dpu/">dpu (1)</a></li>
+    
     <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/gpu/">gpu (1)</a></li>
     
     <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
     
@@ -534,7 +540,9 @@
     
     <li><a href="https://logread.cn/categories/multipath/">multipath (1)</a></li>
     
-    <li><a href="https://logread.cn/categories/network/">network (1)</a></li>
+    <li><a href="https://logread.cn/categories/network/">network (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvidia/">nvidia (1)</a></li>
     
     <li><a href="https://logread.cn/categories/nvmeof/">nvmeof (1)</a></li>
     
@@ -542,7 +550,7 @@
     
     <li><a href="https://logread.cn/categories/qemu/">qemu (1)</a></li>
     
-    <li><a href="https://logread.cn/categories/rdma/">rdma (7)</a></li>
+    <li><a href="https://logread.cn/categories/rdma/">rdma (8)</a></li>
     
     <li><a href="https://logread.cn/categories/roce/">roce (1)</a></li>
     
@@ -550,11 +558,11 @@
     
     <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
     
-    <li><a href="https://logread.cn/categories/stor/">stor (26)</a></li>
+    <li><a href="https://logread.cn/categories/stor/">stor (29)</a></li>
     
     <li><a href="https://logread.cn/categories/virtio/">virtio (1)</a></li>
     
-    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (31)</a></li>
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (34)</a></li>
     
     <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
     
@@ -591,9 +599,13 @@
   
   <a href="https://logread.cn/tags/dpdk/">dpdk</a>
   
+  <a href="https://logread.cn/tags/dpu/">dpu</a>
+  
   <a href="https://logread.cn/tags/gin/">gin</a>
   
   <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/gpu/">gpu</a>
   
   <a href="https://logread.cn/tags/hpc/">hpc</a>
   
@@ -610,6 +622,8 @@
   <a href="https://logread.cn/tags/net/">net</a>
   
   <a href="https://logread.cn/tags/network/">network</a>
+  
+  <a href="https://logread.cn/tags/nvidia/">nvidia</a>
   
   <a href="https://logread.cn/tags/nvmeof/">nvmeof</a>
   

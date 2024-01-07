@@ -85,6 +85,83 @@
     <article class="post">
         <header>
             <h1 class="post-title">
+                <a href="https://logread.cn/post/daos/daos_server_engine_start/">DAOS引擎启动流程-源码分析</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年6月1日
+        </date>
+        
+        <div class="post-meta meta-category">
+            |
+            
+            <a href='/categories/stor'>stor</a>
+            
+            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
+            
+            <a href='/categories/daos'>daos</a>
+            
+        </div>
+        
+        <div class="post-content">
+            执行:daos_server start, server通过golang调用engine的c 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101……
+            <p class="readmore"><a href="https://logread.cn/post/daos/daos_server_engine_start/">阅读全文</a></p>
+        </div>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://logread.cn/post/fs/gfs_paper/">谷歌文件系统</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年5月30日
+        </date>
+        
+        <div class="post-meta meta-category">
+            |
+            
+            <a href='/categories/stor'>stor</a>
+            
+            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
+            
+        </div>
+        
+        <div class="post-content">
+            Google File System 谷歌文件系统 论文[译] The Google File System Sanjay Ghemawat, Howard Gobioff, and Shun Tak Leung Google 我们设计并实现了 Google 文件系统，这是一种可扩展的分布式文件系统，适用于大型分布式数据密集型应用程序。 它在廉价的商品硬件上运行时提供容错，并为大量客户端提供高聚合性能。虽然与以前的分布式文件系统有许多相同的目标，但我们的设计是由对我……
+            <p class="readmore"><a href="https://logread.cn/post/fs/gfs_paper/">阅读全文</a></p>
+        </div>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://logread.cn/post/daos/daos_spdk_bdev/">基于DOAS文件系统接口(DFS)暴露的SPDK块设备</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年5月20日
+        </date>
+        
+        <div class="post-meta meta-category">
+            |
+            
+            <a href='/categories/stor'>stor</a>
+            
+            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
+            
+        </div>
+        
+        <div class="post-content">
+            基于DOAS文件系统(DFS后端)暴露的SPDK块设备 整体架构 步骤 编译daos, 记录daos安装目录, 比如/opt/daos, 启动daos_agent, daos_engine, daos_server 编译spdk git clone https://github.com/spdk/spdk.git git submodule update &ndash;init ./configure &ndash;with-daos #指定daos include目录和lib目录 make -j 16 启动spdk nvmf_tgt sudo HUGE_EVEN_ALLOC=yes scripts/setup.sh sudo ./build/bin/nvmf_tgt -m [21,22,23,24] 创建传输层 sudo ./scripts/rpc.py nvmf_create_transport……
+            <p class="readmore"><a href="https://logread.cn/post/daos/daos_spdk_bdev/">阅读全文</a></p>
+        </div>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
                 <a href="https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/">Mercury为高性能计算启用远程过程调用(RPC)</a>
             </h1>
         </header>
@@ -265,81 +342,6 @@
         </div>
     </article>
     
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://logread.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/">Cart_rdma_hpc开源rpc传输层</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2023年1月22日
-        </date>
-        
-        <div class="post-meta meta-category">
-            |
-            
-            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
-            
-            <a href='/categories/daos'>daos</a>
-            
-        </div>
-        
-        <div class="post-content">
-            Author 晓兵 weixin: ssbandjl 公众号: 云原生云 简介 分布式异步对象存储 (DAOS) 是一种开源软件定义的对象存储，专为大规模分布式非易失性内存 (NVM) 而设计。DAOS 利用存储级内存 (SCM) 和 NVM express (NVMe) 等下一代 NVM 技术，同时呈现键值存储接口并提供事务性非阻塞 I/O、高级数据保护和自我修复等功能 商品硬件、端到端数据完整性、细粒度数据控……
-            <p class="readmore"><a href="https://logread.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/">阅读全文</a></p>
-        </div>
-    </article>
-    
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://logread.cn/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/">Spdk_blobstore编程指导</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2023年1月22日
-        </date>
-        
-        <div class="post-meta meta-category">
-            |
-            
-            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
-            
-            <a href='/categories/spdk'>spdk</a>
-            
-        </div>
-        
-        <div class="post-content">
-            Author 晓兵 weixin: ssbandjl 公众号: 云原生云 Blobstore 编程指导 In this document @ref blob_pg_audience @ref blob_pg_intro @ref blob_pg_theory @ref blob_pg_design @ref blob_pg_examples @ref blob_pg_config @ref blob_pg_component Target Audience The programmer&rsquo;s guide is intended for developers authoring applications that utilize the SPDK Blobstore. It is intended to supplement the source code in providing an overall understanding of how to integrate Blobstore into an application as well as provide some high level insight into how Blobstore works behind the scenes. It is not intended to serve as a design document or an API reference and in some cases source code snippets and high level sequences will be discussed; for the latest source code reference refer to the repo. 程序员指南适用于编写使用 SPDK Blobstore 的……
-            <p class="readmore"><a href="https://logread.cn/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/">阅读全文</a></p>
-        </div>
-    </article>
-    
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://logread.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/">Spdk_nvme_of_target编程指导</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2023年1月22日
-        </date>
-        
-        <div class="post-meta meta-category">
-            |
-            
-            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
-            
-            <a href='/categories/spdk'>spdk</a>
-            
-        </div>
-        
-        <div class="post-content">
-            Author 晓兵 weixin: ssbandjl 公众号: 云原生云 NVme over Fabrics: 也称为 NVMe-oF 和 non-volatile memory express over fabric，是一种协议规范，旨在使用 NVMe 协议通过网络结构将主机连接到存储。 该协议旨在通过网络在主机和目标固态存储设备或系统之间实现数据传输——通过基于 NVMe 消息的命令完成。 数据传输可以通过以太网、光纤通道 (FC) 或 InfiniBand 等方法传输 Target Audience This programming guide is intended……
-            <p class="readmore"><a href="https://logread.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/">阅读全文</a></p>
-        </div>
-    </article>
-    
 
     
 
@@ -450,6 +452,18 @@
 <ul class="widget-list">
     
     <li>
+        <a href="https://logread.cn/post/stor/beegfs_storage/" title="Beegfs存储">Beegfs存储</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/nvidia/nvidia_network_tech/" title="Nvidia网络技术-端到端网络解决方案">Nvidia网络技术-端到端网络解决方案</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/nvidia/gpu_direct_rdma/" title="Nvidia 迈络思 OFED GPU直接RDMA">Nvidia 迈络思 OFED GPU直接RDMA</a>
+    </li>
+    
+    <li>
         <a href="https://logread.cn/post/rdma/rdma_perf/" title="优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</a>
     </li>
     
@@ -477,18 +491,6 @@
         <a href="https://logread.cn/post/daos/daos_dfuse_fs_io_path/" title="DAOS用户态文件系统IO路径(dfuse io全路径)">DAOS用户态文件系统IO路径(dfuse io全路径)</a>
     </li>
     
-    <li>
-        <a href="https://logread.cn/post/daos/daos_docker/" title="DAOS-在docker中搭建daos开发调试环境">DAOS-在docker中搭建daos开发调试环境</a>
-    </li>
-    
-    <li>
-        <a href="https://logread.cn/post/daos/daos_eq_and_event/" title="DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析">DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</a>
-    </li>
-    
-    <li>
-        <a href="https://logread.cn/post/daos/daos_tse/" title="DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析">DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</a>
-    </li>
-    
 </ul>
     </section>
 
@@ -508,7 +510,11 @@
     
     <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
     
+    <li><a href="https://logread.cn/categories/dpu/">dpu (1)</a></li>
+    
     <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/gpu/">gpu (1)</a></li>
     
     <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
     
@@ -522,7 +528,9 @@
     
     <li><a href="https://logread.cn/categories/multipath/">multipath (1)</a></li>
     
-    <li><a href="https://logread.cn/categories/network/">network (1)</a></li>
+    <li><a href="https://logread.cn/categories/network/">network (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvidia/">nvidia (1)</a></li>
     
     <li><a href="https://logread.cn/categories/nvmeof/">nvmeof (1)</a></li>
     
@@ -530,7 +538,7 @@
     
     <li><a href="https://logread.cn/categories/qemu/">qemu (1)</a></li>
     
-    <li><a href="https://logread.cn/categories/rdma/">rdma (7)</a></li>
+    <li><a href="https://logread.cn/categories/rdma/">rdma (8)</a></li>
     
     <li><a href="https://logread.cn/categories/roce/">roce (1)</a></li>
     
@@ -538,11 +546,11 @@
     
     <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
     
-    <li><a href="https://logread.cn/categories/stor/">stor (26)</a></li>
+    <li><a href="https://logread.cn/categories/stor/">stor (29)</a></li>
     
     <li><a href="https://logread.cn/categories/virtio/">virtio (1)</a></li>
     
-    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (31)</a></li>
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (34)</a></li>
     
     <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
     
@@ -579,9 +587,13 @@
   
   <a href="https://logread.cn/tags/dpdk/">dpdk</a>
   
+  <a href="https://logread.cn/tags/dpu/">dpu</a>
+  
   <a href="https://logread.cn/tags/gin/">gin</a>
   
   <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/gpu/">gpu</a>
   
   <a href="https://logread.cn/tags/hpc/">hpc</a>
   
@@ -598,6 +610,8 @@
   <a href="https://logread.cn/tags/net/">net</a>
   
   <a href="https://logread.cn/tags/network/">network</a>
+  
+  <a href="https://logread.cn/tags/nvidia/">nvidia</a>
   
   <a href="https://logread.cn/tags/nvmeof/">nvmeof</a>
   

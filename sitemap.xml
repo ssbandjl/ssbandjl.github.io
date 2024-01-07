@@ -3,57 +3,112 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://logread.cn/post/stor/beegfs_storage/</loc>
+    <lastmod>2024-01-07T08:57:15+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://logread.cn/categories/</loc>
-    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
+    <lastmod>2024-01-07T08:57:15+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/tags/linux/</loc>
-    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
+    <lastmod>2024-01-07T08:57:15+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/post/</loc>
-    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/rdma/</loc>
-    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/rdma/</loc>
-    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
+    <lastmod>2024-01-07T08:57:15+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/tags/stor/</loc>
-    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
+    <lastmod>2024-01-07T08:57:15+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/categories/stor/</loc>
-    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
+    <lastmod>2024-01-07T08:57:15+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/tags/</loc>
-    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/post/rdma/rdma_perf/</loc>
-    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
+    <lastmod>2024-01-07T08:57:15+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/categories/%E5%AD%98%E5%82%A8/</loc>
-    <lastmod>2023-12-19T18:47:02+08:00</lastmod>
+    <lastmod>2024-01-07T08:57:15+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/</loc>
+    <lastmod>2024-01-07T08:57:15+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/dpu/</loc>
+    <lastmod>2024-01-06T17:55:53+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/dpu/</loc>
+    <lastmod>2024-01-06T17:55:53+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/network/</loc>
+    <lastmod>2024-01-06T17:55:53+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/network/</loc>
+    <lastmod>2024-01-06T17:55:53+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/nvidia/</loc>
+    <lastmod>2024-01-06T17:55:53+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/nvidia/</loc>
+    <lastmod>2024-01-06T17:55:53+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/nvidia/nvidia_network_tech/</loc>
+    <lastmod>2024-01-06T17:55:53+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/gpu/</loc>
+    <lastmod>2024-01-06T17:45:25+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/gpu/</loc>
+    <lastmod>2024-01-06T17:45:25+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/nvidia/gpu_direct_rdma/</loc>
+    <lastmod>2024-01-06T17:45:25+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/rdma/</loc>
+    <lastmod>2024-01-06T17:45:25+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/rdma/</loc>
+    <lastmod>2024-01-06T17:45:25+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/rdma/rdma_perf/</loc>
     <lastmod>2023-12-19T18:47:02+08:00</lastmod>
   </url>
   
@@ -100,16 +155,6 @@
   <url>
     <loc>https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/</loc>
     <lastmod>2023-10-05T10:11:49+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/network/</loc>
-    <lastmod>2023-09-24T17:32:26+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/network/</loc>
-    <lastmod>2023-09-24T17:32:26+08:00</lastmod>
   </url>
   
   <url>

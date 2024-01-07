@@ -6,7 +6,34 @@
     <description>Recent content in 存储 on 晓兵</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Tue, 19 Dec 2023 18:47:02 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 07 Jan 2024 08:57:15 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Beegfs存储</title>
+      <link>https://logread.cn/post/stor/beegfs_storage/</link>
+      <pubDate>Sun, 07 Jan 2024 08:57:15 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/stor/beegfs_storage/</guid>
+      <description>Beegfs 简介 BeeGFS 包含两个内置基准测试工具，可以分别帮助表征或评估网络或存储NetBench 和 StorageBench。当启用NetBench模式时，服务器将丢弃收到的写请求而不是写入数据。类似地，在读取请求的情况下，不会从底层文件系统读取，而是仅将内存缓冲区发送到客户端。NetBench</description>
+    </item>
+    
+    <item>
+      <title>Nvidia网络技术-端到端网络解决方案</title>
+      <link>https://logread.cn/post/nvidia/nvidia_network_tech/</link>
+      <pubDate>Sat, 06 Jan 2024 17:55:53 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/nvidia/nvidia_network_tech/</guid>
+      <description>Nvidia网络技术-端到端网络解决方案 术语 performance per watt 每瓦性能 适用于现代工作负载的加速网络-强大、安全的基础设施的蓝图 简介 每年出货的 3000 万台数据中心服务器中，有三分之一用于运行软件定义的数据中心堆栈。企业需要发展其网络基础设施，以支持现代数据中心工作负载导致的呈指数级增长的数据处理量。</description>
+    </item>
+    
+    <item>
+      <title>Nvidia 迈络思 OFED GPU直接RDMA</title>
+      <link>https://logread.cn/post/nvidia/gpu_direct_rdma/</link>
+      <pubDate>Sat, 06 Jan 2024 17:45:25 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/nvidia/gpu_direct_rdma/</guid>
+      <description>Nvidia 迈络思 OFED GPU直接RDMA 简介 ![image-20240106175123171](/Users/xb/Library/Application Support/typora-user-images/image-20240106175123171.png) GPU-GPU 间通信的最新进展是 GPUDirect RDMA。该技术在 GPU 内存与 NVIDIA 网络适配器设备之间提供直接的 P2P（点对点）数据路径。这显着减少了 GPU-GPU 通信延迟，并完全卸载了 CPU，将其从网络上的所有 GPU-GPU 通信中移除。GPU Direct 利用 NVIDIA 网络适配器的 PeerDirect RDMA 和 PeerDirect ASYNC™ 功能(异步远端直接</description>
+    </item>
+    
     <item>
       <title>优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</title>
       <link>https://logread.cn/post/rdma/rdma_perf/</link>

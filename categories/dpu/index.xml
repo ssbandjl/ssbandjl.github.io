@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>dpu on 晓兵</title>
+    <link>https://logread.cn/categories/dpu/</link>
+    <description>Recent content in dpu on 晓兵</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Sat, 06 Jan 2024 17:55:53 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/dpu/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Nvidia网络技术-端到端网络解决方案</title>
+      <link>https://logread.cn/post/nvidia/nvidia_network_tech/</link>
+      <pubDate>Sat, 06 Jan 2024 17:55:53 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/nvidia/nvidia_network_tech/</guid>
+      <description>Nvidia网络技术-端到端网络解决方案 术语 performance per watt 每瓦性能 适用于现代工作负载的加速网络-强大、安全的基础设施的蓝图 简介 每年出货的 3000 万台数据中心服务器中，有三分之一用于运行软件定义的数据中心堆栈。企业需要发展其网络基础设施，以支持现代数据中心工作负载导致的呈指数级增长的数据处理量。</description>
+    </item>
+    
+  </channel>
+</rss>
