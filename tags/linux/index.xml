@@ -2,332 +2,332 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>linux on 晓兵(ssbandjl)-技术兴国</title>
-    <link>https://logread.cn/tags/linux/</link>
+    <link>https://chattoyou.cn/tags/linux/</link>
     <description>Recent content in linux on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 07 Jan 2024 08:57:15 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/linux/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 07 Jan 2024 08:57:15 +0800</lastBuildDate><atom:link href="https://chattoyou.cn/tags/linux/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Beegfs存储</title>
-      <link>https://logread.cn/post/stor/beegfs_storage/</link>
+      <link>https://chattoyou.cn/post/stor/beegfs_storage/</link>
       <pubDate>Sun, 07 Jan 2024 08:57:15 +0800</pubDate>
       
-      <guid>https://logread.cn/post/stor/beegfs_storage/</guid>
+      <guid>https://chattoyou.cn/post/stor/beegfs_storage/</guid>
       <description>Beegfs 简介 BeeGFS 包含两个内置基准测试工具，可以分别帮助表征或评估网络或存储NetBench 和 StorageBench。当启用NetBench模式时，服务器将丢弃收到的写请求而不是写入数据。类似地，在读取请求的情况下，不会从底层文件系统读取，而是仅将内存缓冲区发送到客户端。NetBench</description>
     </item>
     
     <item>
       <title>Nvidia网络技术-端到端网络解决方案</title>
-      <link>https://logread.cn/post/nvidia/nvidia_network_tech/</link>
+      <link>https://chattoyou.cn/post/nvidia/nvidia_network_tech/</link>
       <pubDate>Sat, 06 Jan 2024 17:55:53 +0800</pubDate>
       
-      <guid>https://logread.cn/post/nvidia/nvidia_network_tech/</guid>
+      <guid>https://chattoyou.cn/post/nvidia/nvidia_network_tech/</guid>
       <description>Nvidia网络技术-端到端网络解决方案 术语 performance per watt 每瓦性能 适用于现代工作负载的加速网络-强大、安全的基础设施的蓝图 简介 每年出货的 3000 万台数据中心服务器中，有三分之一用于运行软件定义的数据中心堆栈。企业需要发展其网络基础设施，以支持现代数据中心工作负载导致的呈指数级增长的数据处理量。</description>
     </item>
     
     <item>
       <title>Nvidia 迈络思 OFED GPU直接RDMA</title>
-      <link>https://logread.cn/post/nvidia/gpu_direct_rdma/</link>
+      <link>https://chattoyou.cn/post/nvidia/gpu_direct_rdma/</link>
       <pubDate>Sat, 06 Jan 2024 17:45:25 +0800</pubDate>
       
-      <guid>https://logread.cn/post/nvidia/gpu_direct_rdma/</guid>
+      <guid>https://chattoyou.cn/post/nvidia/gpu_direct_rdma/</guid>
       <description>Nvidia 迈络思 OFED GPU直接RDMA 简介 ![image-20240106175123171](/Users/xb/Library/Application Support/typora-user-images/image-20240106175123171.png) GPU-GPU 间通信的最新进展是 GPUDirect RDMA。该技术在 GPU 内存与 NVIDIA 网络适配器设备之间提供直接的 P2P（点对点）数据路径。这显着减少了 GPU-GPU 通信延迟，并完全卸载了 CPU，将其从网络上的所有 GPU-GPU 通信中移除。GPU Direct 利用 NVIDIA 网络适配器的 PeerDirect RDMA 和 PeerDirect ASYNC™ 功能(异步远端直接</description>
     </item>
     
     <item>
       <title>优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</title>
-      <link>https://logread.cn/post/rdma/rdma_perf/</link>
+      <link>https://chattoyou.cn/post/rdma/rdma_perf/</link>
       <pubDate>Tue, 19 Dec 2023 18:47:02 +0800</pubDate>
       
-      <guid>https://logread.cn/post/rdma/rdma_perf/</guid>
+      <guid>https://chattoyou.cn/post/rdma/rdma_perf/</guid>
       <description>优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南-RDMA资源 RDMA 被用在很多地方，主要是因为它可以实现高性能。在这篇文章中，我将提供有关如何从多个方面优化 RDMA 代码的建议和技巧 简单的科普下RDMA 什么是RDMA？ DMA 代表直接内存访问。这意味着应用程序可以在 CPU 干预的情况下直接访问（读</description>
     </item>
     
     <item>
       <title>VirtIO简介</title>
-      <link>https://logread.cn/post/linux/virtio/</link>
+      <link>https://chattoyou.cn/post/linux/virtio/</link>
       <pubDate>Fri, 15 Dec 2023 19:45:07 +0800</pubDate>
       
-      <guid>https://logread.cn/post/linux/virtio/</guid>
+      <guid>https://chattoyou.cn/post/linux/virtio/</guid>
       <description>VirtIO简介 简介 技术， Linux内核开发 2022 年 5 月 24 日 | 阅读时间 33 分钟 (https://blogs.oracle.com/authors/jonah-palmer) 概述： 在本文档中，我们将从技术角度了解 VirtIO 的基础知识，并深入探讨其一些关键领域。这篇 VirtIO 简介是在假设读者几乎没有 VirtIO 工作知识的情况下编写的，但对于那些已经熟悉 VirtIO 的人来说，这也应该是一个有用的复习。 我们将首先了解 VirtIO</description>
     </item>
     
     <item>
       <title>统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022</title>
-      <link>https://logread.cn/post/net/net_ucx_stor_ucp_uct/</link>
+      <link>https://chattoyou.cn/post/net/net_ucx_stor_ucp_uct/</link>
       <pubDate>Fri, 06 Oct 2023 14:43:38 +0800</pubDate>
       
-      <guid>https://logread.cn/post/net/net_ucx_stor_ucp_uct/</guid>
+      <guid>https://chattoyou.cn/post/net/net_ucx_stor_ucp_uct/</guid>
       <description>统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022 UCX - 有史以来最好的通信库 UCX参考链接 官网: https://openucx.org/ 官方文档: https://openucx.readthedocs.io/en/master/ 设计文档及设计思想(以传输层为例): https://github.com/openucx/ucx/wiki/UCT-Design 项目主页: https://github.com/openucx/ucx 观看 SC&#39;19 会议上的 UCX 演示，了解有关 UCX 及其最新发展状况的更多信息: https://www.youtube.com/watch?v=H2d1CkGXJ64 演讲: https://ucfconsortium.org/presentations/ 视频链接: https://www.youtube.com/watch?v=Yv9nW0Qyjys&amp;amp;t=2713s 术语 UCF Unified Communication Framework 统一通信框架</description>
     </item>
     
     <item>
       <title>DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</title>
-      <link>https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/</link>
+      <link>https://chattoyou.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/</link>
       <pubDate>Thu, 05 Oct 2023 10:11:49 +0800</pubDate>
       
-      <guid>https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/</guid>
+      <guid>https://chattoyou.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/</guid>
       <description>DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解 简介 参考之前的分享中, DAOS与RDMA分层关系如下图, DAOS引擎 -&amp;gt; CART(RPC/大块数据/集合RPC请求) -&amp;gt; Mercury(HG: RPC注册/回调/RPC操作/预期/非预期消息/大块消息/轮训/阻塞/网络抽象等) -&amp;gt; Libfabric(网络抽象层,对rxm,r</description>
     </item>
     
     <item>
       <title>英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda</title>
-      <link>https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/</link>
+      <link>https://chattoyou.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/</link>
       <pubDate>Sun, 24 Sep 2023 17:32:26 +0800</pubDate>
       
-      <guid>https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/</guid>
+      <guid>https://chattoyou.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/</guid>
       <description>Intel Open Fabrics Interfaces Libfabric Tutorial 英特尔开放结构接口 Libfabric 教程 rdma verbs network gpu panda hpc ai 简介 本文介绍了libfabric的基本教程, 以及常见代码示例, 包含tcp_socket, libfabric, gpu, dma等代码和示例, 内容基于intel专家的的视频和个人理解, 欢迎一起交流高性能存储, 分布式存储, 网络, rdma等技术 HOTI 热门互联网络技术 视</description>
     </item>
     
     <item>
       <title>OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</title>
-      <link>https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/</link>
+      <link>https://chattoyou.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/</link>
       <pubDate>Sun, 17 Sep 2023 10:44:13 +0800</pubDate>
       
-      <guid>https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/</guid>
+      <guid>https://chattoyou.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/</guid>
       <description>OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)-[译] 2015 IEEE 第 23 届高性能互连年度研讨会 摘要 OpenFabrics Interfaces (OFI) 是一个新的应用程序接口系列，它向中间件和应用程序公开通信服务。 Libfabric 是 OFI 的第一个成员，是在 OpenFabrics 联盟的支持下，由行业、学术界和国家实验室合作伙伴组成的广泛联盟在过去两年中</description>
     </item>
     
     <item>
       <title>DAOS用户态文件系统IO路径(dfuse io全路径)</title>
-      <link>https://logread.cn/post/daos/daos_dfuse_fs_io_path/</link>
+      <link>https://chattoyou.cn/post/daos/daos_dfuse_fs_io_path/</link>
       <pubDate>Sun, 03 Sep 2023 14:42:07 +0800</pubDate>
       
-      <guid>https://logread.cn/post/daos/daos_dfuse_fs_io_path/</guid>
+      <guid>https://chattoyou.cn/post/daos/daos_dfuse_fs_io_path/</guid>
       <description>DAOS用户态文件系统IO路径(dfuse io全路径) 简介 分布式异步对象存储（DAOS，Distributed Asynchronous Object Storage）是一个开源的可扩展存储系统，从根本上设计用于在用户空间支持SCM和NVMe存储。DAOS在IO500基准测试中展现出领先的性能 DAOS从头开始设计，以</description>
     </item>
     
     <item>
       <title>DAOS-在docker中搭建daos开发调试环境</title>
-      <link>https://logread.cn/post/daos/daos_docker/</link>
+      <link>https://chattoyou.cn/post/daos/daos_docker/</link>
       <pubDate>Sat, 26 Aug 2023 08:55:26 +0800</pubDate>
       
-      <guid>https://logread.cn/post/daos/daos_docker/</guid>
+      <guid>https://chattoyou.cn/post/daos/daos_docker/</guid>
       <description>DAOS-在docker中搭建daos开发调试环境 简介 本节介绍如何在 Docker 容器中构建和运行 DAOS 服务。 至少需要 4GB DRAM 和 16GB 磁盘空间。 在 Mac 上，请确保“Preferences/{Disk, Memory}”下的 Docker 设置已进行相应配置 步骤 拉取项目 1 git clone https://github.com/ssbandjl/daos.git 下载依赖包(缓存cache) 1 cd daos; wget http://rz2fg6ogr.hn-bkt.clouddn.com/cache_tgz 编译镜像或</description>
     </item>
     
     <item>
       <title>DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</title>
-      <link>https://logread.cn/post/daos/daos_eq_and_event/</link>
+      <link>https://chattoyou.cn/post/daos/daos_eq_and_event/</link>
       <pubDate>Sat, 19 Aug 2023 22:23:52 +0800</pubDate>
       
-      <guid>https://logread.cn/post/daos/daos_eq_and_event/</guid>
+      <guid>https://chattoyou.cn/post/daos/daos_eq_and_event/</guid>
       <description>DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析 简介 事件和事件队列 DAOS API 函数可以在阻塞或非阻塞模式下使用。 这是通过传递给每个 API 调用的指向 DAOS 事件的指针来确定的：如果 NULL 表示操作将被阻塞。 操作完成后会返回。 所有失败情况的错误码都将通过API</description>
     </item>
     
     <item>
       <title>DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</title>
-      <link>https://logread.cn/post/daos/daos_tse/</link>
+      <link>https://chattoyou.cn/post/daos/daos_tse/</link>
       <pubDate>Tue, 08 Aug 2023 22:48:22 +0800</pubDate>
       
-      <guid>https://logread.cn/post/daos/daos_tse/</guid>
+      <guid>https://chattoyou.cn/post/daos/daos_tse/</guid>
       <description>DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析 简介 TSE 是一个通用库，用于创建具有函数回调的通用任务，可选地添加这些任务之间的依赖关系，并将它们安排在一个引擎中，该引擎按照插入它们的依赖关系图确定的顺序执行这些任务。任务依赖图是调度程序的组成部分</description>
     </item>
     
     <item>
       <title>Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</title>
-      <link>https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/</link>
+      <link>https://chattoyou.cn/post/rdma/rdma_rocev2_lossless_lossy/</link>
       <pubDate>Sun, 23 Jul 2023 13:40:11 +0800</pubDate>
       
-      <guid>https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/</guid>
+      <guid>https://chattoyou.cn/post/rdma/rdma_rocev2_lossless_lossy/</guid>
       <description>Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介-一文入门RDMA和RoCE有损无损 简介 随着互联网, 人工智能等兴起, 跨机通信对带宽和时延都提出了更高的要求, RDMA技术也不断迭代演进, 如: RoCE(RDMA融合以</description>
     </item>
     
     <item>
       <title>NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析</title>
-      <link>https://logread.cn/post/linux/nvmf/</link>
+      <link>https://chattoyou.cn/post/linux/nvmf/</link>
       <pubDate>Fri, 14 Jul 2023 22:09:39 +0800</pubDate>
       
-      <guid>https://logread.cn/post/linux/nvmf/</guid>
+      <guid>https://chattoyou.cn/post/linux/nvmf/</guid>
       <description>NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析 简介 NVMe over Fabrics (NVMe-oF) 是 NVMe 网络协议对以太网和光纤通道的扩展，可在存储和服务器之间提供更快、更高效的连接，并降低应用程序主机服务器的 CPU 利用率 NVM Express over Fabrics 定义了一个通用架构，支持</description>
     </item>
     
     <item>
       <title>DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)</title>
-      <link>https://logread.cn/post/daos/daos_cart_swim/</link>
+      <link>https://chattoyou.cn/post/daos/daos_cart_swim/</link>
       <pubDate>Sat, 08 Jul 2023 09:50:03 +0800</pubDate>
       
-      <guid>https://logread.cn/post/daos/daos_cart_swim/</guid>
+      <guid>https://chattoyou.cn/post/daos/daos_cart_swim/</guid>
       <description>DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性-感染式过程-组成员协议) 术语 swim: Scalable Weakly-consistent Infection-style process group Membership Protocol, 可扩展的弱一致性-感染式过程-组成员协议 round-trip: 往返 简介 SWIM是DAOS引擎(rank)间的网络健康检测机制, 属于通信组件cart下的代码模块, SWIM是通过Gossip实现的</description>
     </item>
     
     <item>
       <title>linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2</title>
-      <link>https://logread.cn/post/linux/multipath/linux_kernel_multipath_fail_path/</link>
+      <link>https://chattoyou.cn/post/linux/multipath/linux_kernel_multipath_fail_path/</link>
       <pubDate>Fri, 30 Jun 2023 22:46:42 +0800</pubDate>
       
-      <guid>https://logread.cn/post/linux/multipath/linux_kernel_multipath_fail_path/</guid>
+      <guid>https://chattoyou.cn/post/linux/multipath/linux_kernel_multipath_fail_path/</guid>
       <description>linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2 简介 linux多路径multipath, 允许将客户主机端与后端存储引擎或存储阵列之间的多个物理连接组合成一个虚拟设备, 这样做可以为</description>
     </item>
     
     <item>
       <title>Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信</title>
-      <link>https://logread.cn/post/linux/build_kernel_modify_iscsi/</link>
+      <link>https://chattoyou.cn/post/linux/build_kernel_modify_iscsi/</link>
       <pubDate>Tue, 20 Jun 2023 11:51:19 +0800</pubDate>
       
-      <guid>https://logread.cn/post/linux/build_kernel_modify_iscsi/</guid>
+      <guid>https://chattoyou.cn/post/linux/build_kernel_modify_iscsi/</guid>
       <description>Linux内核编译及利用SCSI协议保留字段在initiator和tgt间通信 背景 需求: 如何利用ISCSI协议保留字段, 在Initiator和Tgt端传递, 完成一些控制开关或其他管理功能 ? 解决: 定制内核SCSI层协议, 修改用户态TGT项目来适配保留字段 环境 CentOS Linux (5.10.38-21.hl10.el7.x86_64) 7 (Core)(带</description>
     </item>
     
     <item>
       <title>Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]</title>
-      <link>https://logread.cn/post/linux/linux_kernel_vs_dpdk/</link>
+      <link>https://chattoyou.cn/post/linux/linux_kernel_vs_dpdk/</link>
       <pubDate>Sun, 18 Jun 2023 12:41:32 +0800</pubDate>
       
-      <guid>https://logread.cn/post/linux/linux_kernel_vs_dpdk/</guid>
+      <guid>https://chattoyou.cn/post/linux/linux_kernel_vs_dpdk/</guid>
       <description>概述 在这篇文章中，我将使用一个简单的 HTTP 基准测试在 Linux 内核的网络堆栈和由 DPDK 提供支持的内核旁路堆栈之间进行正面性能比较。 我将使用 Seastar 运行我的测试，Seastar 是一个用于构建高性能服务器应用程序的 C++ 框架。 Seastar 支持构建使用 Linux 内核或 DPDK 进行网络连接的应用程序，因此它是进行此比较的完美框架。 我将以</description>
     </item>
     
     <item>
       <title>常用学习网站汇总(随时更新)</title>
-      <link>https://logread.cn/post/study/summary/</link>
+      <link>https://chattoyou.cn/post/study/summary/</link>
       <pubDate>Sat, 17 Jun 2023 22:47:44 +0800</pubDate>
       
-      <guid>https://logread.cn/post/study/summary/</guid>
+      <guid>https://chattoyou.cn/post/study/summary/</guid>
       <description>本文链接 晓兵博客: https://logread.cn/post/study/summary/ 腾讯云: https://cloud.tencent.com/developer/article/2355052 CSDN: https://blog.csdn.net/ssbandjl/article/details/131265171 论文 中国大陆发第一篇计算机顶会的人都怎么样了: https://www.zhihu.com/question/627499717 云栖大会 聚合话题: https://yunqi.aliyun.com/2023/agenda Nvidia GDS(GPU直接存储): https://docs.nvidia.com/gpudirect-storage/design-guide/index.html Nvidia网络文档:https://docs.nvidia.com/networking/software/index.html 学习目录: https://nvdam.widen.net/s/wlbgbqr7cj/nvidia-learning-training-course-catalog DOC</description>
     </item>
     
     <item>
       <title>DAOS引擎启动流程-源码分析</title>
-      <link>https://logread.cn/post/daos/daos_server_engine_start/</link>
+      <link>https://chattoyou.cn/post/daos/daos_server_engine_start/</link>
       <pubDate>Thu, 01 Jun 2023 23:20:35 +0800</pubDate>
       
-      <guid>https://logread.cn/post/daos/daos_server_engine_start/</guid>
+      <guid>https://chattoyou.cn/post/daos/daos_server_engine_start/</guid>
       <description>执行:daos_server start, server通过golang调用engine的c 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101</description>
     </item>
     
     <item>
       <title>谷歌文件系统</title>
-      <link>https://logread.cn/post/fs/gfs_paper/</link>
+      <link>https://chattoyou.cn/post/fs/gfs_paper/</link>
       <pubDate>Tue, 30 May 2023 16:02:46 +0800</pubDate>
       
-      <guid>https://logread.cn/post/fs/gfs_paper/</guid>
+      <guid>https://chattoyou.cn/post/fs/gfs_paper/</guid>
       <description>Google File System 谷歌文件系统 论文[译] The Google File System Sanjay Ghemawat, Howard Gobioff, and Shun Tak Leung Google 我们设计并实现了 Google 文件系统，这是一种可扩展的分布式文件系统，适用于大型分布式数据密集型应用程序。 它在廉价的商品硬件上运行时提供容错，并为大量客户端提供高聚合性能。虽然与以前的分布式文件系统有许多相同的目标，但我们的设计是由对我</description>
     </item>
     
     <item>
       <title>基于DOAS文件系统接口(DFS)暴露的SPDK块设备</title>
-      <link>https://logread.cn/post/daos/daos_spdk_bdev/</link>
+      <link>https://chattoyou.cn/post/daos/daos_spdk_bdev/</link>
       <pubDate>Sat, 20 May 2023 11:17:30 +0800</pubDate>
       
-      <guid>https://logread.cn/post/daos/daos_spdk_bdev/</guid>
+      <guid>https://chattoyou.cn/post/daos/daos_spdk_bdev/</guid>
       <description>基于DOAS文件系统(DFS后端)暴露的SPDK块设备 整体架构 步骤 编译daos, 记录daos安装目录, 比如/opt/daos, 启动daos_agent, daos_engine, daos_server 编译spdk git clone https://github.com/spdk/spdk.git git submodule update &amp;ndash;init ./configure &amp;ndash;with-daos #指定daos include目录和lib目录 make -j 16 启动spdk nvmf_tgt sudo HUGE_EVEN_ALLOC=yes scripts/setup.sh sudo ./build/bin/nvmf_tgt -m [21,22,23,24] 创建传输层 sudo ./scripts/rpc.py nvmf_create_transport</description>
     </item>
     
     <item>
       <title>Mercury为高性能计算启用远程过程调用(RPC)</title>
-      <link>https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/</link>
+      <link>https://chattoyou.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/</link>
       <pubDate>Sat, 13 May 2023 10:06:46 +0800</pubDate>
       
-      <guid>https://logread.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/</guid>
+      <guid>https://chattoyou.cn/post/net/rpc/hg/mercury_enable_rpc_for_hpc/</guid>
       <description>Mercury为高性能计算启用远程过程调用(RPC) 摘要 ​ 远程过程调用（RPC）是分布式服务广泛使用的一种技术。 这种技术现在越来越多地用于高性能计算 (HPC) 的上下文中，它允许将例程的执行委托给远程节点，这些节点可以留出并专用于特定任务。 然而，现有的 RPC 框架采用基于套接字的网络接口（通常在</description>
     </item>
     
     <item>
       <title>MSGR2 协议（MSGR2.0 和 MSGR2.1）</title>
-      <link>https://logread.cn/post/stor/ceph/ceph_msg/</link>
+      <link>https://chattoyou.cn/post/stor/ceph/ceph_msg/</link>
       <pubDate>Wed, 10 May 2023 14:01:46 +0800</pubDate>
       
-      <guid>https://logread.cn/post/stor/ceph/ceph_msg/</guid>
+      <guid>https://chattoyou.cn/post/stor/ceph/ceph_msg/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 ceph文档 MSGR2 协议（MSGR2.0 和 MSGR2.1） 这是由 SimpleMessenger 实现的遗留 Ceph 在线协议的修订版。它解决了性能和安全问题。 目标 相对于原始协议，此协议修订版有几个目标： 灵活的握手。原始协议没有足够灵活的协议协商来允许不需要的功能。 加密。我们将通过网络整合加密。 表</description>
     </item>
     
     <item>
       <title>Linux_google_trace_dapper</title>
-      <link>https://logread.cn/post/linux/trace/linux_google_trace_dapper/</link>
+      <link>https://chattoyou.cn/post/linux/trace/linux_google_trace_dapper/</link>
       <pubDate>Tue, 09 May 2023 20:42:51 +0800</pubDate>
       
-      <guid>https://logread.cn/post/linux/trace/linux_google_trace_dapper/</guid>
+      <guid>https://chattoyou.cn/post/linux/trace/linux_google_trace_dapper/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 title 另一个设计目标是跟踪数据在生成后可快速用于分析：最好是在一分钟内。 尽管对数小时前的数据运行的跟踪分析系统仍然非常有价值，但可用的最新信息可以更快地对生产异常做出反应。 真正的应用程序级透明性，可能是我们最具挑战性的设计目标，是通过将 Dapper 的核心跟踪工具限制在</description>
     </item>
     
     <item>
       <title>OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织</title>
-      <link>https://logread.cn/post/ofa/ofa_librabric/</link>
+      <link>https://chattoyou.cn/post/ofa/ofa_librabric/</link>
       <pubDate>Mon, 01 May 2023 18:01:44 +0800</pubDate>
       
-      <guid>https://logread.cn/post/ofa/ofa_librabric/</guid>
+      <guid>https://chattoyou.cn/post/ofa/ofa_librabric/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织 成员企业 OFA概览 OpenFabrics Alliance (OFA) 是一个基于开源的组织，负责开发、测试、许可、支持和分发 RDMA/Advanced Networks 软件以及 RDMA/Advanced Networks 软件的 OpenFabrics Enterprise Distribution。该联盟的使命</description>
     </item>
     
     <item>
       <title>利用 RDMA 技术加速 Ceph 存储解决方案</title>
-      <link>https://logread.cn/post/storage/ceph_rdma/</link>
+      <link>https://chattoyou.cn/post/storage/ceph_rdma/</link>
       <pubDate>Sun, 30 Apr 2023 11:21:44 +0800</pubDate>
       
-      <guid>https://logread.cn/post/storage/ceph_rdma/</guid>
+      <guid>https://chattoyou.cn/post/storage/ceph_rdma/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 利用 RDMA 技术加速 Ceph 存储解决方案 原创 晓兵XB 云原生云 2023-04-29 20:37 发表于四川 https://mp.weixin.qq.com/s/FCQMaDmumCHw8WElBsD18Q 在本文中，我们首先回顾了 Ceph* 4K I/O 工作负载中遇到的性能挑战，并对单个 Ceph OSD 对象存储守护进程 (OSD) 进程的 CPU 分布进行了简要分析。然后，我们讨论了现有 TCP/IP 堆栈中的低效问题，并介绍了英特尔® 以太网连接 X722 支持的 iWARP</description>
     </item>
     
     <item>
       <title>在存储性能开发套件 (SPDK) 中启用持久内存(PM)</title>
-      <link>https://logread.cn/post/storage/spdk_pm/</link>
+      <link>https://chattoyou.cn/post/storage/spdk_pm/</link>
       <pubDate>Sun, 30 Apr 2023 11:16:16 +0800</pubDate>
       
-      <guid>https://logread.cn/post/storage/spdk_pm/</guid>
+      <guid>https://chattoyou.cn/post/storage/spdk_pm/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 在存储性能开发套件 (SPDK) 中启用持久内存(PM) 原创 晓兵XB 云原生云 2023-04-30 10:21 发表于四川 https://mp.weixin.qq.com/s/trDKiEoYBjD8-1zhmEMYnA 背景 Optane 是一种内存系统，旨在通过桥接存储和 RAM 来提高硬盘驱动器 (HDD) 和速度较慢的 SATA SSD 的性能。 2022年7月, 英特尔首席执行官 Pat Gelsinger 将关闭 Optane 的决定归因于更广泛的行业转向 Compute Express Link (CXL) 架构 英特尔第</description>
     </item>
     
     <item>
       <title>Dpdk</title>
-      <link>https://logread.cn/post/dpdk/dpdk/</link>
+      <link>https://chattoyou.cn/post/dpdk/dpdk/</link>
       <pubDate>Sun, 22 Jan 2023 13:39:51 +0800</pubDate>
       
-      <guid>https://logread.cn/post/dpdk/dpdk/</guid>
+      <guid>https://chattoyou.cn/post/dpdk/dpdk/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 Data Plane Development Kit (DPDK) Data Plane Development Kit (DPDK) greatly boosts packet processing performance and throughput, allowing more time for data plane applications. DPDK can improve packet processing performance by up to ten times. DPDK software running on current generation Intel® Xeon® Processor E5-2658 v4, achieves 233 Gbps (347 Mpps) of L3 forwarding at 64-byte packet sizes.1 As a result, telecom and network equipment manufacturers (TEMs and NEMs) can lower development costs, use fewer tools and support teams, and get to market faster. 数据平面开发套件 (DPDK) 极大地提升了数据包处理性能和吞吐量，为数据平面应用</description>
     </item>
     
     <item>
       <title>Cart_rdma_hpc开源rpc传输层</title>
-      <link>https://logread.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/</link>
+      <link>https://chattoyou.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/</link>
       <pubDate>Sun, 22 Jan 2023 11:20:30 +0800</pubDate>
       
-      <guid>https://logread.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/</guid>
+      <guid>https://chattoyou.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 简介 分布式异步对象存储 (DAOS) 是一种开源软件定义的对象存储，专为大规模分布式非易失性内存 (NVM) 而设计。DAOS 利用存储级内存 (SCM) 和 NVM express (NVMe) 等下一代 NVM 技术，同时呈现键值存储接口并提供事务性非阻塞 I/O、高级数据保护和自我修复等功能 商品硬件、端到端数据完整性、细粒度数据控</description>
     </item>
     
     <item>
       <title>Spdk_blobstore编程指导</title>
-      <link>https://logread.cn/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</link>
+      <link>https://chattoyou.cn/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</link>
       <pubDate>Sun, 22 Jan 2023 11:17:53 +0800</pubDate>
       
-      <guid>https://logread.cn/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</guid>
+      <guid>https://chattoyou.cn/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 Blobstore 编程指导 In this document @ref blob_pg_audience @ref blob_pg_intro @ref blob_pg_theory @ref blob_pg_design @ref blob_pg_examples @ref blob_pg_config @ref blob_pg_component Target Audience The programmer&amp;rsquo;s guide is intended for developers authoring applications that utilize the SPDK Blobstore. It is intended to supplement the source code in providing an overall understanding of how to integrate Blobstore into an application as well as provide some high level insight into how Blobstore works behind the scenes. It is not intended to serve as a design document or an API reference and in some cases source code snippets and high level sequences will be discussed; for the latest source code reference refer to the repo. 程序员指南适用于编写使用 SPDK Blobstore 的</description>
     </item>
     
     <item>
       <title>Spdk_nvme_of_target编程指导</title>
-      <link>https://logread.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</link>
+      <link>https://chattoyou.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</link>
       <pubDate>Sun, 22 Jan 2023 11:14:33 +0800</pubDate>
       
-      <guid>https://logread.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</guid>
+      <guid>https://chattoyou.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 NVme over Fabrics: 也称为 NVMe-oF 和 non-volatile memory express over fabric，是一种协议规范，旨在使用 NVMe 协议通过网络结构将主机连接到存储。 该协议旨在通过网络在主机和目标固态存储设备或系统之间实现数据传输——通过基于 NVMe 消息的命令完成。 数据传输可以通过以太网、光纤通道 (FC) 或 InfiniBand 等方法传输 Target Audience This programming guide is intended</description>
     </item>
     
     <item>
       <title>Spdk提交io到nvme设备</title>
-      <link>https://logread.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/</link>
+      <link>https://chattoyou.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/</link>
       <pubDate>Sun, 22 Jan 2023 11:09:02 +0800</pubDate>
       
-      <guid>https://logread.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/</guid>
+      <guid>https://chattoyou.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 Submitting I/O to an NVMe Device 提交I/O到NVME设备 The NVMe Specification 规范 The NVMe specification describes a hardware interface for interacting with storage devices. The specification includes network transport definitions for remote storage as well as a hardware register layout for local PCIe devices. What follows here is an overview of how an I/O is submitted to a local PCIe device through SPDK. NVMe 规范描述了用于与存储设备交互的硬件接口。 该规范包括远程存储的网络传输定义以及本地 PCIe 设备的硬件寄存器布局。</description>
     </item>
     
     <item>
       <title>Bcache</title>
-      <link>https://logread.cn/post/storage/cache/bcache/</link>
+      <link>https://chattoyou.cn/post/storage/cache/bcache/</link>
       <pubDate>Mon, 18 Apr 2022 15:34:25 +0800</pubDate>
       
-      <guid>https://logread.cn/post/storage/cache/bcache/</guid>
+      <guid>https://chattoyou.cn/post/storage/cache/bcache/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 A block layer cache (bcache) What is bcache? Bcache is a Linux kernel block layer cache. It allows one or more fast disk drives such as flash-based solid state drives (SSDs) to act as a cache for one or more slower hard disk drives. Hard drives are cheap and big, SSDs are fast but small and expensive. Wouldn&amp;rsquo;t it be nice if you could transparently get the advantages of both? With Bcache, you can have your cake and eat it too. Bcache patches for the Linux kernel allow one to use SSDs to cache other block devices. It&amp;rsquo;s analogous to L2Arc for ZFS, but Bcache also does writeback caching (besides just write through caching), and it&amp;rsquo;s filesystem agnostic. It&amp;rsquo;s designed to be switched on with a minimum</description>
     </item>
     
     <item>
       <title>How to Use Linux Aio</title>
-      <link>https://logread.cn/posts/how-to-use-linux-aio/</link>
+      <link>https://chattoyou.cn/posts/how-to-use-linux-aio/</link>
       <pubDate>Sat, 16 Apr 2022 09:43:27 +0800</pubDate>
       
-      <guid>https://logread.cn/posts/how-to-use-linux-aio/</guid>
+      <guid>https://chattoyou.cn/posts/how-to-use-linux-aio/</guid>
       <description>linux-aio 参考链接 linux-aio io_submit man aio POSIX linux aio 实现概览 Introduction 简介 1 注意与POSIX语义的aio - POSIX asynchronous I/O overview POSIX异步I/O接口, 有区别 Note, Linux AIO is now subsumed by the io_uring API (tutorial, LWN coverage). The below explanation is mostly useful for old kernels. 请注意，Linux AIO 现在包含在 io_uring API（教程，LWN 覆盖范围）中。 下面的解释对旧内核最有用。 The Asynchronous Input/Output (AIO) interface allows many I/O requests to be submitted in parallel without the overhead</description>
     </item>
     

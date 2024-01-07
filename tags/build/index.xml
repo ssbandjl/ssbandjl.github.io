@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>build on 晓兵(ssbandjl)-技术兴国</title>
-    <link>https://logread.cn/tags/build/</link>
+    <link>https://chattoyou.cn/tags/build/</link>
     <description>Recent content in build on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Fri, 22 Apr 2022 22:29:05 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/build/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 22 Apr 2022 22:29:05 +0800</lastBuildDate><atom:link href="https://chattoyou.cn/tags/build/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Makefile</title>
-      <link>https://logread.cn/post/compile/makefile/makefile/</link>
+      <link>https://chattoyou.cn/post/compile/makefile/makefile/</link>
       <pubDate>Fri, 22 Apr 2022 22:29:05 +0800</pubDate>
       
-      <guid>https://logread.cn/post/compile/makefile/makefile/</guid>
+      <guid>https://chattoyou.cn/post/compile/makefile/makefile/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 Makefile 简介 参考链接: https://www.gnu.org/software/make/manual/make.html#Introduction 您需要一个名为 makefile 的文件来告诉 make 要做什么。 大多数情况下，makefile 告诉 make 如何编译和链接程序。 在本章中，我们将讨论一个简单的 makefile，它描述了如何编译和链接一个由 8 个 C 源文件和 3 个头文件组成的文本编辑器。 makefile 还可以告诉 make 在明确要</description>
     </item>
     

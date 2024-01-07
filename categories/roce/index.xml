@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>roce on 晓兵(ssbandjl)-技术兴国</title>
-    <link>https://logread.cn/categories/roce/</link>
+    <link>https://chattoyou.cn/categories/roce/</link>
     <description>Recent content in roce on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 23 Jul 2023 13:40:11 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/roce/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 23 Jul 2023 13:40:11 +0800</lastBuildDate><atom:link href="https://chattoyou.cn/categories/roce/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</title>
-      <link>https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/</link>
+      <link>https://chattoyou.cn/post/rdma/rdma_rocev2_lossless_lossy/</link>
       <pubDate>Sun, 23 Jul 2023 13:40:11 +0800</pubDate>
       
-      <guid>https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/</guid>
+      <guid>https://chattoyou.cn/post/rdma/rdma_rocev2_lossless_lossy/</guid>
       <description>Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介-一文入门RDMA和RoCE有损无损 简介 随着互联网, 人工智能等兴起, 跨机通信对带宽和时延都提出了更高的要求, RDMA技术也不断迭代演进, 如: RoCE(RDMA融合以</description>
     </item>
     

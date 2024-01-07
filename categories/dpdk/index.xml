@@ -2,26 +2,26 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>dpdk on 晓兵(ssbandjl)-技术兴国</title>
-    <link>https://logread.cn/categories/dpdk/</link>
+    <link>https://chattoyou.cn/categories/dpdk/</link>
     <description>Recent content in dpdk on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 18 Jun 2023 12:41:32 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/dpdk/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 18 Jun 2023 12:41:32 +0800</lastBuildDate><atom:link href="https://chattoyou.cn/categories/dpdk/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]</title>
-      <link>https://logread.cn/post/linux/linux_kernel_vs_dpdk/</link>
+      <link>https://chattoyou.cn/post/linux/linux_kernel_vs_dpdk/</link>
       <pubDate>Sun, 18 Jun 2023 12:41:32 +0800</pubDate>
       
-      <guid>https://logread.cn/post/linux/linux_kernel_vs_dpdk/</guid>
+      <guid>https://chattoyou.cn/post/linux/linux_kernel_vs_dpdk/</guid>
       <description>概述 在这篇文章中，我将使用一个简单的 HTTP 基准测试在 Linux 内核的网络堆栈和由 DPDK 提供支持的内核旁路堆栈之间进行正面性能比较。 我将使用 Seastar 运行我的测试，Seastar 是一个用于构建高性能服务器应用程序的 C++ 框架。 Seastar 支持构建使用 Linux 内核或 DPDK 进行网络连接的应用程序，因此它是进行此比较的完美框架。 我将以</description>
     </item>
     
     <item>
       <title>Dpdk</title>
-      <link>https://logread.cn/post/dpdk/dpdk/</link>
+      <link>https://chattoyou.cn/post/dpdk/dpdk/</link>
       <pubDate>Sun, 22 Jan 2023 13:39:51 +0800</pubDate>
       
-      <guid>https://logread.cn/post/dpdk/dpdk/</guid>
+      <guid>https://chattoyou.cn/post/dpdk/dpdk/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 Data Plane Development Kit (DPDK) Data Plane Development Kit (DPDK) greatly boosts packet processing performance and throughput, allowing more time for data plane applications. DPDK can improve packet processing performance by up to ten times. DPDK software running on current generation Intel® Xeon® Processor E5-2658 v4, achieves 233 Gbps (347 Mpps) of L3 forwarding at 64-byte packet sizes.1 As a result, telecom and network equipment manufacturers (TEMs and NEMs) can lower development costs, use fewer tools and support teams, and get to market faster. 数据平面开发套件 (DPDK) 极大地提升了数据包处理性能和吞吐量，为数据平面应用</description>
     </item>
     

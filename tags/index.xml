@@ -2,323 +2,323 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tags on 晓兵(ssbandjl)-技术兴国</title>
-    <link>https://logread.cn/tags/</link>
+    <link>https://chattoyou.cn/tags/</link>
     <description>Recent content in Tags on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 07 Jan 2024 08:57:15 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 07 Jan 2024 08:57:15 +0800</lastBuildDate><atom:link href="https://chattoyou.cn/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>linux</title>
-      <link>https://logread.cn/tags/linux/</link>
+      <link>https://chattoyou.cn/tags/linux/</link>
       <pubDate>Sun, 07 Jan 2024 08:57:15 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/linux/</guid>
+      <guid>https://chattoyou.cn/tags/linux/</guid>
       <description></description>
     </item>
     
     <item>
       <title>stor</title>
-      <link>https://logread.cn/tags/stor/</link>
+      <link>https://chattoyou.cn/tags/stor/</link>
       <pubDate>Sun, 07 Jan 2024 08:57:15 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/stor/</guid>
+      <guid>https://chattoyou.cn/tags/stor/</guid>
       <description></description>
     </item>
     
     <item>
       <title>dpu</title>
-      <link>https://logread.cn/tags/dpu/</link>
+      <link>https://chattoyou.cn/tags/dpu/</link>
       <pubDate>Sat, 06 Jan 2024 17:55:53 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/dpu/</guid>
+      <guid>https://chattoyou.cn/tags/dpu/</guid>
       <description></description>
     </item>
     
     <item>
       <title>network</title>
-      <link>https://logread.cn/tags/network/</link>
+      <link>https://chattoyou.cn/tags/network/</link>
       <pubDate>Sat, 06 Jan 2024 17:55:53 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/network/</guid>
+      <guid>https://chattoyou.cn/tags/network/</guid>
       <description></description>
     </item>
     
     <item>
       <title>nvidia</title>
-      <link>https://logread.cn/tags/nvidia/</link>
+      <link>https://chattoyou.cn/tags/nvidia/</link>
       <pubDate>Sat, 06 Jan 2024 17:55:53 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/nvidia/</guid>
+      <guid>https://chattoyou.cn/tags/nvidia/</guid>
       <description></description>
     </item>
     
     <item>
       <title>gpu</title>
-      <link>https://logread.cn/tags/gpu/</link>
+      <link>https://chattoyou.cn/tags/gpu/</link>
       <pubDate>Sat, 06 Jan 2024 17:45:25 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/gpu/</guid>
+      <guid>https://chattoyou.cn/tags/gpu/</guid>
       <description></description>
     </item>
     
     <item>
       <title>rdma</title>
-      <link>https://logread.cn/tags/rdma/</link>
+      <link>https://chattoyou.cn/tags/rdma/</link>
       <pubDate>Sat, 06 Jan 2024 17:45:25 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/rdma/</guid>
+      <guid>https://chattoyou.cn/tags/rdma/</guid>
       <description></description>
     </item>
     
     <item>
       <title>virtio</title>
-      <link>https://logread.cn/tags/virtio/</link>
+      <link>https://chattoyou.cn/tags/virtio/</link>
       <pubDate>Fri, 15 Dec 2023 19:45:07 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/virtio/</guid>
+      <guid>https://chattoyou.cn/tags/virtio/</guid>
       <description></description>
     </item>
     
     <item>
       <title>net</title>
-      <link>https://logread.cn/tags/net/</link>
+      <link>https://chattoyou.cn/tags/net/</link>
       <pubDate>Fri, 06 Oct 2023 14:43:38 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/net/</guid>
+      <guid>https://chattoyou.cn/tags/net/</guid>
       <description></description>
     </item>
     
     <item>
       <title>daos</title>
-      <link>https://logread.cn/tags/daos/</link>
+      <link>https://chattoyou.cn/tags/daos/</link>
       <pubDate>Thu, 05 Oct 2023 10:11:49 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/daos/</guid>
+      <guid>https://chattoyou.cn/tags/daos/</guid>
       <description></description>
     </item>
     
     <item>
       <title>ofa</title>
-      <link>https://logread.cn/tags/ofa/</link>
+      <link>https://chattoyou.cn/tags/ofa/</link>
       <pubDate>Sun, 24 Sep 2023 17:32:26 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/ofa/</guid>
+      <guid>https://chattoyou.cn/tags/ofa/</guid>
       <description></description>
     </item>
     
     <item>
       <title>hpc</title>
-      <link>https://logread.cn/tags/hpc/</link>
+      <link>https://chattoyou.cn/tags/hpc/</link>
       <pubDate>Sun, 17 Sep 2023 10:44:13 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/hpc/</guid>
+      <guid>https://chattoyou.cn/tags/hpc/</guid>
       <description></description>
     </item>
     
     <item>
       <title>libfabric</title>
-      <link>https://logread.cn/tags/libfabric/</link>
+      <link>https://chattoyou.cn/tags/libfabric/</link>
       <pubDate>Sun, 17 Sep 2023 10:44:13 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/libfabric/</guid>
+      <guid>https://chattoyou.cn/tags/libfabric/</guid>
       <description></description>
     </item>
     
     <item>
       <title>roce</title>
-      <link>https://logread.cn/tags/roce/</link>
+      <link>https://chattoyou.cn/tags/roce/</link>
       <pubDate>Sun, 23 Jul 2023 13:40:11 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/roce/</guid>
+      <guid>https://chattoyou.cn/tags/roce/</guid>
       <description></description>
     </item>
     
     <item>
       <title>nvmeof</title>
-      <link>https://logread.cn/tags/nvmeof/</link>
+      <link>https://chattoyou.cn/tags/nvmeof/</link>
       <pubDate>Fri, 14 Jul 2023 22:09:39 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/nvmeof/</guid>
+      <guid>https://chattoyou.cn/tags/nvmeof/</guid>
       <description></description>
     </item>
     
     <item>
       <title>多路径</title>
-      <link>https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/</link>
+      <link>https://chattoyou.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/</link>
       <pubDate>Fri, 30 Jun 2023 22:46:42 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/</guid>
+      <guid>https://chattoyou.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/</guid>
       <description></description>
     </item>
     
     <item>
       <title>iscsi</title>
-      <link>https://logread.cn/tags/iscsi/</link>
+      <link>https://chattoyou.cn/tags/iscsi/</link>
       <pubDate>Tue, 20 Jun 2023 11:51:19 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/iscsi/</guid>
+      <guid>https://chattoyou.cn/tags/iscsi/</guid>
       <description></description>
     </item>
     
     <item>
       <title>kernel</title>
-      <link>https://logread.cn/tags/kernel/</link>
+      <link>https://chattoyou.cn/tags/kernel/</link>
       <pubDate>Tue, 20 Jun 2023 11:51:19 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/kernel/</guid>
+      <guid>https://chattoyou.cn/tags/kernel/</guid>
       <description></description>
     </item>
     
     <item>
       <title>dpdk</title>
-      <link>https://logread.cn/tags/dpdk/</link>
+      <link>https://chattoyou.cn/tags/dpdk/</link>
       <pubDate>Sun, 18 Jun 2023 12:41:32 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/dpdk/</guid>
+      <guid>https://chattoyou.cn/tags/dpdk/</guid>
       <description></description>
     </item>
     
     <item>
       <title>学习</title>
-      <link>https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/</link>
+      <link>https://chattoyou.cn/tags/%E5%AD%A6%E4%B9%A0/</link>
       <pubDate>Sat, 17 Jun 2023 22:47:44 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/</guid>
+      <guid>https://chattoyou.cn/tags/%E5%AD%A6%E4%B9%A0/</guid>
       <description></description>
     </item>
     
     <item>
       <title>bdev</title>
-      <link>https://logread.cn/tags/bdev/</link>
+      <link>https://chattoyou.cn/tags/bdev/</link>
       <pubDate>Sat, 20 May 2023 11:17:30 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/bdev/</guid>
+      <guid>https://chattoyou.cn/tags/bdev/</guid>
       <description></description>
     </item>
     
     <item>
       <title>spdk</title>
-      <link>https://logread.cn/tags/spdk/</link>
+      <link>https://chattoyou.cn/tags/spdk/</link>
       <pubDate>Sat, 20 May 2023 11:17:30 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/spdk/</guid>
+      <guid>https://chattoyou.cn/tags/spdk/</guid>
       <description></description>
     </item>
     
     <item>
       <title>rpc</title>
-      <link>https://logread.cn/tags/rpc/</link>
+      <link>https://chattoyou.cn/tags/rpc/</link>
       <pubDate>Sat, 13 May 2023 10:06:46 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/rpc/</guid>
+      <guid>https://chattoyou.cn/tags/rpc/</guid>
       <description></description>
     </item>
     
     <item>
       <title>ceph</title>
-      <link>https://logread.cn/tags/ceph/</link>
+      <link>https://chattoyou.cn/tags/ceph/</link>
       <pubDate>Wed, 10 May 2023 14:01:46 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/ceph/</guid>
+      <guid>https://chattoyou.cn/tags/ceph/</guid>
       <description></description>
     </item>
     
     <item>
       <title>optane</title>
-      <link>https://logread.cn/tags/optane/</link>
+      <link>https://chattoyou.cn/tags/optane/</link>
       <pubDate>Sun, 30 Apr 2023 11:16:16 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/optane/</guid>
+      <guid>https://chattoyou.cn/tags/optane/</guid>
       <description></description>
     </item>
     
     <item>
       <title>pm</title>
-      <link>https://logread.cn/tags/pm/</link>
+      <link>https://chattoyou.cn/tags/pm/</link>
       <pubDate>Sun, 30 Apr 2023 11:16:16 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/pm/</guid>
+      <guid>https://chattoyou.cn/tags/pm/</guid>
       <description></description>
     </item>
     
     <item>
       <title>存储</title>
-      <link>https://logread.cn/tags/%E5%AD%98%E5%82%A8/</link>
+      <link>https://chattoyou.cn/tags/%E5%AD%98%E5%82%A8/</link>
       <pubDate>Sun, 22 Jan 2023 13:39:51 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/%E5%AD%98%E5%82%A8/</guid>
+      <guid>https://chattoyou.cn/tags/%E5%AD%98%E5%82%A8/</guid>
       <description></description>
     </item>
     
     <item>
       <title>网络</title>
-      <link>https://logread.cn/tags/%E7%BD%91%E7%BB%9C/</link>
+      <link>https://chattoyou.cn/tags/%E7%BD%91%E7%BB%9C/</link>
       <pubDate>Sun, 22 Jan 2023 13:39:51 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/%E7%BD%91%E7%BB%9C/</guid>
+      <guid>https://chattoyou.cn/tags/%E7%BD%91%E7%BB%9C/</guid>
       <description></description>
     </item>
     
     <item>
       <title>build</title>
-      <link>https://logread.cn/tags/build/</link>
+      <link>https://chattoyou.cn/tags/build/</link>
       <pubDate>Fri, 22 Apr 2022 22:29:05 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/build/</guid>
+      <guid>https://chattoyou.cn/tags/build/</guid>
       <description></description>
     </item>
     
     <item>
       <title>makefile</title>
-      <link>https://logread.cn/tags/makefile/</link>
+      <link>https://chattoyou.cn/tags/makefile/</link>
       <pubDate>Fri, 22 Apr 2022 22:29:05 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/makefile/</guid>
+      <guid>https://chattoyou.cn/tags/makefile/</guid>
       <description></description>
     </item>
     
     <item>
       <title>bcache</title>
-      <link>https://logread.cn/tags/bcache/</link>
+      <link>https://chattoyou.cn/tags/bcache/</link>
       <pubDate>Mon, 18 Apr 2022 15:34:25 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/bcache/</guid>
+      <guid>https://chattoyou.cn/tags/bcache/</guid>
       <description></description>
     </item>
     
     <item>
       <title>gin</title>
-      <link>https://logread.cn/tags/gin/</link>
+      <link>https://chattoyou.cn/tags/gin/</link>
       <pubDate>Sat, 16 Apr 2022 13:14:40 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/gin/</guid>
+      <guid>https://chattoyou.cn/tags/gin/</guid>
       <description></description>
     </item>
     
     <item>
       <title>golang</title>
-      <link>https://logread.cn/tags/golang/</link>
+      <link>https://chattoyou.cn/tags/golang/</link>
       <pubDate>Sat, 16 Apr 2022 13:14:40 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/golang/</guid>
+      <guid>https://chattoyou.cn/tags/golang/</guid>
       <description></description>
     </item>
     
     <item>
       <title>aio</title>
-      <link>https://logread.cn/tags/aio/</link>
+      <link>https://chattoyou.cn/tags/aio/</link>
       <pubDate>Sat, 16 Apr 2022 09:43:27 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/aio/</guid>
+      <guid>https://chattoyou.cn/tags/aio/</guid>
       <description></description>
     </item>
     
     <item>
       <title>c&#43;&#43;</title>
-      <link>https://logread.cn/tags/c&#43;&#43;/</link>
+      <link>https://chattoyou.cn/tags/c&#43;&#43;/</link>
       <pubDate>Sat, 16 Apr 2022 09:43:27 +0800</pubDate>
       
-      <guid>https://logread.cn/tags/c&#43;&#43;/</guid>
+      <guid>https://chattoyou.cn/tags/c&#43;&#43;/</guid>
       <description></description>
     </item>
     

@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>golang on 晓兵(ssbandjl)-技术兴国</title>
-    <link>https://logread.cn/categories/golang/</link>
+    <link>https://chattoyou.cn/categories/golang/</link>
     <description>Recent content in golang on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 16 Apr 2022 13:14:40 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/golang/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 16 Apr 2022 13:14:40 +0800</lastBuildDate><atom:link href="https://chattoyou.cn/categories/golang/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>GinWeb框架</title>
-      <link>https://logread.cn/post/GinWeb%E6%A1%86%E6%9E%B6/</link>
+      <link>https://chattoyou.cn/post/GinWeb%E6%A1%86%E6%9E%B6/</link>
       <pubDate>Sat, 16 Apr 2022 13:14:40 +0800</pubDate>
       
-      <guid>https://logread.cn/post/GinWeb%E6%A1%86%E6%9E%B6/</guid>
+      <guid>https://chattoyou.cn/post/GinWeb%E6%A1%86%E6%9E%B6/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 GinWeb框架 简介 本文基于Golang Gin框架官方文档翻译, 验证了其中大部分示例代码, 便于Gin快速入门, 也欢迎大家提出意见, 一起交流学习. 本文地址: https://github.com/ssbandjl/golang-gin-doc-cn Gin是Golang写的Web框架, 功能类似另一个Go框架Martini(暂停维护), Gin内部使</description>
     </item>
     

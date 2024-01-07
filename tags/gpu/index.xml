@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>gpu on 晓兵(ssbandjl)-技术兴国</title>
-    <link>https://logread.cn/tags/gpu/</link>
+    <link>https://chattoyou.cn/tags/gpu/</link>
     <description>Recent content in gpu on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 06 Jan 2024 17:45:25 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/gpu/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 06 Jan 2024 17:45:25 +0800</lastBuildDate><atom:link href="https://chattoyou.cn/tags/gpu/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Nvidia 迈络思 OFED GPU直接RDMA</title>
-      <link>https://logread.cn/post/nvidia/gpu_direct_rdma/</link>
+      <link>https://chattoyou.cn/post/nvidia/gpu_direct_rdma/</link>
       <pubDate>Sat, 06 Jan 2024 17:45:25 +0800</pubDate>
       
-      <guid>https://logread.cn/post/nvidia/gpu_direct_rdma/</guid>
+      <guid>https://chattoyou.cn/post/nvidia/gpu_direct_rdma/</guid>
       <description>Nvidia 迈络思 OFED GPU直接RDMA 简介 ![image-20240106175123171](/Users/xb/Library/Application Support/typora-user-images/image-20240106175123171.png) GPU-GPU 间通信的最新进展是 GPUDirect RDMA。该技术在 GPU 内存与 NVIDIA 网络适配器设备之间提供直接的 P2P（点对点）数据路径。这显着减少了 GPU-GPU 通信延迟，并完全卸载了 CPU，将其从网络上的所有 GPU-GPU 通信中移除。GPU Direct 利用 NVIDIA 网络适配器的 PeerDirect RDMA 和 PeerDirect ASYNC™ 功能(异步远端直接</description>
     </item>
     

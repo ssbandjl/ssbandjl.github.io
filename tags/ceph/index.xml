@@ -2,26 +2,26 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>ceph on 晓兵(ssbandjl)-技术兴国</title>
-    <link>https://logread.cn/tags/ceph/</link>
+    <link>https://chattoyou.cn/tags/ceph/</link>
     <description>Recent content in ceph on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Wed, 10 May 2023 14:01:46 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/ceph/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 10 May 2023 14:01:46 +0800</lastBuildDate><atom:link href="https://chattoyou.cn/tags/ceph/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>MSGR2 协议（MSGR2.0 和 MSGR2.1）</title>
-      <link>https://logread.cn/post/stor/ceph/ceph_msg/</link>
+      <link>https://chattoyou.cn/post/stor/ceph/ceph_msg/</link>
       <pubDate>Wed, 10 May 2023 14:01:46 +0800</pubDate>
       
-      <guid>https://logread.cn/post/stor/ceph/ceph_msg/</guid>
+      <guid>https://chattoyou.cn/post/stor/ceph/ceph_msg/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 ceph文档 MSGR2 协议（MSGR2.0 和 MSGR2.1） 这是由 SimpleMessenger 实现的遗留 Ceph 在线协议的修订版。它解决了性能和安全问题。 目标 相对于原始协议，此协议修订版有几个目标： 灵活的握手。原始协议没有足够灵活的协议协商来允许不需要的功能。 加密。我们将通过网络整合加密。 表</description>
     </item>
     
     <item>
       <title>利用 RDMA 技术加速 Ceph 存储解决方案</title>
-      <link>https://logread.cn/post/storage/ceph_rdma/</link>
+      <link>https://chattoyou.cn/post/storage/ceph_rdma/</link>
       <pubDate>Sun, 30 Apr 2023 11:21:44 +0800</pubDate>
       
-      <guid>https://logread.cn/post/storage/ceph_rdma/</guid>
+      <guid>https://chattoyou.cn/post/storage/ceph_rdma/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 利用 RDMA 技术加速 Ceph 存储解决方案 原创 晓兵XB 云原生云 2023-04-29 20:37 发表于四川 https://mp.weixin.qq.com/s/FCQMaDmumCHw8WElBsD18Q 在本文中，我们首先回顾了 Ceph* 4K I/O 工作负载中遇到的性能挑战，并对单个 Ceph OSD 对象存储守护进程 (OSD) 进程的 CPU 分布进行了简要分析。然后，我们讨论了现有 TCP/IP 堆栈中的低效问题，并介绍了英特尔® 以太网连接 X722 支持的 iWARP</description>
     </item>
     

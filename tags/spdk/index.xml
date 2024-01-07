@@ -2,53 +2,53 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>spdk on 晓兵(ssbandjl)-技术兴国</title>
-    <link>https://logread.cn/tags/spdk/</link>
+    <link>https://chattoyou.cn/tags/spdk/</link>
     <description>Recent content in spdk on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 20 May 2023 11:17:30 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/spdk/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 20 May 2023 11:17:30 +0800</lastBuildDate><atom:link href="https://chattoyou.cn/tags/spdk/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>基于DOAS文件系统接口(DFS)暴露的SPDK块设备</title>
-      <link>https://logread.cn/post/daos/daos_spdk_bdev/</link>
+      <link>https://chattoyou.cn/post/daos/daos_spdk_bdev/</link>
       <pubDate>Sat, 20 May 2023 11:17:30 +0800</pubDate>
       
-      <guid>https://logread.cn/post/daos/daos_spdk_bdev/</guid>
+      <guid>https://chattoyou.cn/post/daos/daos_spdk_bdev/</guid>
       <description>基于DOAS文件系统(DFS后端)暴露的SPDK块设备 整体架构 步骤 编译daos, 记录daos安装目录, 比如/opt/daos, 启动daos_agent, daos_engine, daos_server 编译spdk git clone https://github.com/spdk/spdk.git git submodule update &amp;ndash;init ./configure &amp;ndash;with-daos #指定daos include目录和lib目录 make -j 16 启动spdk nvmf_tgt sudo HUGE_EVEN_ALLOC=yes scripts/setup.sh sudo ./build/bin/nvmf_tgt -m [21,22,23,24] 创建传输层 sudo ./scripts/rpc.py nvmf_create_transport</description>
     </item>
     
     <item>
       <title>在存储性能开发套件 (SPDK) 中启用持久内存(PM)</title>
-      <link>https://logread.cn/post/storage/spdk_pm/</link>
+      <link>https://chattoyou.cn/post/storage/spdk_pm/</link>
       <pubDate>Sun, 30 Apr 2023 11:16:16 +0800</pubDate>
       
-      <guid>https://logread.cn/post/storage/spdk_pm/</guid>
+      <guid>https://chattoyou.cn/post/storage/spdk_pm/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 在存储性能开发套件 (SPDK) 中启用持久内存(PM) 原创 晓兵XB 云原生云 2023-04-30 10:21 发表于四川 https://mp.weixin.qq.com/s/trDKiEoYBjD8-1zhmEMYnA 背景 Optane 是一种内存系统，旨在通过桥接存储和 RAM 来提高硬盘驱动器 (HDD) 和速度较慢的 SATA SSD 的性能。 2022年7月, 英特尔首席执行官 Pat Gelsinger 将关闭 Optane 的决定归因于更广泛的行业转向 Compute Express Link (CXL) 架构 英特尔第</description>
     </item>
     
     <item>
       <title>Spdk_blobstore编程指导</title>
-      <link>https://logread.cn/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</link>
+      <link>https://chattoyou.cn/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</link>
       <pubDate>Sun, 22 Jan 2023 11:17:53 +0800</pubDate>
       
-      <guid>https://logread.cn/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</guid>
+      <guid>https://chattoyou.cn/post/spdk/spdk_blobstore%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 Blobstore 编程指导 In this document @ref blob_pg_audience @ref blob_pg_intro @ref blob_pg_theory @ref blob_pg_design @ref blob_pg_examples @ref blob_pg_config @ref blob_pg_component Target Audience The programmer&amp;rsquo;s guide is intended for developers authoring applications that utilize the SPDK Blobstore. It is intended to supplement the source code in providing an overall understanding of how to integrate Blobstore into an application as well as provide some high level insight into how Blobstore works behind the scenes. It is not intended to serve as a design document or an API reference and in some cases source code snippets and high level sequences will be discussed; for the latest source code reference refer to the repo. 程序员指南适用于编写使用 SPDK Blobstore 的</description>
     </item>
     
     <item>
       <title>Spdk_nvme_of_target编程指导</title>
-      <link>https://logread.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</link>
+      <link>https://chattoyou.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</link>
       <pubDate>Sun, 22 Jan 2023 11:14:33 +0800</pubDate>
       
-      <guid>https://logread.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</guid>
+      <guid>https://chattoyou.cn/post/spdk/spdk_nvme_of_target%E7%BC%96%E7%A8%8B%E6%8C%87%E5%AF%BC/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 NVme over Fabrics: 也称为 NVMe-oF 和 non-volatile memory express over fabric，是一种协议规范，旨在使用 NVMe 协议通过网络结构将主机连接到存储。 该协议旨在通过网络在主机和目标固态存储设备或系统之间实现数据传输——通过基于 NVMe 消息的命令完成。 数据传输可以通过以太网、光纤通道 (FC) 或 InfiniBand 等方法传输 Target Audience This programming guide is intended</description>
     </item>
     
     <item>
       <title>Spdk提交io到nvme设备</title>
-      <link>https://logread.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/</link>
+      <link>https://chattoyou.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/</link>
       <pubDate>Sun, 22 Jan 2023 11:09:02 +0800</pubDate>
       
-      <guid>https://logread.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/</guid>
+      <guid>https://chattoyou.cn/post/spdk/spdk%E6%8F%90%E4%BA%A4io%E5%88%B0nvme%E8%AE%BE%E5%A4%87/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 Submitting I/O to an NVMe Device 提交I/O到NVME设备 The NVMe Specification 规范 The NVMe specification describes a hardware interface for interacting with storage devices. The specification includes network transport definitions for remote storage as well as a hardware register layout for local PCIe devices. What follows here is an overview of how an I/O is submitted to a local PCIe device through SPDK. NVMe 规范描述了用于与存储设备交互的硬件接口。 该规范包括远程存储的网络传输定义以及本地 PCIe 设备的硬件寄存器布局。</description>
     </item>
     
