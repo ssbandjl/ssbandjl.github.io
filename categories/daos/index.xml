@@ -2,53 +2,53 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>daos on 晓兵(ssbandjl)-技术兴国</title>
-    <link>https://chattoyou.cn/categories/daos/</link>
+    <link>https://logread.cn/categories/daos/</link>
     <description>Recent content in daos on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 19 Aug 2023 22:23:52 +0800</lastBuildDate><atom:link href="https://chattoyou.cn/categories/daos/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 19 Aug 2023 22:23:52 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/daos/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析</title>
-      <link>https://chattoyou.cn/post/daos/daos_eq_and_event/</link>
+      <link>https://logread.cn/post/daos/daos_eq_and_event/</link>
       <pubDate>Sat, 19 Aug 2023 22:23:52 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/post/daos/daos_eq_and_event/</guid>
+      <guid>https://logread.cn/post/daos/daos_eq_and_event/</guid>
       <description>DAOS的事件队列(EventQueue)与事件(Event)和任务调度引擎(TSE)及源码分析 简介 事件和事件队列 DAOS API 函数可以在阻塞或非阻塞模式下使用。 这是通过传递给每个 API 调用的指向 DAOS 事件的指针来确定的：如果 NULL 表示操作将被阻塞。 操作完成后会返回。 所有失败情况的错误码都将通过API</description>
     </item>
     
     <item>
       <title>DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析</title>
-      <link>https://chattoyou.cn/post/daos/daos_tse/</link>
+      <link>https://logread.cn/post/daos/daos_tse/</link>
       <pubDate>Tue, 08 Aug 2023 22:48:22 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/post/daos/daos_tse/</guid>
+      <guid>https://logread.cn/post/daos/daos_tse/</guid>
       <description>DAOS_TSE(TaskSchedulerEngine)任务调度引擎流程及源码分析 简介 TSE 是一个通用库，用于创建具有函数回调的通用任务，可选地添加这些任务之间的依赖关系，并将它们安排在一个引擎中，该引擎按照插入它们的依赖关系图确定的顺序执行这些任务。任务依赖图是调度程序的组成部分</description>
     </item>
     
     <item>
       <title>DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性感染式过程组成员协议)</title>
-      <link>https://chattoyou.cn/post/daos/daos_cart_swim/</link>
+      <link>https://logread.cn/post/daos/daos_cart_swim/</link>
       <pubDate>Sat, 08 Jul 2023 09:50:03 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/post/daos/daos_cart_swim/</guid>
+      <guid>https://logread.cn/post/daos/daos_cart_swim/</guid>
       <description>DAOS引擎心跳健康检测-cart_swim(可扩展的弱一致性-感染式过程-组成员协议) 术语 swim: Scalable Weakly-consistent Infection-style process group Membership Protocol, 可扩展的弱一致性-感染式过程-组成员协议 round-trip: 往返 简介 SWIM是DAOS引擎(rank)间的网络健康检测机制, 属于通信组件cart下的代码模块, SWIM是通过Gossip实现的</description>
     </item>
     
     <item>
       <title>DAOS引擎启动流程-源码分析</title>
-      <link>https://chattoyou.cn/post/daos/daos_server_engine_start/</link>
+      <link>https://logread.cn/post/daos/daos_server_engine_start/</link>
       <pubDate>Thu, 01 Jun 2023 23:20:35 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/post/daos/daos_server_engine_start/</guid>
+      <guid>https://logread.cn/post/daos/daos_server_engine_start/</guid>
       <description>执行:daos_server start, server通过golang调用engine的c 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101</description>
     </item>
     
     <item>
       <title>Cart_rdma_hpc开源rpc传输层</title>
-      <link>https://chattoyou.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/</link>
+      <link>https://logread.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/</link>
       <pubDate>Sun, 22 Jan 2023 11:20:30 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/</guid>
+      <guid>https://logread.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 简介 分布式异步对象存储 (DAOS) 是一种开源软件定义的对象存储，专为大规模分布式非易失性内存 (NVM) 而设计。DAOS 利用存储级内存 (SCM) 和 NVM express (NVMe) 等下一代 NVM 技术，同时呈现键值存储接口并提供事务性非阻塞 I/O、高级数据保护和自我修复等功能 商品硬件、端到端数据完整性、细粒度数据控</description>
     </item>
     

@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>多路径 on 晓兵(ssbandjl)-技术兴国</title>
-    <link>https://chattoyou.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/</link>
+    <link>https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/</link>
     <description>Recent content in 多路径 on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Fri, 30 Jun 2023 22:46:42 +0800</lastBuildDate><atom:link href="https://chattoyou.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 30 Jun 2023 22:46:42 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2</title>
-      <link>https://chattoyou.cn/post/linux/multipath/linux_kernel_multipath_fail_path/</link>
+      <link>https://logread.cn/post/linux/multipath/linux_kernel_multipath_fail_path/</link>
       <pubDate>Fri, 30 Jun 2023 22:46:42 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/post/linux/multipath/linux_kernel_multipath_fail_path/</guid>
+      <guid>https://logread.cn/post/linux/multipath/linux_kernel_multipath_fail_path/</guid>
       <description>linux内核多路径故障(fail_path)流程图及源码分析_kernel_iscsid_multipathd_device_mapper_lvm2 简介 linux多路径multipath, 允许将客户主机端与后端存储引擎或存储阵列之间的多个物理连接组合成一个虚拟设备, 这样做可以为</description>
     </item>
     

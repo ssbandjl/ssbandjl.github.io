@@ -2,80 +2,80 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>rdma on 晓兵(ssbandjl)-技术兴国</title>
-    <link>https://chattoyou.cn/categories/rdma/</link>
+    <link>https://logread.cn/categories/rdma/</link>
     <description>Recent content in rdma on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 06 Jan 2024 17:45:25 +0800</lastBuildDate><atom:link href="https://chattoyou.cn/categories/rdma/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 06 Jan 2024 17:45:25 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/rdma/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Nvidia 迈络思 OFED GPU直接RDMA</title>
-      <link>https://chattoyou.cn/post/nvidia/gpu_direct_rdma/</link>
+      <link>https://logread.cn/post/nvidia/gpu_direct_rdma/</link>
       <pubDate>Sat, 06 Jan 2024 17:45:25 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/post/nvidia/gpu_direct_rdma/</guid>
+      <guid>https://logread.cn/post/nvidia/gpu_direct_rdma/</guid>
       <description>Nvidia 迈络思 OFED GPU直接RDMA 简介 ![image-20240106175123171](/Users/xb/Library/Application Support/typora-user-images/image-20240106175123171.png) GPU-GPU 间通信的最新进展是 GPUDirect RDMA。该技术在 GPU 内存与 NVIDIA 网络适配器设备之间提供直接的 P2P（点对点）数据路径。这显着减少了 GPU-GPU 通信延迟，并完全卸载了 CPU，将其从网络上的所有 GPU-GPU 通信中移除。GPU Direct 利用 NVIDIA 网络适配器的 PeerDirect RDMA 和 PeerDirect ASYNC™ 功能(异步远端直接</description>
     </item>
     
     <item>
       <title>优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</title>
-      <link>https://chattoyou.cn/post/rdma/rdma_perf/</link>
+      <link>https://logread.cn/post/rdma/rdma_perf/</link>
       <pubDate>Tue, 19 Dec 2023 18:47:02 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/post/rdma/rdma_perf/</guid>
+      <guid>https://logread.cn/post/rdma/rdma_perf/</guid>
       <description>优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南-RDMA资源 RDMA 被用在很多地方，主要是因为它可以实现高性能。在这篇文章中，我将提供有关如何从多个方面优化 RDMA 代码的建议和技巧 简单的科普下RDMA 什么是RDMA？ DMA 代表直接内存访问。这意味着应用程序可以在 CPU 干预的情况下直接访问（读</description>
     </item>
     
     <item>
       <title>DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</title>
-      <link>https://chattoyou.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/</link>
+      <link>https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/</link>
       <pubDate>Thu, 05 Oct 2023 10:11:49 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/</guid>
+      <guid>https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/</guid>
       <description>DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解 简介 参考之前的分享中, DAOS与RDMA分层关系如下图, DAOS引擎 -&amp;gt; CART(RPC/大块数据/集合RPC请求) -&amp;gt; Mercury(HG: RPC注册/回调/RPC操作/预期/非预期消息/大块消息/轮训/阻塞/网络抽象等) -&amp;gt; Libfabric(网络抽象层,对rxm,r</description>
     </item>
     
     <item>
       <title>英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda</title>
-      <link>https://chattoyou.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/</link>
+      <link>https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/</link>
       <pubDate>Sun, 24 Sep 2023 17:32:26 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/</guid>
+      <guid>https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/</guid>
       <description>Intel Open Fabrics Interfaces Libfabric Tutorial 英特尔开放结构接口 Libfabric 教程 rdma verbs network gpu panda hpc ai 简介 本文介绍了libfabric的基本教程, 以及常见代码示例, 包含tcp_socket, libfabric, gpu, dma等代码和示例, 内容基于intel专家的的视频和个人理解, 欢迎一起交流高性能存储, 分布式存储, 网络, rdma等技术 HOTI 热门互联网络技术 视</description>
     </item>
     
     <item>
       <title>OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</title>
-      <link>https://chattoyou.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/</link>
+      <link>https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/</link>
       <pubDate>Sun, 17 Sep 2023 10:44:13 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/</guid>
+      <guid>https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/</guid>
       <description>OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)-[译] 2015 IEEE 第 23 届高性能互连年度研讨会 摘要 OpenFabrics Interfaces (OFI) 是一个新的应用程序接口系列，它向中间件和应用程序公开通信服务。 Libfabric 是 OFI 的第一个成员，是在 OpenFabrics 联盟的支持下，由行业、学术界和国家实验室合作伙伴组成的广泛联盟在过去两年中</description>
     </item>
     
     <item>
       <title>Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</title>
-      <link>https://chattoyou.cn/post/rdma/rdma_rocev2_lossless_lossy/</link>
+      <link>https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/</link>
       <pubDate>Sun, 23 Jul 2023 13:40:11 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/post/rdma/rdma_rocev2_lossless_lossy/</guid>
+      <guid>https://logread.cn/post/rdma/rdma_rocev2_lossless_lossy/</guid>
       <description>Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介-一文入门RDMA和RoCE有损无损 简介 随着互联网, 人工智能等兴起, 跨机通信对带宽和时延都提出了更高的要求, RDMA技术也不断迭代演进, 如: RoCE(RDMA融合以</description>
     </item>
     
     <item>
       <title>NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析</title>
-      <link>https://chattoyou.cn/post/linux/nvmf/</link>
+      <link>https://logread.cn/post/linux/nvmf/</link>
       <pubDate>Fri, 14 Jul 2023 22:09:39 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/post/linux/nvmf/</guid>
+      <guid>https://logread.cn/post/linux/nvmf/</guid>
       <description>NVMe-oF,nvme_cli_initiator与tgt(spdk_tgt)之Fabrics(RDMA)流程源码分析 简介 NVMe over Fabrics (NVMe-oF) 是 NVMe 网络协议对以太网和光纤通道的扩展，可在存储和服务器之间提供更快、更高效的连接，并降低应用程序主机服务器的 CPU 利用率 NVM Express over Fabrics 定义了一个通用架构，支持</description>
     </item>
     
     <item>
       <title>OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织</title>
-      <link>https://chattoyou.cn/post/ofa/ofa_librabric/</link>
+      <link>https://logread.cn/post/ofa/ofa_librabric/</link>
       <pubDate>Mon, 01 May 2023 18:01:44 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/post/ofa/ofa_librabric/</guid>
+      <guid>https://logread.cn/post/ofa/ofa_librabric/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 OFA(开放Fabric联盟) - 利用最小CPU开销,为上层应用提供超高性能(线速),超低时延,最大带宽的开放组织 成员企业 OFA概览 OpenFabrics Alliance (OFA) 是一个基于开源的组织，负责开发、测试、许可、支持和分发 RDMA/Advanced Networks 软件以及 RDMA/Advanced Networks 软件的 OpenFabrics Enterprise Distribution。该联盟的使命</description>
     </item>
     

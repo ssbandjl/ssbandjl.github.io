@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>学习 on 晓兵(ssbandjl)-技术兴国</title>
-    <link>https://chattoyou.cn/categories/%E5%AD%A6%E4%B9%A0/</link>
+    <link>https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/</link>
     <description>Recent content in 学习 on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 17 Jun 2023 22:47:44 +0800</lastBuildDate><atom:link href="https://chattoyou.cn/categories/%E5%AD%A6%E4%B9%A0/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 17 Jun 2023 22:47:44 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>常用学习网站汇总(随时更新)</title>
-      <link>https://chattoyou.cn/post/study/summary/</link>
+      <link>https://logread.cn/post/study/summary/</link>
       <pubDate>Sat, 17 Jun 2023 22:47:44 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/post/study/summary/</guid>
+      <guid>https://logread.cn/post/study/summary/</guid>
       <description>本文链接 晓兵博客: https://logread.cn/post/study/summary/ 腾讯云: https://cloud.tencent.com/developer/article/2355052 CSDN: https://blog.csdn.net/ssbandjl/article/details/131265171 论文 中国大陆发第一篇计算机顶会的人都怎么样了: https://www.zhihu.com/question/627499717 云栖大会 聚合话题: https://yunqi.aliyun.com/2023/agenda Nvidia GDS(GPU直接存储): https://docs.nvidia.com/gpudirect-storage/design-guide/index.html Nvidia网络文档:https://docs.nvidia.com/networking/software/index.html 学习目录: https://nvdam.widen.net/s/wlbgbqr7cj/nvidia-learning-training-course-catalog DOC</description>
     </item>
     

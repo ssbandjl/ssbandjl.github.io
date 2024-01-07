@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>optane on 晓兵(ssbandjl)-技术兴国</title>
-    <link>https://chattoyou.cn/tags/optane/</link>
+    <link>https://logread.cn/tags/optane/</link>
     <description>Recent content in optane on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 30 Apr 2023 11:16:16 +0800</lastBuildDate><atom:link href="https://chattoyou.cn/tags/optane/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 30 Apr 2023 11:16:16 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/optane/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>在存储性能开发套件 (SPDK) 中启用持久内存(PM)</title>
-      <link>https://chattoyou.cn/post/storage/spdk_pm/</link>
+      <link>https://logread.cn/post/storage/spdk_pm/</link>
       <pubDate>Sun, 30 Apr 2023 11:16:16 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/post/storage/spdk_pm/</guid>
+      <guid>https://logread.cn/post/storage/spdk_pm/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 在存储性能开发套件 (SPDK) 中启用持久内存(PM) 原创 晓兵XB 云原生云 2023-04-30 10:21 发表于四川 https://mp.weixin.qq.com/s/trDKiEoYBjD8-1zhmEMYnA 背景 Optane 是一种内存系统，旨在通过桥接存储和 RAM 来提高硬盘驱动器 (HDD) 和速度较慢的 SATA SSD 的性能。 2022年7月, 英特尔首席执行官 Pat Gelsinger 将关闭 Optane 的决定归因于更广泛的行业转向 Compute Express Link (CXL) 架构 英特尔第</description>
     </item>
     

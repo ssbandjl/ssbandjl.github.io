@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>linux on 晓兵(ssbandjl)-技术兴国</title>
-    <link>https://chattoyou.cn/categories/linux/</link>
+    <link>https://logread.cn/categories/linux/</link>
     <description>Recent content in linux on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 18 Jun 2023 12:41:32 +0800</lastBuildDate><atom:link href="https://chattoyou.cn/categories/linux/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 18 Jun 2023 12:41:32 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/linux/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]</title>
-      <link>https://chattoyou.cn/post/linux/linux_kernel_vs_dpdk/</link>
+      <link>https://logread.cn/post/linux/linux_kernel_vs_dpdk/</link>
       <pubDate>Sun, 18 Jun 2023 12:41:32 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/post/linux/linux_kernel_vs_dpdk/</guid>
+      <guid>https://logread.cn/post/linux/linux_kernel_vs_dpdk/</guid>
       <description>概述 在这篇文章中，我将使用一个简单的 HTTP 基准测试在 Linux 内核的网络堆栈和由 DPDK 提供支持的内核旁路堆栈之间进行正面性能比较。 我将使用 Seastar 运行我的测试，Seastar 是一个用于构建高性能服务器应用程序的 C++ 框架。 Seastar 支持构建使用 Linux 内核或 DPDK 进行网络连接的应用程序，因此它是进行此比较的完美框架。 我将以</description>
     </item>
     

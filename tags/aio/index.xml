@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>aio on 晓兵(ssbandjl)-技术兴国</title>
-    <link>https://chattoyou.cn/tags/aio/</link>
+    <link>https://logread.cn/tags/aio/</link>
     <description>Recent content in aio on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 16 Apr 2022 09:43:27 +0800</lastBuildDate><atom:link href="https://chattoyou.cn/tags/aio/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 16 Apr 2022 09:43:27 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/aio/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>How to Use Linux Aio</title>
-      <link>https://chattoyou.cn/posts/how-to-use-linux-aio/</link>
+      <link>https://logread.cn/posts/how-to-use-linux-aio/</link>
       <pubDate>Sat, 16 Apr 2022 09:43:27 +0800</pubDate>
       
-      <guid>https://chattoyou.cn/posts/how-to-use-linux-aio/</guid>
+      <guid>https://logread.cn/posts/how-to-use-linux-aio/</guid>
       <description>linux-aio 参考链接 linux-aio io_submit man aio POSIX linux aio 实现概览 Introduction 简介 1 注意与POSIX语义的aio - POSIX asynchronous I/O overview POSIX异步I/O接口, 有区别 Note, Linux AIO is now subsumed by the io_uring API (tutorial, LWN coverage). The below explanation is mostly useful for old kernels. 请注意，Linux AIO 现在包含在 io_uring API（教程，LWN 覆盖范围）中。 下面的解释对旧内核最有用。 The Asynchronous Input/Output (AIO) interface allows many I/O requests to be submitted in parallel without the overhead</description>
     </item>
     
