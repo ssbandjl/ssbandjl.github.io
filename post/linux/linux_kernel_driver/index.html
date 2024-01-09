@@ -12,21 +12,24 @@
     <meta name="referrer" content="no-referrer-when-downgrade">
     
 
-    <title>libfabric | 晓兵(ssbandjl)-技术兴国</title>
-    <meta property="og:title" content="libfabric - 晓兵(ssbandjl)-技术兴国">
+    <title>Linux内核-驱动技术杂谈 | 晓兵(ssbandjl)-技术兴国</title>
+    <meta property="og:title" content="Linux内核-驱动技术杂谈 - 晓兵(ssbandjl)-技术兴国">
     <meta property="og:type" content="article">
         
+    <meta property="article:published_time" content='2024-01-09T09:18:08&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2024-01-09T09:18:08&#43;08:00'>
         
     <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储,ceph,分布式块存储,云计算,daos,rdma,spdk,nvmeof,linux,kernel,内核,分布式存储,dpdk,rpc">
-    <meta name="description" content="libfabric">
+    <meta name="description" content="Linux内核-驱动技术杂谈">
         
     <meta name="author" content="晓兵">
-    <meta property="og:url" content="https://logread.cn/categories/libfabric/">
+    <meta property="og:url" content="https://logread.cn/post/linux/linux_kernel_driver/">
     <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
 
     <link rel="stylesheet" href='/css/normalize.css'>
     <link rel="stylesheet" href='/css/style.css'>
-    <link rel="alternate" type="application/rss+xml+xml" href="https://logread.cn/categories/libfabric/index.xml" title="晓兵(ssbandjl)-技术兴国" />
     <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 
     
@@ -56,7 +59,7 @@
             </div>
             <div>
                 <nav id="nav-menu" class="clearfix">
-                    <a class="" href="https://logread.cn">首页</a>
+                    <a class="current" href="https://logread.cn">首页</a>
                     
                     <a  href="https://logread.cn/archives/" title="归档">归档</a>
                     
@@ -73,53 +76,236 @@
                 <div class="col-8" id="main">
                     
 <div class="res-cons">
-    
-    <h3 class="archive-title">
-        分类
-        <span class="keyword">libfabric</span>
-        中的文章
-    </h3>
-    
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
 
-    
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#简介">简介</a></li>
+    <li><a href="#linux进程状态机">Linux进程状态机</a></li>
+    <li><a href="#内存管理">内存管理</a></li>
+    <li><a href="#网络架构">网络架构</a></li>
+    <li><a href="#arm引导">arm引导</a></li>
+    <li><a href="#参考">参考</a></li>
+    <li><a href="#晓兵">晓兵</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
     <article class="post">
         <header>
-            <h1 class="post-title">
-                <a href="https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/">OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</a>
-            </h1>
+            <h1 class="post-title">Linux内核-驱动技术杂谈</h1>
         </header>
         <date class="post-meta meta-date">
-            2023年9月17日
+            2024年1月9日
         </date>
         
-        <div class="post-meta meta-category">
-            |
+        <div class="post-meta">
+            <span>|</span>
             
-            <a href='/categories/stor'>stor</a>
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
             
-            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
-            
-            <a href='/categories/libfabric'>libfabric</a>
-            
-            <a href='/categories/%E7%BD%91%E7%BB%9C'>网络</a>
-            
-            <a href='/categories/rdma'>rdma</a>
+            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
             
         </div>
         
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
         <div class="post-content">
-            OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)-[译] 2015 IEEE 第 23 届高性能互连年度研讨会 摘要 OpenFabrics Interfaces (OFI) 是一个新的应用程序接口系列，它向中间件和应用程序公开通信服务。 Libfabric 是 OFI 的第一个成员，是在 OpenFabrics 联盟的支持下，由行业、学术界和国家实验室合作伙伴组成的广泛联盟在过去两年中……
-            <p class="readmore"><a href="https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/">阅读全文</a></p>
+            <h1 id="linux内核-驱动技术杂谈">Linux内核-驱动技术杂谈</h1>
+<h2 id="简介">简介</h2>
+<h2 id="linux进程状态机">Linux进程状态机</h2>
+<p>![image-20240109131015348](/Users/xb/Library/Application Support/typora-user-images/image-20240109131015348.png)</p>
+<h2 id="内存管理">内存管理</h2>
+<p>![image-20240109131145103](/Users/xb/Library/Application Support/typora-user-images/image-20240109131145103.png)</p>
+<h2 id="网络架构">网络架构</h2>
+<p>![image-20240109131209558](/Users/xb/Library/Application Support/typora-user-images/image-20240109131209558.png)</p>
+<h2 id="arm引导">arm引导</h2>
+<p>![image-20240109131341565](/Users/xb/Library/Application Support/typora-user-images/image-20240109131341565.png)</p>
+<h2 id="参考">参考</h2>
+<p>Linux设备驱动开发详解(基于4.0内核-宋宝华): <a href="https://e.dangdang.com/pc/reader/index.html?id=1900471094">https://e.dangdang.com/pc/reader/index.html?id=1900471094</a></p>
+<h2 id="晓兵">晓兵</h2>
+<p>AI吐槽工具(小喇叭): <a href="https://chattoyou.cn">https://chattoyou.cn</a>
+博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a> | <a href="https://cloud.tencent.com/developer/user/5060293/articles">https://cloud.tencent.com/developer/user/5060293/articles</a></p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/linux/linux_kernel_driver/">https://logread.cn/post/linux/linux_kernel_driver/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/stor/beegfs_storage/">Beegfs存储</a></li>
+        
+        <li><a href="/post/nvidia/nvidia_network_tech/">Nvidia网络技术-端到端网络解决方案</a></li>
+        
+        <li><a href="/post/nvidia/gpu_direct_rdma/">Nvidia 迈络思 OFED GPU直接RDMA</a></li>
+        
+        <li><a href="/post/rdma/rdma_perf/">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</a></li>
+        
+        <li><a href="/post/linux/virtio/">VirtIO简介</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+            </ul>
+            
         </div>
     </article>
     
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
 
     
-
-
-
-
-
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
 </div>
 
                     <footer id="footer">
@@ -154,6 +340,19 @@
 </footer>
 
 
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
 
 <a id="rocket" href="#top"></a>
 <script

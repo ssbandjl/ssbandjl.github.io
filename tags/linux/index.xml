@@ -6,7 +6,16 @@
     <description>Recent content in linux on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 07 Jan 2024 08:57:15 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/linux/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 09 Jan 2024 09:18:08 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/linux/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Linux内核-驱动技术杂谈</title>
+      <link>https://logread.cn/post/linux/linux_kernel_driver/</link>
+      <pubDate>Tue, 09 Jan 2024 09:18:08 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/linux/linux_kernel_driver/</guid>
+      <description>Linux内核-驱动技术杂谈 简介 Linux进程状态机 ![image-20240109131015348](/Users/xb/Library/Application Support/typora-user-images/image-20240109131015348.png) 内存管理 ![image-20240109131145103](/Users/xb/Library/Application Support/typora-user-images/image-20240109131145103.png) 网络架构 ![image-20240109131209558](/Users/xb/Library/Application Support/typora-user-images/image-20240109131209558.png) arm引导 ![image-20240109131341565](/Users/xb/Library/Application Support/typora-user-images/image-20240109131341565.png) 参考 Linux设备驱动开发详解(基于4.0内核-宋宝华): https://e.dangdang.com/pc/reader/index.html?id=1900471094 晓兵 AI吐槽工具(小喇叭): https://chattoyou.cn 博客: https://logread.cn | https://blog.csdn.net/ssbandjl | https://cloud.tencent.com/developer/user/5060293/articles weixin: ssbandjl 公众号: 云原生云</description>
+    </item>
+    
     <item>
       <title>Beegfs存储</title>
       <link>https://logread.cn/post/stor/beegfs_storage/</link>
@@ -184,7 +193,7 @@
       <pubDate>Sat, 17 Jun 2023 22:47:44 +0800</pubDate>
       
       <guid>https://logread.cn/post/study/summary/</guid>
-      <description>本文链接 晓兵博客: https://logread.cn/post/study/summary/ 腾讯云: https://cloud.tencent.com/developer/article/2355052 CSDN: https://blog.csdn.net/ssbandjl/article/details/131265171 论文 中国大陆发第一篇计算机顶会的人都怎么样了: https://www.zhihu.com/question/627499717 云栖大会 聚合话题: https://yunqi.aliyun.com/2023/agenda Nvidia GDS(GPU直接存储): https://docs.nvidia.com/gpudirect-storage/design-guide/index.html Nvidia网络文档:https://docs.nvidia.com/networking/software/index.html 学习目录: https://nvdam.widen.net/s/wlbgbqr7cj/nvidia-learning-training-course-catalog DOC</description>
+      <description>本文链接 晓兵博客: https://logread.cn/post/study/summary/ 腾讯云: https://cloud.tencent.com/developer/article/2355052 CSDN: https://blog.csdn.net/ssbandjl/article/details/131265171 术语 CFS 完全公平调度 EDF 最早截止期限有限调度算法 论文 中国大陆发第一篇计算机顶会的人都怎么样了: https://www.zhihu.com/question/627499717 云栖大会 聚合话题: https://yunqi.aliyun.com/2023/agenda Nvidia GDS(GPU直接存储): https://docs.nvidia.com/gpudirect-storage/design-guide/index.html Nvidia网络文档:https://docs.nvidia.com/networking/softwa</description>
     </item>
     
     <item>
