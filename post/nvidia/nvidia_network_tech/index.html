@@ -168,6 +168,26 @@
 
   <ul>
     <li><a href="#历史编辑httpsenwikipediaorgwindexphptitlenvidia_gtcactioneditsection1">历史[<a href="https://en.wikipedia.org/w/index.php?title=Nvidia_GTC&amp;action=edit&amp;section=1">编辑</a>]</a></li>
+    <li><a href="#dpu和doca">DPU和DOCA</a>
+      <ul>
+        <li><a href="#三大特性">三大特性</a></li>
+      </ul>
+    </li>
+    <li><a href="#零信任-认证-监控">零信任-认证-监控</a></li>
+    <li><a href="#doca13">DOCA1.3</a></li>
+    <li><a href="#bf2connect-6dx">BF2+Connect-6DX</a></li>
+    <li><a href="#asap加速网络功能aclroutingnat">ASAP加速网络功能(ACL/Routing/NAT&hellip;)</a></li>
+    <li><a href="#doca流水线">DOCA流水线</a></li>
+    <li><a href="#doca-流初始化步骤">DOCA 流初始化步骤</a></li>
+    <li><a href="#插入优化">插入优化</a></li>
+    <li><a href="#arp风暴控制">ARP风暴控制</a></li>
+    <li><a href="#流转发">流转发</a></li>
+    <li><a href="#流水线">流水线</a></li>
+    <li><a href="#设置">设置</a></li>
+    <li><a href="#广播给cpu">广播给CPU</a></li>
+    <li><a href="#丢包流水线">丢包流水线</a></li>
+    <li><a href="#实战">实战</a></li>
+    <li><a href="#抓包-查看丢包-广播-卸载包风暴硬件">抓包-查看丢包-广播-卸载包风暴硬件</a></li>
     <li><a href="#参考">参考</a></li>
     <li><a href="#晓兵">晓兵</a></li>
   </ul>
@@ -433,6 +453,56 @@ BlueField-3 是提供云和人工智能服务的数据中心控制平面的基�
 <p>它于 2009 年起源于加利福尼亚州圣何塞，最初关注的是通过 GPU 解决计算挑战的潜力。[<a href="https://en.wikipedia.org/wiki/Nvidia_GTC#cite_note-2">2]</a>近年来，会议焦点已转向人工智能和深度学习的各种应用，包括：<a href="https://en.wikipedia.org/wiki/Self-driving_cars">自动驾驶汽车</a>、医疗保健、<a href="https://en.wikipedia.org/wiki/Supercomputer">高性能计算</a>、专业可视化以及 Nvidia 深度学习学院 (DLI) 培训。[<a href="https://en.wikipedia.org/wiki/Nvidia_GTC#cite_note-3">3]</a></p>
 <h2 id="历史编辑httpsenwikipediaorgwindexphptitlenvidia_gtcactioneditsection1">历史[<a href="https://en.wikipedia.org/w/index.php?title=Nvidia_GTC&amp;action=edit&amp;section=1">编辑</a>]</h2>
 <p>GTC 2018 吸引了超过 8,400 名与会者。由于 2020 年新冠疫情大流行，GTC 2020 改为数字活动，吸引了大约 59,000 名注册者。<a href="https://en.wikipedia.org/wiki/YouTube">2021 年 GTC 主题演讲于 4 月 12 日在YouTube</a>上直播，其中一部分是使用 Nvidia Omniverse<a href="https://en.wikipedia.org/wiki/Real-time_rendering">实时渲染</a>平台通过 CGI 制作的。由于该活动的照片真实感，包括首席执行官<a href="https://en.wikipedia.org/wiki/Jensen_Huang">黄仁勋</a>的模型，新闻媒体报道称无法辨别主题演讲的一部分是<a href="https://en.wikipedia.org/wiki/Computer-generated_imagery">CGI</a>，直到后来在 8 月 11 日的一篇博客文章中披露。</p>
+<h2 id="dpu和doca">DPU和DOCA</h2>
+<h3 id="三大特性">三大特性</h3>
+<p>卸载, 加速, 隔离</p>
+<h2 id="零信任-认证-监控">零信任-认证-监控</h2>
+<h2 id="doca13">DOCA1.3</h2>
+<p>![image-20240109212329599](/Users/xb/Library/Application Support/typora-user-images/image-20240109212329599.png)</p>
+<h2 id="bf2connect-6dx">BF2+Connect-6DX</h2>
+<p>![image-20240110105817927](/Users/xb/Library/Application Support/typora-user-images/image-20240110105817927.png)</p>
+<h2 id="asap加速网络功能aclroutingnat">ASAP加速网络功能(ACL/Routing/NAT&hellip;)</h2>
+<p>![image-20240110110436366](/Users/xb/Library/Application Support/typora-user-images/image-20240110110436366.png)</p>
+<h2 id="doca流水线">DOCA流水线</h2>
+<p>![image-20240110111557374](/Users/xb/Library/Application Support/typora-user-images/image-20240110111557374.png)</p>
+<h2 id="doca-流初始化步骤">DOCA 流初始化步骤</h2>
+<p>![image-20240110111914164](/Users/xb/Library/Application Support/typora-user-images/image-20240110111914164.png)</p>
+<h2 id="插入优化">插入优化</h2>
+<p>![image-20240110112110623](/Users/xb/Library/Application Support/typora-user-images/image-20240110112110623.png)</p>
+<h2 id="arp风暴控制">ARP风暴控制</h2>
+<p>![image-20240110112352996](/Users/xb/Library/Application Support/typora-user-images/image-20240110112352996.png)</p>
+<p>![image-20240110112438024](/Users/xb/Library/Application Support/typora-user-images/image-20240110112438024.png)</p>
+<h2 id="流转发">流转发</h2>
+<p>![image-20240110112603517](/Users/xb/Library/Application Support/typora-user-images/image-20240110112603517.png)</p>
+<h2 id="流水线">流水线</h2>
+<p>![image-20240110112734133](/Users/xb/Library/Application Support/typora-user-images/image-20240110112734133.png)</p>
+<p>![image-20240110112750729](/Users/xb/Library/Application Support/typora-user-images/image-20240110112750729.png)</p>
+<h2 id="设置">设置</h2>
+<p>![image-20240110112845640](/Users/xb/Library/Application Support/typora-user-images/image-20240110112845640.png)</p>
+<h2 id="广播给cpu">广播给CPU</h2>
+<p>![image-20240110112927775](/Users/xb/Library/Application Support/typora-user-images/image-20240110112927775.png)</p>
+<h2 id="丢包流水线">丢包流水线</h2>
+<p>![image-20240110113017507](/Users/xb/Library/Application Support/typora-user-images/image-20240110113017507.png)</p>
+<h2 id="实战">实战</h2>
+<p>![image-20240110113219341](/Users/xb/Library/Application Support/typora-user-images/image-20240110113219341.png)</p>
+<p>![image-20240110113429910](/Users/xb/Library/Application Support/typora-user-images/image-20240110113429910.png)</p>
+<p>![image-20240110113456757](/Users/xb/Library/Application Support/typora-user-images/image-20240110113456757.png)</p>
+<p>![image-20240110113609065](/Users/xb/Library/Application Support/typora-user-images/image-20240110113609065.png)</p>
+<p>![image-20240110113627874](/Users/xb/Library/Application Support/typora-user-images/image-20240110113627874.png)</p>
+<p>![image-20240110113817495](/Users/xb/Library/Application Support/typora-user-images/image-20240110113817495.png)</p>
+<p>show entries</p>
+<p>![image-20240110113905961](/Users/xb/Library/Application Support/typora-user-images/image-20240110113905961.png)</p>
+<p>ping包, 看流表</p>
+<p>![image-20240110114158228](/Users/xb/Library/Application Support/typora-user-images/image-20240110114158228.png)</p>
+<h2 id="抓包-查看丢包-广播-卸载包风暴硬件">抓包-查看丢包-广播-卸载包风暴硬件</h2>
+<p>![image-20240110115215105](/Users/xb/Library/Application Support/typora-user-images/image-20240110115215105.png)</p>
+<p>2022/5/11</p>
+<ul>
+<li>前后兼容</li>
+<li>purchage</li>
+<li>zero trust 保证性能</li>
+<li>dpu对于挖比特币帮助不是很大</li>
+</ul>
 <h2 id="参考">参考</h2>
 <p>Nvidia网络技术汇总: <a href="https://www.nvidia.com/en-us/networking">https://www.nvidia.com/en-us/networking</a></p>
 <p>NvidiaAI网络: <a href="https://resources.nvidia.com/en-us-networking-ai">https://resources.nvidia.com/en-us-networking-ai</a></p>
@@ -441,6 +511,8 @@ BlueField-3 是提供云和人工智能服务的数据中心控制平面的基�
 <p>Nvidia技术博客: <a href="https://developer.nvidia.com/blog/">https://developer.nvidia.com/blog/</a></p>
 <p>2023 年最受欢迎的 NVIDIA 技术博客文章：生成式 AI、法学硕士、机器人技术和虚拟世界的突破: <a href="https://developer.nvidia.com/blog/year-in-review-trending-posts-of-2023/">https://developer.nvidia.com/blog/year-in-review-trending-posts-of-2023/</a></p>
 <p>全方位宇宙(Omniverse)术语: <a href="https://docs.omniverse.nvidia.com/extensions/latest/common/glossary-of-terms.html">https://docs.omniverse.nvidia.com/extensions/latest/common/glossary-of-terms.html</a></p>
+<p>DOCA入门: <a href="https://www.youtube.com/watch?v=H7T-yS4FTqI">https://www.youtube.com/watch?v=H7T-yS4FTqI</a></p>
+<p>开发者早期访问: <a href="https://developer.nvidia.com/nvidia-doca-sdk-early-access">https://developer.nvidia.com/nvidia-doca-sdk-early-access</a></p>
 <h2 id="晓兵">晓兵</h2>
 <p>博客: <a href="https://logread.cn/">https://logread.cn</a> | <a href="https://blog.csdn.net/ssbandjl">https://blog.csdn.net/ssbandjl</a> | <a href="https://cloud.tencent.com/developer/user/5060293/articles">https://cloud.tencent.com/developer/user/5060293/articles</a></p>
 <p>weixin: ssbandjl</p>
