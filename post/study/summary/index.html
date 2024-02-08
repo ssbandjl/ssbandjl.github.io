@@ -142,22 +142,34 @@
     <div class="post-toc-content">
         <nav id="TableOfContents">
   <ul>
-    <li><a href="#聚合话题-httpsyunqialiyuncom2023agenda">聚合话题: <a href="https://yunqi.aliyun.com/2023/agenda">https://yunqi.aliyun.com/2023/agenda</a></a></li>
+    <li><a href="#聚合话题">聚合话题</a></li>
   </ul>
 
   <ul>
-    <li><a href="#nvidia网络文档-httpsdocsnvidiacomnetworkingsoftwareindexhtmlhttpsdocsnvidiacomnetworkingsoftwareindexhtml">Nvidia网络文档:<a href="https://docs.nvidia.com/networking/software/index.html"> https://docs.nvidia.com/networking/software/index.html</a></a></li>
-    <li><a href="#学习目录-httpsnvdamwidennetswlbgbqr7cjnvidia-learning-training-course-catalog">学习目录: <a href="https://nvdam.widen.net/s/wlbgbqr7cj/nvidia-learning-training-course-catalog">https://nvdam.widen.net/s/wlbgbqr7cj/nvidia-learning-training-course-catalog</a></a></li>
-    <li><a href="#doca纠删码编程指南">DOCA纠删码编程指南:</a></li>
-    <li><a href="#nvidia在线研讨会视频教程-httpswwwnvidiacnabout-nvidiawebinar-portalhttpswwwnvidiacnabout-nvidiawebinar-portal">Nvidia在线研讨会(视频教程): <a href="https://www.nvidia.cn/about-nvidia/webinar-portal/">https://www.nvidia.cn/about-nvidia/webinar-portal</a></a></li>
-    <li><a href="#nvidia深度学习学院-httpswwwnvidiacomen-ustrainingonline">Nvidia深度学习学院: <a href="https://www.nvidia.com/en-us/training/online/">https://www.nvidia.com/en-us/training/online/</a></a></li>
-    <li><a href="#nvidia深度学习培训中心-httpswwwnvidiacntraining">Nvidia深度学习培训中心: <a href="https://www.nvidia.cn/training/">https://www.nvidia.cn/training/</a></a></li>
-    <li><a href="#mellanox学院-httpsacademynvidiacom">Mellanox学院: <a href="https://academy.nvidia.com/">https://academy.nvidia.com/</a></a></li>
-    <li><a href="#英伟达三大ai法宝cudanvlinkinfiniband-httpsmpweixinqqcomsrvwosl-qbwdwosb0cntxbq">英伟达三大AI法宝：CUDA、Nvlink、InfiniBand <a href="https://mp.weixin.qq.com/s/rVWoSl-QbwdwoSB0cNTXbQ">https://mp.weixin.qq.com/s/rVWoSl-QbwdwoSB0cNTXbQ</a></a></li>
+    <li><a href="#doca纠删码编程指南">DOCA纠删码编程指南</a></li>
+    <li><a href="#nvidia在线研讨会视频教程">Nvidia在线研讨会(视频教程)</a></li>
+    <li><a href="#nvidia深度学习学院">Nvidia深度学习学院</a></li>
+    <li><a href="#nvidia深度学习培训中心">Nvidia深度学习培训中心</a></li>
+    <li><a href="#mellanox学院">Mellanox学院</a></li>
+    <li><a href="#英伟达三大ai法宝cudanvlinkinfiniband">英伟达三大AI法宝：CUDA、Nvlink、InfiniBand</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#网络">网络</a></li>
+    <li><a href="#驱动适配器编程">驱动/适配器编程</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#驱动">驱动</a></li>
+    <li><a href="#内存管理">内存管理</a></li>
+    <li><a href="#bpf">BPF</a></li>
+    <li><a href="#driver">driver</a></li>
+    <li><a href="#log">log</a></li>
   </ul>
 
   <ul>
     <li><a href="#基于virtio的虚拟化方案">基于VIRTIO的虚拟化方案</a></li>
+    <li><a href="#qemu">qemu</a></li>
   </ul>
 
   <ul>
@@ -176,8 +188,25 @@
   </ul>
 
   <ul>
-    <li><a href="#rdma">rdma</a></li>
+    <li><a href="#rdma">rdma</a>
+      <ul>
+        <li><a href="#pkey">pkey</a></li>
+      </ul>
+    </li>
+    <li><a href="#刚玉corundum">刚玉/corundum</a></li>
+    <li><a href="#fpga以太网卡verilog">FPGA/以太网卡/verilog</a></li>
     <li><a href="#ucx">ucx</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#google-c编码规范">google c++编码规范</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#pcipcie">PCI/PCIe</a></li>
+    <li><a href="#中断">中断</a></li>
+    <li><a href="#dma">DMA</a></li>
+    <li><a href="#uefi和bios探秘">UEFI和BIOS探秘</a></li>
   </ul>
 
   <ul>
@@ -252,24 +281,57 @@
 <h1 id="术语">术语</h1>
 <p>CFS: 完全公平调度</p>
 <p>EDF: 最早截止期限有限调度算法</p>
-<p>MSI: Message Signaled Interrupts (MSIs), 消息信号中断</p>
+<p>MSI: Message Signaled Interrupts (MSIs), <strong>消息信号中断</strong>( <strong>MSI</strong> ) 是一种发出<a href="https://en.wikipedia.org/wiki/Interrupt">中断信号</a>的方法，它使用特殊的<a href="https://en.wikipedia.org/wiki/In-band">带内</a>消息来替代专用中断线路上的传统<a href="https://en.wikipedia.org/wiki/Out-of-band_data">带外</a>信号。虽然消息信号中断在设备中实现起来更为复杂，但与基于引脚的带外中断信号相比，它们具有一些显着的优势，例如改进的中断处理性能。这与传统中断机制（例如传统中断请求（IRQ）系统）形成对比</p>
 <p>CMB（controller memory buffer）: 控制器内存缓冲区</p>
 <p>IO映射: 控制寄存器, 状态寄存器, 数据寄存器</p>
+<p>BBR: Bottleneck Bandwidth and Round-trip propagation time 瓶颈带宽和往返传播时间</p>
+<p>SMMUv3: <em>System Memory Management Unit</em> (<em>SMMU</em>) (otherwise known as IOMMU) , 系统内存管理单元, 通过添加存储在内存中的配置来扩展早期 SMMU 架构的架构概念，从而支持更大的 IO 系统。 SMMUv3 还为基于 PCI Express 的系统提供增强支持，包括 PCIe ATS 和 PRI 功能。</p>
+<p>CSR, 控制/状态寄存器
+CBL, 命令块列表
+RFA, 接收帧区域</p>
+<p>embedded switch (eSwitch) within the NIC subsystem</p>
+<p>Network functions virtualization (<em>NFV</em>): 网络功能虚拟化</p>
+<p>SDN <a href="https://en.wikipedia.org/wiki/Software-defined_networking">Software-defined networking</a></p>
+<p>Direct Access Transport (DAT)</p>
+<p>KNEM <em>stands for Kernel-Nemesis</em> 内核克星/复仇者</p>
+<p>NVIDIA Messaging Accelerator (VMA)</p>
+<p>Accelerated IO SW library (XLIO)
+系统镜像(System Image，SI)</p>
+<p>Cache空间用作RAM，Cache As Ram, CAR</p>
+<p>Quantum 量子</p>
+<p>Advanced Programmable Interrupt Controller（APIC，高级可编程中断控制器）</p>
+<p>中断服务例程（ISR）</p>
+<p>GRO（Generic Receive Offloading）, <strong>Large Receive Offloading (LRO) 是一个硬件优化，GRO 是 LRO 的一种软件实现</strong></p>
+<p>Linux 内核内存模型 ( LKMM )</p>
+<p>bql: Byte Queue Limits
+Digital Phase Locked Loops (DPLL)</p>
+<p>Interconnect Context Memory (ICM)</p>
+<p>Precision Time Measurement (PTM) : 精密时间测量</p>
+<p>vDPA (virtio data path acceleration)</p>
+<p>default timeouts register (DTOR)</p>
+<p>Dynamic Device Personalization, DDP</p>
+<p>mailbox Transmit Queue (<em>ATQ</em>)</p>
 <h1 id="论文">论文</h1>
 <p>中国大陆发第一篇计算机顶会的人都怎么样了: <a href="https://www.zhihu.com/question/627499717">https://www.zhihu.com/question/627499717</a></p>
 <h1 id="云栖大会">云栖大会</h1>
-<h2 id="聚合话题-httpsyunqialiyuncom2023agenda">聚合话题: <a href="https://yunqi.aliyun.com/2023/agenda">https://yunqi.aliyun.com/2023/agenda</a></h2>
+<h2 id="聚合话题">聚合话题</h2>
+<p><a href="https://yunqi.aliyun.com/2023/agenda">https://yunqi.aliyun.com/2023/agenda</a></p>
 <h1 id="nvidia">Nvidia</h1>
 <p>GDS(GPU直接存储): <a href="https://docs.nvidia.com/gpudirect-storage/design-guide/index.html">https://docs.nvidia.com/gpudirect-storage/design-guide/index.html</a></p>
-<h2 id="nvidia网络文档-httpsdocsnvidiacomnetworkingsoftwareindexhtmlhttpsdocsnvidiacomnetworkingsoftwareindexhtml">Nvidia网络文档:<a href="https://docs.nvidia.com/networking/software/index.html"> https://docs.nvidia.com/networking/software/index.html</a></h2>
-<h2 id="学习目录-httpsnvdamwidennetswlbgbqr7cjnvidia-learning-training-course-catalog">学习目录: <a href="https://nvdam.widen.net/s/wlbgbqr7cj/nvidia-learning-training-course-catalog">https://nvdam.widen.net/s/wlbgbqr7cj/nvidia-learning-training-course-catalog</a></h2>
-<h2 id="doca纠删码编程指南">DOCA纠删码编程指南:</h2>
+<p>Nvidia网络文档:<a href="https://docs.nvidia.com/networking/software/index.html"> https://docs.nvidia.com/networking/software/index.html</a></p>
+<p>学习目录: <a href="https://nvdam.widen.net/s/wlbgbqr7cj/nvidia-learning-training-course-catalog">https://nvdam.widen.net/s/wlbgbqr7cj/nvidia-learning-training-course-catalog</a></p>
+<h2 id="doca纠删码编程指南">DOCA纠删码编程指南</h2>
 <p><a href="https://docs.nvidia.com/doca/sdk/erasure-coding-programming-guide/index.html">https://docs.nvidia.com/doca/sdk/erasure-coding-programming-guide/index.html</a></p>
-<h2 id="nvidia在线研讨会视频教程-httpswwwnvidiacnabout-nvidiawebinar-portalhttpswwwnvidiacnabout-nvidiawebinar-portal">Nvidia在线研讨会(视频教程): <a href="https://www.nvidia.cn/about-nvidia/webinar-portal/">https://www.nvidia.cn/about-nvidia/webinar-portal</a></h2>
-<h2 id="nvidia深度学习学院-httpswwwnvidiacomen-ustrainingonline">Nvidia深度学习学院: <a href="https://www.nvidia.com/en-us/training/online/">https://www.nvidia.com/en-us/training/online/</a></h2>
-<h2 id="nvidia深度学习培训中心-httpswwwnvidiacntraining">Nvidia深度学习培训中心: <a href="https://www.nvidia.cn/training/">https://www.nvidia.cn/training/</a></h2>
-<h2 id="mellanox学院-httpsacademynvidiacom">Mellanox学院: <a href="https://academy.nvidia.com/">https://academy.nvidia.com/</a></h2>
-<h2 id="英伟达三大ai法宝cudanvlinkinfiniband-httpsmpweixinqqcomsrvwosl-qbwdwosb0cntxbq">英伟达三大AI法宝：CUDA、Nvlink、InfiniBand <a href="https://mp.weixin.qq.com/s/rVWoSl-QbwdwoSB0cNTXbQ">https://mp.weixin.qq.com/s/rVWoSl-QbwdwoSB0cNTXbQ</a></h2>
+<h2 id="nvidia在线研讨会视频教程">Nvidia在线研讨会(视频教程)</h2>
+<p><a href="https://www.nvidia.cn/about-nvidia/webinar-portal/">https://www.nvidia.cn/about-nvidia/webinar-portal</a></p>
+<h2 id="nvidia深度学习学院">Nvidia深度学习学院</h2>
+<p><a href="https://www.nvidia.com/en-us/training/online/">https://www.nvidia.com/en-us/training/online/</a></p>
+<h2 id="nvidia深度学习培训中心">Nvidia深度学习培训中心</h2>
+<p><a href="https://www.nvidia.cn/training/">https://www.nvidia.cn/training/</a></p>
+<h2 id="mellanox学院">Mellanox学院</h2>
+<p><a href="https://academy.nvidia.com/">https://academy.nvidia.com/</a></p>
+<h2 id="英伟达三大ai法宝cudanvlinkinfiniband">英伟达三大AI法宝：CUDA、Nvlink、InfiniBand</h2>
+<p><a href="https://mp.weixin.qq.com/s/rVWoSl-QbwdwoSB0cNTXbQ">https://mp.weixin.qq.com/s/rVWoSl-QbwdwoSB0cNTXbQ</a></p>
 <p>Nvidia技术博客: <a href="https://developer.nvidia.com/blog/">https://developer.nvidia.com/blog/</a></p>
 <p>Nvidia文档: <a href="https://docs.nvidia.com/">https://docs.nvidia.com/</a></p>
 <p>Nvidia下载中心: <a href="https://developer.nvidia.com/downloads">https://developer.nvidia.com/downloads</a></p>
@@ -291,6 +353,19 @@
 <p>DPU专栏(<a href="https://blog.csdn.net/gongtxy">大空新一</a>): <a href="https://blog.csdn.net/gongtxy/article/details/128740434">https://blog.csdn.net/gongtxy/article/details/128740434</a></p>
 <p>Corundum 是一款基于<a href="https://docs.corundum.io/en/latest/glossary.html#term-FPGA">FPGA</a>的开源高性能<a href="https://docs.corundum.io/en/latest/glossary.html#term-NIC">NIC</a>和网络内计算平台-文档: <a href="https://docs.corundum.io/en/latest/">https://docs.corundum.io/en/latest/</a></p>
 <p>业界第一个真正意义上开源100 Gbps NIC Corundum介绍: <a href="https://mp.weixin.qq.com/s/Dc8rdlyR3Z5VohghTYEANQ">https://mp.weixin.qq.com/s/Dc8rdlyR3Z5VohghTYEANQ</a></p>
+<p>BF2快速入门指南(NVIDIA BlueField-2 DPU快速入门指南): <a href="https://devforum.nvidia.cn/forum.php?mod=viewthread&amp;tid=12823&amp;extra=page%3D1">https://devforum.nvidia.cn/forum.php?mod=viewthread&amp;tid=12823&amp;extra=page%3D1</a></p>
+<p>openvswitch卸载: <a href="https://docs.nvidia.com/">NVIDIA Docs Hub</a> <a href="https://docs.nvidia.com/networking/index.html">NVIDIA Networking</a> <a href="https://docs.nvidia.com/networking/software/index.html">Networking Software</a> <a href="https://docs.nvidia.com/doca/sdk">DOCA Documentation v2.5.0</a> <a href="https://docs.nvidia.com/doca/sdk/OpenvSwitch+Offload">OpenvSwitch Offload</a></p>
+<h2 id="网络">网络</h2>
+<p>多主机Multihost用户手册: <a href="https://network.nvidia.com/sites/default/files/doc-2020/connectx-4-multi-host-evaluation-kit-user-manual.pdf">https://network.nvidia.com/sites/default/files/doc-2020/connectx-4-multi-host-evaluation-kit-user-manual.pdf</a></p>
+<p>MultiHostSDK: <a href="https://network.nvidia.com/sites/default/files/doc-2020/pb-multi-host-evb-kit.pdf">https://network.nvidia.com/sites/default/files/doc-2020/pb-multi-host-evb-kit.pdf</a></p>
+<p>DPU多主机功能简介: <a href="https://docs.nvidia.com/networking/display/bluefielddpuosv450/multi-host">https://docs.nvidia.com/networking/display/bluefielddpuosv450/multi-host</a></p>
+<p>多主机架构解决方案/优点: <a href="https://www.nvidia.com/en-us/networking/multi-host/">https://www.nvidia.com/en-us/networking/multi-host/</a></p>
+<p>6DX白皮书: <a href="https://www.nvidia.com/content/dam/en-zz/Solutions/networking/ethernet-adapters/connectX-6-dx-datasheet.pdf">https://www.nvidia.com/content/dam/en-zz/Solutions/networking/ethernet-adapters/connectX-6-dx-datasheet.pdf</a></p>
+<p>下一代AI网络白皮书: <a href="https://resources.nvidia.com/en-us-accelerated-networking-resource-library/next-generation-netw?ncid=so-face-852347-vt45&amp;fbclid=IwAR1ONw41JYU_J1CnJbELrWgAg50rSbAHbrPKZwCmp7P3euKhD0Tal1F0JqQ">https://resources.nvidia.com/en-us-accelerated-networking-resource-library/next-generation-netw?ncid=so-face-852347-vt45&amp;fbclid=IwAR1ONw41JYU_J1CnJbELrWgAg50rSbAHbrPKZwCmp7P3euKhD0Tal1F0JqQ</a></p>
+<p>mlx5驱动源码分析: <a href="https://blog.csdn.net/leiyanjie8995/article/details/121341828">https://blog.csdn.net/leiyanjie8995/article/details/121341828</a>
+cx6dx_ovs流表卸载源码分析: <a href="https://blog.csdn.net/qq_20679687/article/details/131632198">https://blog.csdn.net/qq_20679687/article/details/131632198</a></p>
+<h2 id="驱动适配器编程">驱动/适配器编程</h2>
+<p>Mellanox CX4/4Lx适配器-程序员参考手册 (PRM)-PRM-CX4/4Lx: <a href="https://network.nvidia.com/files/doc-2020/ethernet-adapters-programming-manual.pdf">https://network.nvidia.com/files/doc-2020/ethernet-adapters-programming-manual.pdf</a></p>
 <h1 id="gpu">GPU</h1>
 <p>GPU集群组网技术分析：NVLink、InfiniBand、ROCE、DDC: <a href="https://mp.weixin.qq.com/s/CJCm7nqACSjJWGHHd7cMFA">https://mp.weixin.qq.com/s/CJCm7nqACSjJWGHHd7cMFA</a></p>
 <p>“AI时代，你需要了解的GPU互联技术：NVLink、IB、ROCE”  <a href="https://mp.weixin.qq.com/s/u7ZOD0qLIpUXgcZtluoBmg">https://mp.weixin.qq.com/s/u7ZOD0qLIpUXgcZtluoBmg</a></p>
@@ -312,7 +387,7 @@ IEEE Hot Interconnects 是最先进的硬件和软件架构以及各种规模互
 <h1 id="hpc高性能计算">HPC高性能计算</h1>
 <p>Mochi 项目是阿贡国家实验室、洛斯阿拉莫斯国家实验室、卡内基梅隆大学和 HDF 集团之间的合作。 该项目的目标是探索一种软件定义的存储方法，用于组合存储服务，为极端规模的科学应用程序提供新级别的功能、性能和可靠性</p>
 <p>Mochi(麻薯): <a href="https://mochi.readthedocs.io/en/latest/">https://mochi.readthedocs.io/en/latest/</a></p>
-<h1 id="linux">linux</h1>
+<h1 id="linux">Linux</h1>
 <p>linux内核文档: <a href="https://www.kernel.org/doc/html/latest">https://www.kernel.org/doc/html/latest</a></p>
 <p>内核子系统: <a href="https://docs.kernel.org/subsystem-apis.html#networking-interfaces">https://docs.kernel.org/subsystem-apis.html#networking-interfaces</a></p>
 <p>linux内存管理: <a href="https://www.kernel.org/doc/gorman/html/understand/">https://www.kernel.org/doc/gorman/html/understand/</a></p>
@@ -332,8 +407,7 @@ IEEE Hot Interconnects 是最先进的硬件和软件架构以及各种规模互
 <p>中文档: <a href="https://spacewander.gitbooks.io/systemtapbeginnersguide_zh/content/4_3_UserSpaceStackBacktraces.html">https://spacewander.gitbooks.io/systemtapbeginnersguide_zh/content/4_3_UserSpaceStackBacktraces.html</a></p>
 <p>探测点: <a href="https://linux.die.net/man/3/stapprobes">https://linux.die.net/man/3/stapprobes</a></p>
 <p>官方示例: <a href="https://sourceware.org/systemtap/examples/">https://sourceware.org/systemtap/examples/</a></p>
-<p>bpftrace:</p>
-<p>官方教程,指南: <a href="https://github.com/iovisor/bpftrace/blob/master/docs/reference_guide.md">https://github.com/iovisor/bpftrace/blob/master/docs/reference_guide.md</a></p>
+<p>bpftrace官方教程,指南: <a href="https://github.com/iovisor/bpftrace/blob/master/docs/reference_guide.md">https://github.com/iovisor/bpftrace/blob/master/docs/reference_guide.md</a></p>
 <p>动态调试: <a href="https://www.kernel.org/doc/html/v4.14/admin-guide/dynamic-debug-howto.html">https://www.kernel.org/doc/html/v4.14/admin-guide/dynamic-debug-howto.html</a></p>
 <p>中国Unix操作系统: <a href="http://blog.chinaunix.net/os.html">http://blog.chinaunix.net/os.html</a></p>
 <p>函数调用栈: <a href="https://ivanzz1001.github.io/records/post/linux/2017/10/18/linux-function_callstack_part1">https://ivanzz1001.github.io/records/post/linux/2017/10/18/linux-function_callstack_part1</a></p>
@@ -351,9 +425,33 @@ IEEE Hot Interconnects 是最先进的硬件和软件架构以及各种规模互
 <p>深入理解epoll：高效I/O多路复用的核心技术: <a href="https://mp.weixin.qq.com/s/QFqcn5ck7vNBP254tTrUQQ">https://mp.weixin.qq.com/s/QFqcn5ck7vNBP254tTrUQQ</a></p>
 <p>深入理解Linux内核I/O机制：探索文件系统与设备驱动: <a href="https://mp.weixin.qq.com/s/kCdZUZrYMMaN3L526liN4g">https://mp.weixin.qq.com/s/kCdZUZrYMMaN3L526liN4g</a></p>
 <p>Block multi-queue 架构解析（一）数据结构: <a href="https://blog.csdn.net/qq_32740107/article/details/106302376">https://blog.csdn.net/qq_32740107/article/details/106302376</a></p>
+<p>Linux内核学习笔记: <a href="https://void-star.icu/archives/153">https://void-star.icu/archives/153</a></p>
+<h2 id="驱动">驱动</h2>
+<p>如何写Linux PCI驱动: <a href="https://docs.kernel.org/translations/zh_CN/PCI/pci.html">https://docs.kernel.org/translations/zh_CN/PCI/pci.html</a></p>
+<p>Linux设备驱动第三版: <a href="https://lwn.net/Kernel/LDD3/">https://lwn.net/Kernel/LDD3/</a></p>
+<p>Linux内核在线书籍: <a href="https://0xax.gitbooks.io/linux-insides/content/">https://0xax.gitbooks.io/linux-insides/content/</a></p>
+<h2 id="内存管理">内存管理</h2>
+<p>内存管理1_为什么需要虚拟内存: <a href="https://zhuanlan.zhihu.com/p/404813126">https://zhuanlan.zhihu.com/p/404813126</a></p>
+<p>深入浅出Linux内核内存管理基础: <a href="https://zhuanlan.zhihu.com/p/597993158">https://zhuanlan.zhihu.com/p/597993158</a></p>
+<p><a href="https://www.cnblogs.com/binlovetech/p/16914715.html">一步一图带你深入理解 Linux 物理内存管理</a></p>
+<p>【概述】-Linux内核三驾马车之-内存管理: <a href="https://blog.acean.vip/post/linux-kernel/gai-shu-linuxnei-he-san-jia-ma-che-zhi-nei-cun-guan-li#toc_9">https://blog.acean.vip/post/linux-kernel/gai-shu-linuxnei-he-san-jia-ma-che-zhi-nei-cun-guan-li#toc_9</a></p>
+<h2 id="bpf">BPF</h2>
+<p>Linux超能力BPF技术介绍及学习分享（技术创作101训练营): <a href="https://cloud.tencent.com/developer/article/1698426">https://cloud.tencent.com/developer/article/1698426</a></p>
+<h2 id="driver">driver</h2>
+<p>内核驱动调试方法: <a href="https://wiki.phytec.com/pages/viewpage.action?pageId=132776352">https://wiki.phytec.com/pages/viewpage.action?pageId=132776352</a>
+利用GDB、KGDB调试应用程序及内核驱动模块: <a href="https://blog.nsfocus.net/gdb-kgdb-debug-application/">https://blog.nsfocus.net/gdb-kgdb-debug-application/</a></p>
+<h2 id="log">log</h2>
+<p>内核如何打印日志及动态调试(dev_info/dbg&hellip;): <a href="https://cloud.tencent.com/developer/article/1819284">https://cloud.tencent.com/developer/article/1819284</a></p>
 <h1 id="虚拟化">虚拟化</h1>
 <h2 id="基于virtio的虚拟化方案">基于VIRTIO的虚拟化方案</h2>
 <p><a href="https://mp.weixin.qq.com/s/RNpR4Chv6Az2HS34Ov1vmQ">https://mp.weixin.qq.com/s/RNpR4Chv6Az2HS34Ov1vmQ</a></p>
+<h2 id="qemu">qemu</h2>
+<p>系列专栏: <a href="https://phmatthaus.blog.csdn.net/category_12072874_2.html">https://phmatthaus.blog.csdn.net/category_12072874_2.html</a></p>
+<p>QEMU虚拟机(一)、源码分析概论(相关参考链接): <a href="https://blog.csdn.net/weixin_38387929/article/details/120121636">https://blog.csdn.net/weixin_38387929/article/details/120121636</a></p>
+<p>QEMU源码全解析 —— PCI设备模拟（7）(MMIO设备读写/触发中断/DMA等): <a href="https://phmatthaus.blog.csdn.net/article/details/135547308">https://phmatthaus.blog.csdn.net/article/details/135547308</a></p>
+<p>使用GDB: GDB usage: <a href="https://qemu-project.gitlab.io/qemu/system/gdb.html">https://qemu-project.gitlab.io/qemu/system/gdb.html</a></p>
+<p><a href="https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/821624963/Debugging+Guest+Applications+with+QEMU+and+GDB">https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/821624963/Debugging+Guest+Applications+with+QEMU+and+GDB</a></p>
+<p>使用qemu和gdb调试内核: <a href="https://imkira.com/QEMU-GDB-Linux-Kernel/">https://imkira.com/QEMU-GDB-Linux-Kernel/</a></p>
 <h1 id="存储">存储</h1>
 <p>华为存储: <a href="https://e.huawei.com/cn/material/MaterialList?id=%7BA246BE8A-D1A6-4AA6-852F-16AD3C4BC7AA%7D">https://e.huawei.com/cn/material/MaterialList?id={A246BE8A-D1A6-4AA6-852F-16AD3C4BC7AA}</a></p>
 <p>存储技术最前线: <a href="https://mp.weixin.qq.com/s/-_76xhvBVsSXswMFCBFe6w">nvme, ceph, spdk, 虚拟化汇总</a></p>
@@ -372,6 +470,11 @@ IEEE Hot Interconnects 是最先进的硬件和软件架构以及各种规模互
 <p>nvme设备驱动(专栏): <a href="https://www.cnblogs.com/vlhn/tag/NVMe">https://www.cnblogs.com/vlhn/tag/NVMe</a></p>
 <h2 id="ib">IB</h2>
 <p>协议规范: [http://47.92.214.21:8888/rdma/IB%20Specification%20Vol%201-Release-1.4-2020-04-07_ib_spec_vol1.pdf](http://47.92.214.21:8888/rdma/IB Specification Vol 1-Release-1.4-2020-04-07_ib_spec_vol1.pdf)</p>
+<p>IB协议中文翻译版本链接(汇总)：https://ngdcn.com/tags-28.html
+第3章(架构预览)：https://ngdcn.com/post/94.html
+第5章(数据报文格式)：https://ngdcn.com/post/97.html
+第9章(传输层)：https://ngdcn.com/post/107.html
+第10章(软件传输接口)：https://ngdcn.com/post/148.html</p>
 <h2 id="数据库">数据库</h2>
 <p>redis_rocksdb_leveldb_scylladb_raft: <a href="https://youjiali1995.github.io/categories/">https://youjiali1995.github.io/categories/</a></p>
 <h2 id="rocksdb">rocksdb</h2>
@@ -475,7 +578,9 @@ IEEE Hot Interconnects 是最先进的硬件和软件架构以及各种规模互
 <p>dpdk官方博客: <a href="https://www.dpdk.org/blog">https://www.dpdk.org/blog</a></p>
 <p>dpdk入门: <a href="https://www.zhihu.com/question/313210254">https://www.zhihu.com/question/313210254</a></p>
 <p><a href="https://ke.qq.com/course/5066203">Dpdk/网络协议栈/vpp/OvS/DDos/NFV/虚拟化/高性能专家</a>: <a href="https://ke.qq.com/course/5066203">https://ke.qq.com/course/5066203</a></p>
-<h1 id="网络">网络</h1>
+<p>源码分析: <a href="https://zzqcn.github.io/opensource/dpdk/hf-dpdk/index.html">https://zzqcn.github.io/opensource/dpdk/hf-dpdk/index.html</a></p>
+<p>DPDK源码分析系列: <a href="https://blog.csdn.net/apelife/category_9036462.html">https://blog.csdn.net/apelife/category_9036462.html</a></p>
+<h1 id="网络-1">网络</h1>
 <h2 id="rdma">rdma</h2>
 <p>mojo-rdma代码优化技巧(提升性能): <a href="https://www.rdmamojo.com/2013/06/08/tips-and-tricks-to-optimize-your-rdma-code/">https://www.rdmamojo.com/2013/06/08/tips-and-tricks-to-optimize-your-rdma-code/</a></p>
 <p>rdma杂谈_技术原理: <a href="https://www.zhihu.com/column/c_1231181516811390976">https://www.zhihu.com/column/c_1231181516811390976</a></p>
@@ -487,14 +592,68 @@ IEEE Hot Interconnects 是最先进的硬件和软件架构以及各种规模互
 <p>学习可编程交换芯片原理，洞悉头部云厂商研发可编程交换机的战略布局(P4): <a href="https://mp.weixin.qq.com/s/JeEA_cfZpX5HksLmJ9IFXw">https://mp.weixin.qq.com/s/JeEA_cfZpX5HksLmJ9IFXw</a></p>
 <p>实测-基于Corundum(刚玉)架构的100G RDMA网卡: <a href="https://mp.weixin.qq.com/s/vNXfnYsDgZX3ryHjpxNFoQ">https://mp.weixin.qq.com/s/vNXfnYsDgZX3ryHjpxNFoQ</a></p>
 <p>![image-20240109112747957](/Users/xb/Library/Application Support/typora-user-images/image-20240109112747957.png)</p>
+<p>阿里RDMA通信库X-RDMA论文精读: <a href="https://mp.weixin.qq.com/s/IyFLlJ6O8B1Z99Z65Mui8w">https://mp.weixin.qq.com/s/IyFLlJ6O8B1Z99Z65Mui8w</a></p>
+<p>网络的智能应该放在哪里：网卡、交换机还是 xPU - 李博杰的文章 - 知乎: <a href="https://zhuanlan.zhihu.com/p/657498193">https://zhuanlan.zhihu.com/p/657498193</a></p>
+<p>携程技术(Linux 网络栈接收数据（RX）：原理及内核实现（2022）): <a href="https://arthurchiao.art/blog/linux-net-stack-implementation-rx-zh/">https://arthurchiao.art/blog/linux-net-stack-implementation-rx-zh/</a></p>
+<p>mlx5以太网驱动程序: <a href="https://doc.dpdk.org/guides/nics/mlx5.html">https://doc.dpdk.org/guides/nics/mlx5.html</a></p>
+<p>网络性能调优(红帽): <a href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/performance_tuning_guide/main-network#doc-wrapper">https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/performance_tuning_guide/main-network#doc-wrapper</a></p>
+<p>intel irdma参考文档: <a href="https://blog.csdn.net/bandaoyu/article/details/116203690">https://blog.csdn.net/bandaoyu/article/details/116203690</a></p>
+<h3 id="pkey">pkey</h3>
+<p>kernel ib doc: <a href="https://docs.kernel.org/infiniband/user_mad.html">https://docs.kernel.org/infiniband/user_mad.html</a></p>
+<p>mojo pkey: <a href="https://www.rdmamojo.com/2014/04/30/partition-key-p_key/">https://www.rdmamojo.com/2014/04/30/partition-key-p_key/</a></p>
+<p>other pkey: <a href="https://blog.csdn.net/qq_42890800/article/details/133176579">https://blog.csdn.net/qq_42890800/article/details/133176579</a></p>
+<h2 id="刚玉corundum">刚玉/corundum</h2>
+<p>实测RDMA(【实测】基于Corundum架构的100G RDMA网卡): <a href="https://cloud.tencent.com/developer/article/2351007">https://cloud.tencent.com/developer/article/2351007</a></p>
+<p>FPGA100G网卡: <a href="https://blog.csdn.net/qq_41667729/article/details/131987565">https://blog.csdn.net/qq_41667729/article/details/131987565</a></p>
+<p>corundum文档: <a href="https://docs.corundum.io/en/latest/gettingstarted.html">https://docs.corundum.io/en/latest/gettingstarted.html</a>
+irdma自述文件(inter rdma): <a href="https://downloadmirror.intel.com/738730/README_irdma.txt">https://downloadmirror.intel.com/738730/README_irdma.txt</a></p>
+<p>ofed rdma driver download: <a href="https://network.nvidia.com/products/infiniband-drivers/linux/mlnx_ofed/">https://network.nvidia.com/products/infiniband-drivers/linux/mlnx_ofed/</a></p>
+<h2 id="fpga以太网卡verilog">FPGA/以太网卡/verilog</h2>
+<p>25G网卡工程及项目: <a href="https://blog.csdn.net/qq_41667729/article/details/131624649">https://blog.csdn.net/qq_41667729/article/details/131624649</a></p>
 <h2 id="ucx">ucx</h2>
 <p>UCX-UCT统一通信传输层3-服务端和客户端调用栈详解(及相关)_源码解读: <a href="https://cloud.tencent.com/developer/article/2353126">https://cloud.tencent.com/developer/article/2353126</a></p>
 <h1 id="编码">编码</h1>
-<p>google c++编码规范: <a href="https://google.github.io/styleguide/cppguide.html">https://google.github.io/styleguide/cppguide.html</a></p>
+<h2 id="google-c编码规范">google c++编码规范</h2>
+<p><a href="https://google.github.io/styleguide/cppguide.html">https://google.github.io/styleguide/cppguide.html</a></p>
 <h1 id="计算机">计算机</h1>
-<p>计算机经典书籍一千本: <a href="https://gitee.com/mphyatyh/CS-Books">https://gitee.com/mphyatyh/CS-Books</a></p>
+<p>计算机经典书籍一千本: <a href="https://gitee.com/mphyatyh/CS-Booksf">https://gitee.com/mphyatyh/CS-Booksf</a></p>
 <p>龙蜥社区: <a href="https://openanolis.cn/">https://openanolis.cn/</a></p>
+<h2 id="pcipcie">PCI/PCIe</h2>
 <p>PCIE进化史: <a href="https://cloud.tencent.com/developer/article/2192556">https://cloud.tencent.com/developer/article/2192556</a></p>
+<p>bar(基地址寄存器): <a href="https://stackoverflow.com/questions/30190050/what-is-the-base-address-register-bar-in-pcie">https://stackoverflow.com/questions/30190050/what-is-the-base-address-register-bar-in-pcie</a></p>
+<p>配置空间: <a href="https://en.wikipedia.org/wiki/PCI_configuration_space">https://en.wikipedia.org/wiki/PCI_configuration_space</a></p>
+<p>e1000网络驱动分析: <a href="https://developer.aliyun.com/article/559567">https://developer.aliyun.com/article/559567</a></p>
+<p>e1000e网卡驱动源码分析: <a href="https://dachunlv.com/2021/04/03/linux/%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90/e1000e/">https://dachunlv.com/2021/04/03/linux/%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90/e1000e/</a></p>
+<p>前兆网卡实现机制: <a href="https://blog.csdn.net/fengying765/article/details/6776394">https://blog.csdn.net/fengying765/article/details/6776394</a></p>
+<p>ioremap函数讲解: <a href="http://blog.chinaunix.net/uid-26384989-id-5756930.html">http://blog.chinaunix.net/uid-26384989-id-5756930.html</a></p>
+<p>独立于总线的设备访问: <a href="https://zhuanlan.zhihu.com/p/548249146">https://zhuanlan.zhihu.com/p/548249146</a></p>
+<p>开发者分享 | 使用 lspci 和 setpci 调试 PCIe 问题: <a href="https://xilinx.eetrend.com/content/2020/100059215.html">https://xilinx.eetrend.com/content/2020/100059215.html</a></p>
+<p>使用setpci配置pci设备: <a href="https://blog.csdn.net/choumin/article/details/129864512">https://blog.csdn.net/choumin/article/details/129864512</a></p>
+<p>读写寄存器: <a href="https://blog.csdn.net/Frank_sample/article/details/118385535">https://blog.csdn.net/Frank_sample/article/details/118385535</a></p>
+<p>PCIe5 spec: <a href="https://picture.iczhiku.com/resource/eetop/SYkDTqhOLhpUTnMx.pdf">https://picture.iczhiku.com/resource/eetop/SYkDTqhOLhpUTnMx.pdf</a></p>
+<p>如何为Linux写一个PCI驱动:</p>
+<p><a href="https://docs.kernel.org/PCI/pci.html">https://docs.kernel.org/PCI/pci.html</a></p>
+<p><a href="https://elinux.org/images/3/3a/PCI_Endpoint_drivers_in_Linux_kernel_and_How_to_write_one_.pdf">https://elinux.org/images/3/3a/PCI_Endpoint_drivers_in_Linux_kernel_and_How_to_write_one_.pdf</a></p>
+<p><a href="https://olegkutkov.me/2021/01/07/writing-a-pci-device-driver-for-linux/">https://olegkutkov.me/2021/01/07/writing-a-pci-device-driver-for-linux/</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/372708521">https://zhuanlan.zhihu.com/p/372708521</a></p>
+<p>sysfs-bus-pci(系统文件/总线/PCI): <a href="https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-bus-pci">https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-bus-pci</a></p>
+<p>PCIe总线/地址空间/DMA/配置空间/协议解析: <a href="https://www.zhihu.com/question/550129239/answer/3378732759">https://www.zhihu.com/question/550129239/answer/3378732759</a></p>
+<h2 id="中断">中断</h2>
+<p>中断原理及触发: <a href="https://phmatthaus.blog.csdn.net/article/details/135621181">https://phmatthaus.blog.csdn.net/article/details/135621181</a></p>
+<p>pci_change_irq_level, map_irq, set_irq</p>
+<p>PCIE中断-MSI/MSI-x及代码分析: <a href="https://blog.csdn.net/yhb1047818384/article/details/106676560">https://blog.csdn.net/yhb1047818384/article/details/106676560</a></p>
+<p>使用MSI驱动: <a href="https://www.infradead.org/~mchehab/rst_conversion/PCI/msi-howto.html">https://www.infradead.org/~mchehab/rst_conversion/PCI/msi-howto.html</a></p>
+<h2 id="dma">DMA</h2>
+<p>DMA原理: <a href="https://zhuanlan.zhihu.com/p/547764502">https://zhuanlan.zhihu.com/p/547764502</a></p>
+<p>kernel_how_to_use_dma: <a href="https://www.kernel.org/doc/Documentation/DMA-API-HOWTO.txt">https://www.kernel.org/doc/Documentation/DMA-API-HOWTO.txt</a></p>
+<p>IOMMU/DMA/虚拟地址/物理地址: <a href="https://zhuanlan.zhihu.com/p/413978652">https://zhuanlan.zhihu.com/p/413978652</a></p>
+<p>DMA实现机制: <a href="https://cloud.tencent.com/developer/article/1628161">https://cloud.tencent.com/developer/article/1628161</a></p>
+<p>PCIe5 spec: <a href="https://picture.iczhiku.com/resource/eetop/SYkDTqhOLhpUTnMx.pdf">https://picture.iczhiku.com/resource/eetop/SYkDTqhOLhpUTnMx.pdf</a>
+pcie学习总结: <a href="https://www.zhihu.com/column/c_1633240317909524480">https://www.zhihu.com/column/c_1633240317909524480</a></p>
+<p>深入PCI与PCIe之二：软件篇: <a href="https://zhuanlan.zhihu.com/p/26244141">https://zhuanlan.zhihu.com/p/26244141</a></p>
+<h2 id="uefi和bios探秘">UEFI和BIOS探秘</h2>
+<p>老狼知乎专栏: <a href="https://www.zhihu.com/column/UEFIBlog">https://www.zhihu.com/column/UEFIBlog</a></p>
+<p>UEFI和BIOS区别: <a href="https://www.zhihu.com/question/21672895/answer/774538058">https://www.zhihu.com/question/21672895/answer/774538058</a></p>
 <h1 id="其他">其他</h1>
 <p><a href="https://mp.weixin.qq.com/s/7qjoqYdHwIaKOp89LXnYmg">范老师博客汇总-云计算-虚拟化-容器</a></p>
 <p>腾讯云沙龙活动: <a href="https://cloud.tencent.com/developer/salon/activities">https://cloud.tencent.com/developer/salon/activities</a></p>
