@@ -85,6 +85,35 @@
     <article class="post">
         <header>
             <h1 class="post-title">
+                <a href="https://logread.cn/post/linux/linux_kernel_vs_dpdk/">Linux内核与DPDK-HTTP 性能对决(Linux Kernel vs DPDK: HTTP Performance Showdown)[译]</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2023年6月18日
+        </date>
+        
+        <div class="post-meta meta-category">
+            |
+            
+            <a href='/categories/stor'>stor</a>
+            
+            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
+            
+            <a href='/categories/linux'>linux</a>
+            
+            <a href='/categories/dpdk'>dpdk</a>
+            
+        </div>
+        
+        <div class="post-content">
+            概述 在这篇文章中，我将使用一个简单的 HTTP 基准测试在 Linux 内核的网络堆栈和由 DPDK 提供支持的内核旁路堆栈之间进行正面性能比较。 我将使用 Seastar 运行我的测试，Seastar 是一个用于构建高性能服务器应用程序的 C++ 框架。 Seastar 支持构建使用 Linux 内核或 DPDK 进行网络连接的应用程序，因此它是进行此比较的完美框架。 我将以……
+            <p class="readmore"><a href="https://logread.cn/post/linux/linux_kernel_vs_dpdk/">阅读全文</a></p>
+        </div>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
                 <a href="https://logread.cn/post/study/summary/">常用学习网站汇总(随时更新)</a>
             </h1>
         </header>
@@ -104,7 +133,7 @@
         </div>
         
         <div class="post-content">
-            本文链接 晓兵博客: https://logread.cn/post/study/summary/ 腾讯云: https://cloud.tencent.com/developer/article/2355052 CSDN: https://blog.csdn.net/ssbandjl/article/details/131265171 术语 CFS: 完全公平调度 EDF: 最早截止期限有限调度算法 MSI: Message Signaled Interrupts (MSIs), 消息信号中断( MSI ) 是一种发出中断信号的方法，它使用特殊的带内消息来替代专用中断线路上的传统带外信号。虽然消息信号中断在设备中实现起来更为复杂，但与基于引脚的带外中断信号相比，它们具有一些显着的……
+            本文链接 晓兵博客: https://logread.cn/post/study/summary/ 腾讯云: https://cloud.tencent.com/developer/article/2355052 CSDN: https://blog.csdn.net/ssbandjl/article/details/131265171 术语 xilinx Zynq: 这个词是由锌创造的，锌是电池、太阳能屏幕、合金产品和药品中最常见的化学元素锌。 锌与其他金属的合金可实现增强功能，根据合金的不同用途呈现出不同的颜色 orthogonal frequency-division multiplexing (OFDM) : 正交频分多路复用 Shared Virtual Memory (SVM) 统一虚拟地址空间 SD: segment descriptor 段描述 Physical Buffer List Entry (PBLE) Virtual Station Interfaces (VSIs) : 虚拟 virtio full emulation……
             <p class="readmore"><a href="https://logread.cn/post/study/summary/">阅读全文</a></p>
         </div>
     </article>
@@ -323,31 +352,6 @@
         </div>
     </article>
     
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://logread.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/">Cart_rdma_hpc开源rpc传输层</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2023年1月22日
-        </date>
-        
-        <div class="post-meta meta-category">
-            |
-            
-            <a href='/categories/%E5%AD%98%E5%82%A8'>存储</a>
-            
-            <a href='/categories/daos'>daos</a>
-            
-        </div>
-        
-        <div class="post-content">
-            Author 晓兵 weixin: ssbandjl 公众号: 云原生云 简介 分布式异步对象存储 (DAOS) 是一种开源软件定义的对象存储，专为大规模分布式非易失性内存 (NVM) 而设计。DAOS 利用存储级内存 (SCM) 和 NVM express (NVMe) 等下一代 NVM 技术，同时呈现键值存储接口并提供事务性非阻塞 I/O、高级数据保护和自我修复等功能 商品硬件、端到端数据完整性、细粒度数据控……
-            <p class="readmore"><a href="https://logread.cn/post/daos/cart_rdma_hpc%E5%BC%80%E6%BA%90rpc%E4%BC%A0%E8%BE%93%E5%B1%82/">阅读全文</a></p>
-        </div>
-    </article>
-    
 
     
 
@@ -458,6 +462,10 @@
 <ul class="widget-list">
     
     <li>
+        <a href="https://logread.cn/post/nvidia/nvidia_doca/" title="Nvidia_doca">Nvidia_doca</a>
+    </li>
+    
+    <li>
         <a href="https://logread.cn/post/linux/linux_kernel_driver/" title="Linux内核-驱动技术杂谈">Linux内核-驱动技术杂谈</a>
     </li>
     
@@ -491,10 +499,6 @@
     
     <li>
         <a href="https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/" title="英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda">英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda</a>
-    </li>
-    
-    <li>
-        <a href="https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/" title="OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)">OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</a>
     </li>
     
 </ul>
@@ -552,11 +556,11 @@
     
     <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
     
-    <li><a href="https://logread.cn/categories/stor/">stor (30)</a></li>
+    <li><a href="https://logread.cn/categories/stor/">stor (31)</a></li>
     
     <li><a href="https://logread.cn/categories/virtio/">virtio (1)</a></li>
     
-    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (35)</a></li>
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (36)</a></li>
     
     <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
     

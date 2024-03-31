@@ -216,7 +216,9 @@
 <h2 id="简介">简介</h2>
 <p>BeeGFS 包含两个内置基准测试工具，可以分别帮助表征或评估网络或存储<a href="http://www.beegfs.io/wiki/Benchmark">NetBench 和 StorageBench</a>。当启用NetBench模式时，服务器将丢弃收到的写请求而不是写入数据。类似地，在读取请求的情况下，不会从底层文件系统读取，而是仅将内存缓冲区发送到客户端。NetBench 模式旨在测试独立于底层磁盘的网络流吞吐量。另一方面，StorageBench 旨在测量独立于网络性能的底层文件系统的流吞吐量。StorageBench 是不使用网络的存储目标基准测试。storage-bench 命令只是将请求发送到存储目标以开始写入/读取数据。通过这样做，我们消除了网络的影响。我们从存储平台得到的输出是在网络性能理想的情况下系统可以达到的最佳性能。本博客说明了如何使用 StorageBench 来比较不同存储目标的性能，从而识别有缺陷或配置错误的目标</p>
 <h2 id="架构">架构</h2>
-<p>![image-20240107101415221](/Users/xb/Library/Application Support/typora-user-images/image-20240107101415221.png)</p>
+<p>
+        <img class="mx-auto" alt="image-20240107101415221" src="../beegfs_arch.png" />   
+    </p>
 <h1 id="beeondbeegfs-点播">BeeOND：BeeGFS 点播</h1>
 <p>BeeOND（“ <strong>Bee</strong> GFS <strong>On</strong> <strong>Demand</strong> ”，发音类似于“beyond”）的开发目的是为了能够轻松地动态创建一个或多个 BeeGFS 实例。此功能在许多不同的用例中非常有用，例如在云环境中，但特别是在创建临时工作文件系统时。BeeOND 通常用于在计算作业期间聚合计算节点中内部 SSD 或硬盘的性能和容量。这提供了额外的性能和一种非常优雅的突发缓冲方式</p>
 <p>参考: <a href="https://doc.beegfs.io/latest/advanced_topics/beeond.html">https://doc.beegfs.io/latest/advanced_topics/beeond.html</a></p>
@@ -471,6 +473,10 @@
 <ul class="widget-list">
     
     <li>
+        <a href="https://logread.cn/post/nvidia/nvidia_doca/" title="Nvidia_doca">Nvidia_doca</a>
+    </li>
+    
+    <li>
         <a href="https://logread.cn/post/linux/linux_kernel_driver/" title="Linux内核-驱动技术杂谈">Linux内核-驱动技术杂谈</a>
     </li>
     
@@ -504,10 +510,6 @@
     
     <li>
         <a href="https://logread.cn/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/" title="英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda">英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda</a>
-    </li>
-    
-    <li>
-        <a href="https://logread.cn/post/net/libfabric_hpc_net_api_rdma_daos_mercury/" title="OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)">OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</a>
     </li>
     
 </ul>
@@ -565,11 +567,11 @@
     
     <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
     
-    <li><a href="https://logread.cn/categories/stor/">stor (30)</a></li>
+    <li><a href="https://logread.cn/categories/stor/">stor (31)</a></li>
     
     <li><a href="https://logread.cn/categories/virtio/">virtio (1)</a></li>
     
-    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (35)</a></li>
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (36)</a></li>
     
     <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
     

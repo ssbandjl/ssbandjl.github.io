@@ -6,14 +6,23 @@
     <description>Recent content in linux on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Tue, 09 Jan 2024 09:18:08 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/linux/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 31 Mar 2024 08:05:40 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/linux/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Nvidia_doca</title>
+      <link>https://logread.cn/post/nvidia/nvidia_doca/</link>
+      <pubDate>Sun, 31 Mar 2024 08:05:40 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/nvidia/nvidia_doca/</guid>
+      <description>Nvidia DOCA-芯片上的数据中心软硬件架构简介 术语 DOCA: Data Center-on-a-Chip Architecture, 芯片上的数据中心架构 简介 DOCA 代表片上数据中心架构，基本上，它是 NVIDIA 的 DPU 软件开发平台。 DOCA 包括支持 DPU 加速的库、驱动程序和运行时。 DOCA 代码是用 C 编写的，一种思考方式是 DOCA 之于 DPU，就像 CUDA 之于 GPU 一样 NVIDIA DOCA™ SDK 使开发人员能够利用行业标准 API</description>
+    </item>
+    
     <item>
       <title>Linux内核-驱动技术杂谈</title>
       <link>https://logread.cn/post/linux/linux_kernel_driver/</link>
       <pubDate>Tue, 09 Jan 2024 09:18:08 +0800</pubDate>
       
       <guid>https://logread.cn/post/linux/linux_kernel_driver/</guid>
-      <description>Linux内核-驱动技术杂谈 简介 Linux进程状态机 ![image-20240109131015348](/Users/xb/Library/Application Support/typora-user-images/image-20240109131015348.png) 内存管理 ![image-20240109131145103](/Users/xb/Library/Application Support/typora-user-images/image-20240109131145103.png) 网络架构 ![image-20240109131209558](/Users/xb/Library/Application Support/typora-user-images/image-20240109131209558.png) arm引导 ![image-20240109131341565](/Users/xb/Library/Application Support/typora-user-images/image-20240109131341565.png) 参考 Linux设备驱动开发详解(基于4.0内核-宋宝华): https://e.dangdang.com/pc/reader/index.html?id=1900471094 晓兵 AI吐槽工具(小喇叭): https://chattoyou.cn 博客: https://logread.cn | https://blog.csdn.net/ssbandjl | https://cloud.tencent.com/developer/user/5060293/articles weixin: ssbandjl 公众号: 云原生云</description>
+      <description>Linux内核-驱动技术杂谈 简介 Linux进程状态机 内存管理 网络架构 arm引导 参考 Linux设备驱动开发详解(基于4.0内核-宋宝华): https://e.dangdang.com/pc/reader/index.html?id=1900471094 晓兵 AI吐槽工具(小喇叭): https://chattoyou.cn 博客: https://logread.cn | https://blog.csdn.net/ssbandjl | https://cloud.tencent.com/developer/user/5060293/articles weixin: ssbandjl 公众号: 云原生云</description>
     </item>
     
     <item>
@@ -40,7 +49,7 @@
       <pubDate>Sat, 06 Jan 2024 17:45:25 +0800</pubDate>
       
       <guid>https://logread.cn/post/nvidia/gpu_direct_rdma/</guid>
-      <description>Nvidia 迈络思 OFED GPU直接RDMA 简介 ![image-20240106175123171](/Users/xb/Library/Application Support/typora-user-images/image-20240106175123171.png) GPU-GPU 间通信的最新进展是 GPUDirect RDMA。该技术在 GPU 内存与 NVIDIA 网络适配器设备之间提供直接的 P2P（点对点）数据路径。这显着减少了 GPU-GPU 通信延迟，并完全卸载了 CPU，将其从网络上的所有 GPU-GPU 通信中移除。GPU Direct 利用 NVIDIA 网络适配器的 PeerDirect RDMA 和 PeerDirect ASYNC™ 功能(异步远端直接</description>
+      <description>Nvidia 迈络思 OFED GPU直接RDMA 简介 GPU-GPU 间通信的最新进展是 GPUDirect RDMA。该技术在 GPU 内存与 NVIDIA 网络适配器设备之间提供直接的 P2P（点对点）数据路径。这显着减少了 GPU-GPU 通信延迟，并完全卸载了 CPU，将其从网络上的所有 GPU-GPU 通信中移除。GPU Direct 利用 NVIDIA 网络适配器的 PeerDirect RDMA 和 PeerDirect ASYNC™ 功能(异步远端直接通信</description>
     </item>
     
     <item>
@@ -193,7 +202,7 @@
       <pubDate>Sat, 17 Jun 2023 22:47:44 +0800</pubDate>
       
       <guid>https://logread.cn/post/study/summary/</guid>
-      <description>本文链接 晓兵博客: https://logread.cn/post/study/summary/ 腾讯云: https://cloud.tencent.com/developer/article/2355052 CSDN: https://blog.csdn.net/ssbandjl/article/details/131265171 术语 CFS: 完全公平调度 EDF: 最早截止期限有限调度算法 MSI: Message Signaled Interrupts (MSIs), 消息信号中断( MSI ) 是一种发出中断信号的方法，它使用特殊的带内消息来替代专用中断线路上的传统带外信号。虽然消息信号中断在设备中实现起来更为复杂，但与基于引脚的带外中断信号相比，它们具有一些显着的</description>
+      <description>本文链接 晓兵博客: https://logread.cn/post/study/summary/ 腾讯云: https://cloud.tencent.com/developer/article/2355052 CSDN: https://blog.csdn.net/ssbandjl/article/details/131265171 术语 xilinx Zynq: 这个词是由锌创造的，锌是电池、太阳能屏幕、合金产品和药品中最常见的化学元素锌。 锌与其他金属的合金可实现增强功能，根据合金的不同用途呈现出不同的颜色 orthogonal frequency-division multiplexing (OFDM) : 正交频分多路复用 Shared Virtual Memory (SVM) 统一虚拟地址空间 SD: segment descriptor 段描述 Physical Buffer List Entry (PBLE) Virtual Station Interfaces (VSIs) : 虚拟 virtio full emulation</description>
     </item>
     
     <item>
