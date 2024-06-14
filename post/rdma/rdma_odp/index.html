@@ -1,0 +1,1060 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7571343657358120"
+     crossorigin="anonymous"></script>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>RDMA - ODP按需分页设计原理-优点-源码浅析 | 晓兵(ssbandjl)-技术兴国</title>
+    <meta property="og:title" content="RDMA - ODP按需分页设计原理-优点-源码浅析 - 晓兵(ssbandjl)-技术兴国">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2024-06-15T00:03:32&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2024-06-15T00:03:32&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储,ceph,分布式块存储,云计算,daos,rdma,spdk,nvmeof,linux,kernel,内核,分布式存储,dpdk,rpc">
+    <meta name="description" content="RDMA - ODP按需分页设计原理-优点-源码浅析">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/rdma/rdma_odp/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵(ssbandjl)-技术兴国
+                    </a>
+                
+                <p class="description">存储 | DPU | 高性能 | RDMA | DAOS | 内核等, AI吐槽工具: https://chattoyou.cn</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#什么是按需分页">什么是按需分页？</a></li>
+    <li><a href="#当前内存注册的痛点">当前内存注册的痛点</a></li>
+    <li><a href="#odp带来的好处">ODP带来的好处</a></li>
+    <li><a href="#内存注册流程">内存注册流程</a></li>
+    <li><a href="#设计思路">设计思路</a></li>
+    <li><a href="#参考数据结构">参考数据结构</a></li>
+    <li><a href="#页面换入参考流程">页面换入参考流程</a></li>
+    <li><a href="#页面失效参考流程">页面失效参考流程</a></li>
+    <li><a href="#odp的rnic页表与cpu页表">ODP的RNIC页表与CPU页表</a></li>
+    <li><a href="#同步-cpu-和-rnic-页表的流程">同步 CPU 和 RNIC 页表的流程</a></li>
+    <li><a href="#页面预取及好处">页面预取及好处</a></li>
+    <li><a href="#测试">测试</a></li>
+    <li><a href="#执行时间细分请求发送者">执行时间细分（请求发送者）</a></li>
+    <li><a href="#未来工作">未来工作</a></li>
+    <li><a href="#总结">总结</a></li>
+    <li><a href="#rdma-softrocerxe-支持odp">RDMA SoftRoCE(rxe) 支持ODP</a></li>
+    <li><a href="#mlx5支持odp">MLX5支持ODP</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#ibv_access_on_demand-odp标记位">IBV_ACCESS_ON_DEMAND ODP标记位</a></li>
+    <li><a href="#rdma-core">rdma-core</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#dpu专栏"><strong>DPU专栏</strong></a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">RDMA - ODP按需分页设计原理-优点-源码浅析</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2024年6月15日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/net'>net</a></span>
+            
+            <span class="meta-category"><a href='/categories/rdma'>rdma</a></span>
+            
+            <span class="meta-category"><a href='/categories/%E7%BD%91%E7%BB%9C'>网络</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="rdma---odp按需分页设计原理-优点-源码浅析">RDMA - ODP按需分页设计原理-优点-源码浅析</h1>
+<h1 id="术语">术语</h1>
+<p>ODP: 按需分页</p>
+<p>HMM: 异构内存管理(Heterogeneous Memory Management)</p>
+<p>显示/隐式ODP</p>
+<ul>
+<li>
+<p>显式 ODP在显式 ODP 中，应用程序仍注册内存缓冲区以进行通信，但此操作用于定义 IO 的访问控制，而不是固定页面。ODP 内存区域 (MR) 在注册时不需要具有有效的映射。(IBV_EXP_ACCESS_ON_DEMAND)</p>
+</li>
+<li>
+<p>隐式 ODP在隐式 ODP 中，应用程序会获得一个特殊的内存密钥，该密钥代表其完整的地址空间。所有引用此密钥的 IO 访问（受与密钥关联的访问权限约束）都不需要注册任何虚拟地址范围。(IBV_EXP_IMPLICIT_MR_SIZE)</p>
+</li>
+</ul>
+<p>ODP预取 (IBV_EXP_PREFETCH_WRITE_ACCESS) , 驱动程序可以预取给定范围的页面并映射它们以供 HCA 访问。预取动词仅适用于 ODP MR，并且会尽最大努力完成，并且可能会忽略错误</p>
+<ul>
+<li>无效虚拟页: 未映射的页面, 由于页面不再固定，OS 内核可以交换和迁移页面</li>
+</ul>
+<h1 id="简介">简介</h1>
+<h2 id="什么是按需分页">什么是按需分页？</h2>
+<p>应用程序使用系统调用(ibv_reg_mr)向 RDMA 适配器注册内存，然后将引用相应虚拟地址的 IO 操作直接发布到硬件。到目前为止，这是通过在注册调用期间<strong>固定内存</strong>来实现的。按需分页的目标是避免固定已注册内存区域 (MR) 的页面。这将使用户获得与交换其进程地址空间的任何其他部分时相同的灵活性。我们不必要求整个 MR 都适配物理内存大小，而是允许 MR 可以更大，并且只适合物理内存中的当前工作集。这可以使RDMA 进行编程变得更加简单。今天，处理的数据多于物理内存RAM 的开发人员需要在其进程的整个生命周期内取消注册和重新注册内存区域，或者保留单个内存区域并将数据复制到其中。按需分页将允许这些开发人员在其进程生命周期开始时注册单个 MR，并让操作系统管理在给定时间需要获取哪些页面。将来，我们可能能够为每个进程提供<strong>单个内存访问密钥</strong>，该密钥将整个进程的地址作为一个大<strong>内存区域</strong>提供，所以开发人员根本<strong>不需要注册内存区域</strong></p>
+<h2 id="当前内存注册的痛点">当前内存注册的痛点</h2>
+<p>注册内存的大小必须适配物理内存
+• 应用程序必须具有内存锁定权限
+• 由于以下操作存在, 持续同步地址空间和 HCA 之间的转换表很困难
+– 地址空间更改（malloc、mmap、堆栈）
+– NUMA 迁移
+– fork()
+• 注册是一项成本高昂的操作
+– 没有引用局部性</p>
+<p>尽管固定 MR 在 RDMA 应用中很普遍，但它有几个限制。它将大量页面固定在物理内存中（例如，数十或数百 GB），占用宝贵的 DRAM 资源。应用程序只能初始化不大于可用物理内存的 MR。同时，它失去了<strong>过度使用、页面迁移、透明大页面</strong>等机会。面对这些限制，提出了 ODP（按需分页MR)</p>
+<h2 id="odp带来的好处">ODP带来的好处</h2>
+<p>简化编程
+– MPI 集合通信无需动态注册内存
+– 无需管理专用缓冲池(MR pool)
+• 几乎无限的内存注册(如支持TB级别的MR)
+– 无需特殊权限
+• 优化物理内存以保存工作集</p>
+<h2 id="内存注册流程">内存注册流程</h2>
+<p>
+        <img class="mx-auto" alt="image-20240613080843387" src="../image-20240613080843387.png" />   
+    </p>
+<h2 id="设计思路">设计思路</h2>
+<p>• 仅限内核
+– 对应用程序透明
+• 通用代码 (ib_core) 任务
+– 管理页面失效(page invalidations)
+• 注册 MMU 通知程序调用(MMU notifier calls)
+• 提供失效上下文
+• 确定页面失效和 MR 之间的交集
+– 支持缺页错误(page faults)
+• 在失效和缺页错误之间进行同步
+• 将用户页面换入并映射到 dma</p>
+<p>• 驱动程序代码 (mlx4_core/ib) 任务
+– 处理页面错误
+• 捕获并分类 HW 硬件页面错误
+• 提供页面错误上下文
+– 针对每个QP的请求者/响应者(Per-QP work_struct)
+– 处理 HW 页面失效</p>
+<h2 id="参考数据结构">参考数据结构</h2>
+<p>
+        <img class="mx-auto" alt="image-20240614231111245" src="../image-20240614231111245.png" />   
+    </p>
+<h2 id="页面换入参考流程">页面换入参考流程</h2>
+<p>
+        <img class="mx-auto" alt="image-20240614231145038" src="../image-20240614231145038.png" />   
+    </p>
+<h2 id="页面失效参考流程">页面失效参考流程</h2>
+<p>
+        <img class="mx-auto" alt="image-20240614231221001" src="../image-20240614231221001.png" />   
+    </p>
+<h2 id="odp的rnic页表与cpu页表">ODP的RNIC页表与CPU页表</h2>
+<p>
+        <img class="mx-auto" alt="image-20240614233506173" src="../image-20240614233506173.png" />   
+    </p>
+<p><strong>图 1</strong>, 我们展示了 ODP MR 的 RNIC 页表并将其与 CPU 页表进行比较。有效的虚拟页面映射到页表中的物理页面。无效的虚拟页面不会被映射。v5 在 CPU 页表中有效，但在 RNIC 页表中无效</p>
+<h2 id="同步-cpu-和-rnic-页表的流程">同步 CPU 和 RNIC 页表的流程</h2>
+<p>
+        <img class="mx-auto" alt="image-20240614233725255" src="../image-20240614233725255.png" />   
+    </p>
+<p>ODP MR 与固定 MR 不同，因为它不会将页面固定在物理内存中，RNIC 页表将一些虚拟页面映射到物理页面（我们称之为有效虚拟页面），其余页面保持未映射状态，即无效虚拟页面。由于页面不再固定，OS 内核可以交换和迁移页面。应用程序能够公开大于物理内存的 MR。由于虚拟到物理的映射可能会发生变化，CPU 和 RNIC 页表通过上图所示的三个流程同步。</p>
+<ol>
+<li>
+<p>故障。当 RDMA 请求访问无效虚拟页面上的数据时，</p>
+<p>(1a) RNIC 会停止 QP 并引发 RNIC 页面错误 1 中断。</p>
+<p>(1b) 驱动程序通过 <strong>hmm_range_fault</strong> [2] 向 OS 内核请求虚拟到物理映射。OS 内核会在这些虚拟页面上触发 CPU 页面错误，并在必要时填充 CPU 页表。</p>
+<p>(1c) 驱动程序更新 RNIC 页表上的映射</p>
+<p>(1d) 恢复 QP。</p>
+</li>
+<li>
+<p>失效。当 OS 内核尝试在交换或页面迁移等场景中取消虚拟页面映射时，</p>
+<p>(2a) 它会通过 mmu_interval_notifier [2] 通知 RNIC 驱动程序使虚拟页面失效。</p>
+<p>(2b) RNIC 驱动程序从 RNIC 页表中删除虚拟到物理的映射。</p>
+<p>(2c) 驱动程序通知内核 RNIC 不再使用物理页面。然后，OS 内核修改 CPU 页表并重用物理页面。ODP MR 依靠故障和失效流来同步 CPU 和 RNIC 页表。RNIC 页表中的所有有效虚拟页面都保证在 CPU 页表中有效，但反之则不然。当内核将无效虚拟页面更改为有效虚拟页面时，它不会通知驱动程序。如图 1 所示，v5 在 CPU 页表中有效，但在 RNIC 页表中仍然无效。</p>
+</li>
+<li>
+<p>建议流程解决了上述问题。应用程序可以主动请求 RNIC 驱动程序填充 RNIC 页表中的范围。RNIC 驱动程序通过步骤 (3a) – (3b) 完成建议，这些步骤与步骤 (1b) – (1c) 相同。</p>
+</li>
+</ol>
+<h2 id="页面预取及好处">页面预取及好处</h2>
+<p>用于预取页面的新动词(verbs)
+• 用途
+– 预热新内存映射
+– MPI 约会协议优化
+– UD 响应器优化</p>
+<h2 id="测试">测试</h2>
+<p>• ODP 支持
+– 为 IB 和 RoCE 实现了所有 RC 传输流
+• 不包括 SRQ 和内存窗口
+– IB 和 RoCE 上的 UD
+– 原始以太网 QP
+• 互操作性
+– 同时运行的非 ODP 应用程序的延迟几乎不受影响
+– 混合请求者/响应者也能很好地工作
+• 内存驻留 ODP 页面的本机性能
+• 页入性能
+– 4K 页面错误大约需要 135us
+– 4M 页面错误大约需要 1ms</p>
+<h2 id="执行时间细分请求发送者">执行时间细分（请求发送者）</h2>
+<p>
+        <img class="mx-auto" alt="image-20240614231550757" src="../image-20240614231550757.png" />   
+    </p>
+<h2 id="未来工作">未来工作</h2>
+<p>• 超大 MR 支持
+• 支持 TB 级的 MR
+• 隐式 ODP
+– 预先注册完整的应用程序地址空间
+– 有效消除内存注册
+• 元数据大小必须是当前映射内存的函数，而不是 MR 大小
+– 适用于所有数据结构（IB 核心、驱动程序和硬件）
+• 内存窗口 (MW) 成为控制访问权限的主要工具</p>
+<p>根据 IO 访问更新 PTE 访问/脏位
+• 页面失效批处理
+– swapper中的页面驱逐
+– NUMA 迁移过程
+• 将 ODP 扩展到客户物理机器翻译以实现虚拟化</p>
+<h2 id="总结">总结</h2>
+<p>RDMA 性能很棒
+– 但需要精心设计
+• ODP 简化了 RDMA 编程和部署
+– 将内存管理移至操作系统
+– 解除内存固定限制
+• ODP 不会牺牲性能或互操作性
+• ODP 消除了内存注册</p>
+<h2 id="rdma-softrocerxe-支持odp">RDMA SoftRoCE(rxe) 支持ODP</h2>
+<p>该补丁系列在 SoftRoCE(rxe) 驱动程序上实现了按需分页功能，到目前为止，该功能仅在 mlx5 驱动程序中可用。作为一项重要更改，有必要将三重任务集（请求者、响应者和完成者）转换为工作队列，因为它们必须能够休眠才能在访问 MR 之前触发页面错误。对此进行了一些讨论，Bob Pearson 发布了用于转换的补丁集[2]。我发现它会导致软锁定，并于 11 月 18 日向他报告。但是，自那以后没有任何进展。自 RFC 补丁集首次发布以来，该问题一直阻碍着此 ODP 补丁集的进展，已超过三个月。由于他的补丁集由 13 个补丁组成，太大太复杂，无法找到软锁定的原因，因此我准备了一个补丁，可以实现转换而不会出现问题。我尽量减少更改，以便他可以轻松地对其进行他最初打算进行的更改。</p>
+<p>[概述]</p>
+<p>当应用程序注册内存区域 (MR) 时，RDMA 驱动程序通常会将页面固定在 MR 中，以便在 RDMA 通信期间物理地址永远不会改变。这需要 MR 适配物理内存，不可避免地会导致内存压力。另一方面，按需分页 (ODP) 允许应用程序注册 MR 而不固定页面。当驱动程序需要时，它们会被调入页面，当操作系统回收时，它们会被调出页面。因此，可以注册一个不用适配物理内存的大型 MR，而不会占用太多物理内存。</p>
+<p>[为什么要添加此功能？]</p>
+<p>我们富士通为 RDMA 做出了贡献，希望将其与<strong>持久内存</strong>一起使用。持久内存可以托管文件系统，允许应用程序直接读取/写入文件，而无需涉及页面缓存。这称为 FS-DAX（<strong>文件系统直接访问</strong>）模式。存在一个问题，即启用 DAX 的文件系统上的数据无法<strong>使用软件 RAID</strong> 或其他硬件方法复制。使用具有高速连接的 RDMA 进行数据复制是解决该问题的最佳方法。但是，已知有一个问题阻碍了 RDMA 与 FS-DAX 的结合使用。当在同一节点上同时处理对文件的 RDMA 操作和文件元数据的更新时，可以执行非法内存访问，而忽略更新的元数据。这是因为 RDMA 操作不经过页面缓存，而是直接访问数据。曾经有人努力[3]解决这个问题，但最终被否决了。虽然没有通用的解决方案，但可以使用 ODP 功能解决这个问题。它使内核驱动程序能够在处理 RDMA 操作之前更新元数据。我们增强了 rxe 以加快持久内存的使用。我们对 rxe 的贡献包括 RDMA Atomic write[4] 和 RDMA Flush[5]。随着它们与 ODP 合并，开发人员将有一个环境来创建和测试带有 FS-DAX 的 RDMA 软件。为此目的，正在开发一个库（librpma）[6]。任何人都可以使用此环境，无需任何特殊硬件，只需一台具有普通 NIC 的普通计算机即可，尽管在性能方面不如硬件实现。</p>
+<p>[设计考虑]</p>
+<p>ODP 仅在 mlx5 中可用，但 ib_uverbs（infiniband/core）中提供了可以常用的函数和数据结构。接口严重依赖于 <strong>HMM</strong> 基础架构[7]，此补丁集尽可能多地使用它们。虽然 mlx5 同时具有<strong>显式和隐式 ODP 功能以及预取功能</strong>，但此补丁集仅实现了显式 ODP 功能。当响应者和完成者处于睡眠状态时，由于接收队列溢出而发生数据包丢失的可能性更大。涉及多个队列，但由于 SoftRoCE 使用 UDP，因此最重要的是 UDP 缓冲区。大小可以在 net.core.rmem_default 和 net.core.rmem_max sysconfig 参数中配置。用户应该在数据包丢失的情况下更改这些值，但页面错误通常不会持续太久而导致问题。</p>
+<p>[ODP 如何工作？]</p>
+<p>“struct ib_umem_odp” 用于管理页面。它是在每个启用 ODP 的 MR 注册时为其创建的。此结构包含一对数组 (dma_list/pfn_list)，用作驱动程序页表。DMA 地址和 PFN 存储在驱动程序页表中。它们在页面输入和页面输出时更新，两者都使用 ib_uverbs 层中的通用接口。当请求者、响应者或完成者访问 MR 以处理 RDMA 操作时，可能会发生页面输入。如果他们发现正在访问的页面不在物理内存中，或者页面上未设置必要的权限，他们会引发页面错误，使页面具有适当的权限，同时更新驱动程序页表。确认页面存在后，它们执行内存访问，例如读取、写入或原子操作。页面输出由页面回收或文件系统事件触发（例如，正在用作 MR 的文件的元数据更新)。创建启用 ODP 的 MR 时，驱动程序会注册一个 MMU 通知器回调。当内核发出页面失效通知时，会触发回调以取消映射 DMA 地址并更新驱动程序页表。之后，内核释放页面。</p>
+<p>[支持的操作]</p>
+<p>RC 连接上支持所有传统操作。新的 Atomic write[4] 和 RDMA Flush[5] 操作不包含在此补丁集中。我将在合并此补丁集后发布它们。在 UD 连接上，支持 Send、Recv 和 SRQ-Recv。</p>
+<p>[如何测试 ODP？]</p>
+<p>只有少数资源可用于测试。推荐使用 rdma-core 中的 pyverbs 测试用例和 perftest[8]。除此之外，ibv_rc_pingpong 命令也可以用于测试。请注意，您可能必须从上游构建 perftest，因为旧版本不能正确处理 ODP 功能。该树可从以下 URL 获得：https://github.com/daimatsuda/linux/tree/odp_v3 [未来工作] 我的下一步工作是使用 ODP 启用新的 Atomic write[4] 和 RDMA Flush[5] 操作。之后，我将实现<strong>预取功能。它允许应用程序使用 ibv_advise_mr(3) 触发页面错误以优化性能</strong>。一些现有软件（如 librpma[6]）使用此功能。此外，我认为我们将来还可以添加隐式 ODP 功能</p>
+<h2 id="mlx5支持odp">MLX5支持ODP</h2>
+<p>以下补丁集在 RDMA 堆栈和 mlx5_ib Infiniband 驱动程序中实现了按需分页 (ODP) 支持。</p>
+<p>页面错误通常如何工作？</p>
+<p>使用固定内存区域，驱动程序会将虚拟地址映射到总线地址，并将这些地址传递给 HCA 以将它们与新 MR 关联。使用 ODP，驱动程序现在可以将 MR 中的某些页面标记为不存在。当 HCA 尝试执行通信操作的内存访问时，它会注意到页面不存在，并向驱动程序发出页面错误事件。此外，HCA 执行传输协议所需的任何操作以暂停通信，直到页面错误得到解决。在收到页面错误中断后，驱动程序首先需要知道页面错误发生在哪个虚拟地址上，以及在哪个内存密钥上。处理发送/接收操作时，此信息位于工作队列内。驱动程序读取所需的工作队列元素，并解析它们以收集地址和内存密钥。对于其他 RDMA 操作，HCA 生成的事件仅包含虚拟地址和 rkey，因为不涉及工作队列元素。有了 rkey，驱动程序可以在其数据结构中找到相关的内存区域，并计算完成操作所需的实际页面。然后，它使用 get_user_pages 将所需的页面检索回内存，获取 dma 映射，并将地址传递给 HCA。最后，驱动程序通知 HCA 它可以继续对遇到页面错误的队列对进行操作。get_user_pages 返回的页面通过释放其引用立即取消固定。</p>
+<p>如何处理失效？</p>
+<p>补丁添加了基础架构以将 RDMA 堆栈订阅为 mmu 通知程序客户端 [1]。每个使用 ODP 的进程都会注册一个通知程序客户端。收到页面失效通知时，会将它们传递给 mlx5_ib 驱动程序，该驱动程序会使用新的、不存在的映射更新 HCA。只有在刷新 HCA 的页表缓存后，通知程序才会返回，从而允许内核释放页面。</p>
+<p>支持哪些操作？</p>
+<p>目前，RC 协议仅支持发送、接收和 RDMA 写入操作，UD 协议也支持发送操作。我们希望将来能够实现对其他传输和操作的支持。</p>
+<p>补丁集的结构</p>
+<p>首先，补丁适用于 roland/infiniband.git 树中的 for-next 分支，应用了签名补丁 [2]，还应用了重构 umem 以使用线性 SG 表 [3] 的补丁。</p>
+<p>补丁 1-5：第一组补丁为 IB 核心层添加了页面错误支持，允许注册 MR 而无需固定其页面。第一个补丁添加了功能位、配置选项以及用于从用户空间查询分页功能的方法。接下来的两个补丁 (2-3) 对 ib_umem 类型进行了一些必要的更改。补丁 4 和 5 分别添加了分页支持和无效支持。</p>
+<p>补丁 6-9：下一组补丁包含对 mlx5 驱动程序的一些小修复。补丁 6-7 修复了两个可能影响分页代码的错误，补丁 8-9 添加代码以将缺失信息存储在 mlx5 结构中，这是分页代码正常工作所必需的。</p>
+<p>补丁 10-16：这组补丁为 mlx5 驱动程序添加了小规模的新功能并构建了分页支持。补丁 10-11 对 <strong>UMR 机制（mlx5 用于更新设备页面映射的内部机制</strong>）进行了更改。补丁 12 为 mlx5_core 模块添加了页面错误处理的基础结构支持。补丁 13 为设备配置分页功能，补丁 15 添加了执行部分设备页表更新的函数。最后，补丁 16 添加了辅助函数，用于从驱动程序上下文中的用户空间工作队列读取信息。</p>
+<p>补丁 17-20：此补丁集的第四部分终于为 mlx5 驱动程序添加了分页支持。补丁 17 在 mlx5_ib 中添加了基础结构，以处理来自 mlx5_core 的页面错误。补丁 18 添加了处理 UD 发送页面错误和 RC 发送和接收页面错误的代码。补丁 19 添加了对由 RDMA 写入操作引起的页面错误的支持，补丁 20 为 mlx5 驱动程序添加了无效支持，允许动态取消页面映射</p>
+<h1 id="odp代码分析">ODP代码分析</h1>
+<h2 id="ibv_access_on_demand-odp标记位">IBV_ACCESS_ON_DEMAND ODP标记位</h2>
+<h2 id="rdma-core">rdma-core</h2>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">rc_pingpong.c
+...
+pp_init_ctx
+    <span style="color:#000;font-weight:bold">if</span> (use_odp)
+        <span style="color:#000;font-weight:bold">const</span> uint32_t rc_caps_mask <span style="color:#000;font-weight:bold">=</span> IBV_ODP_SUPPORT_SEND <span style="color:#000;font-weight:bold">|</span> IBV_ODP_SUPPORT_RECV
+        ibv_query_device_ex(ctx<span style="color:#000;font-weight:bold">-&gt;</span>context, <span style="color:#0086b3">NULL</span>, <span style="color:#000;font-weight:bold">&amp;</span>attrx)
+        <span style="color:#000;font-weight:bold">if</span> (<span style="color:#000;font-weight:bold">!</span>(attrx.odp_caps.general_caps <span style="color:#000;font-weight:bold">&amp;</span> IBV_ODP_SUPPORT) <span style="color:#000;font-weight:bold">||</span>
+        attrx.odp_caps.general_caps <span style="color:#000;font-weight:bold">&amp;</span> IBV_ODP_SUPPORT_IMPLICIT
+        access_flags <span style="color:#000;font-weight:bold">|=</span> IBV_ACCESS_ON_DEMAND
+</code></pre></td></tr></table>
+</div>
+</div><p>linux-kernel(参考mlx5)</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">  9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 81
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 82
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 83
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 84
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 85
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 86
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 87
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 88
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 89
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 90
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 91
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 92
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 93
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 94
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 95
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 96
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 97
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 98
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 99
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">100
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">101
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">102
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">103
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">104
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">105
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">kernel, drivers<span style="color:#000;font-weight:bold">/</span>infiniband<span style="color:#000;font-weight:bold">/</span>hw<span style="color:#000;font-weight:bold">/</span>mlx5<span style="color:#000;font-weight:bold">/</span>odp.c
+
+module_init(mlx5_ib_init);
+    mlx5_ib_odp_init <span style="color:#000;font-weight:bold">-&gt;</span> IB<span style="color:#000;font-weight:bold">/</span>mlx5<span style="color:#a61717;background-color:#e3d2d2">：添加隐式</span> MR <span style="color:#a61717;background-color:#e3d2d2">支持，添加隐式</span> MR<span style="color:#a61717;background-color:#e3d2d2">，覆盖整个用户地址空间。</span>MR <span style="color:#a61717;background-color:#e3d2d2">实现为由</span> <span style="color:#099">1</span>GB <span style="color:#a61717;background-color:#e3d2d2">直接</span> MR <span style="color:#a61717;background-color:#e3d2d2">组成的间接</span> KSM MR<span style="color:#a61717;background-color:#e3d2d2">。页面和直接</span> MR <span style="color:#a61717;background-color:#e3d2d2">由</span> ODP <span style="color:#a61717;background-color:#e3d2d2">添加</span><span style="color:#000;font-weight:bold">/</span><span style="color:#a61717;background-color:#e3d2d2">删除到</span> MR
+    mlx5_imr_ksm_entries <span style="color:#000;font-weight:bold">=</span> BIT_ULL(get_order(TASK_SIZE) <span style="color:#000;font-weight:bold">-</span> MLX5_IMR_MTT_BITS)
+
+ibv_reg_mr <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">注册内存时带上</span>ODP标志
+.reg_user_mr <span style="color:#000;font-weight:bold">=</span> mlx5_ib_reg_user_mr
+    <span style="color:#000;font-weight:bold">if</span> (access_flags <span style="color:#000;font-weight:bold">&amp;</span> IB_ACCESS_ON_DEMAND)
+        <span style="color:#000;font-weight:bold">return</span> create_user_odp_mr(pd, start, length, iova, access_flags, udata)
+            <span style="color:#000;font-weight:bold">struct</span> ib_umem_odp <span style="color:#000;font-weight:bold">*</span>odp
+            <span style="color:#000;font-weight:bold">if</span> (<span style="color:#000;font-weight:bold">!</span>IS_ENABLED(CONFIG_INFINIBAND_ON_DEMAND_PAGING))
+            mlx5r_odp_create_eq(dev, <span style="color:#000;font-weight:bold">&amp;</span>dev<span style="color:#000;font-weight:bold">-&gt;</span>odp_pf_eq)
+                INIT_WORK(<span style="color:#000;font-weight:bold">&amp;</span>eq<span style="color:#000;font-weight:bold">-&gt;</span>work, mlx5_ib_eq_pf_action)
+                    mempool_refill
+                        mempool_free(mempool_alloc(pool, GFP_KERNEL), pool)
+                    mlx5_ib_eq_pf_process
+                eq<span style="color:#000;font-weight:bold">-&gt;</span>pool <span style="color:#000;font-weight:bold">=</span> mempool_create_kmalloc_pool(MLX5_IB_NUM_PF_DRAIN, <span style="color:#000;font-weight:bold">sizeof</span>(<span style="color:#000;font-weight:bold">struct</span> mlx5_pagefault))
+                eq<span style="color:#000;font-weight:bold">-&gt;</span>wq <span style="color:#000;font-weight:bold">=</span> alloc_workqueue(<span style="color:#d14">&#34;mlx5_ib_page_fault&#34;</span>, WQ_HIGHPRI <span style="color:#000;font-weight:bold">|</span> WQ_UNBOUND <span style="color:#000;font-weight:bold">|</span> WQ_MEM_RECLAIM, MLX5_NUM_CMD_EQE)
+                eq<span style="color:#000;font-weight:bold">-&gt;</span>irq_nb.notifier_call <span style="color:#000;font-weight:bold">=</span> mlx5_ib_eq_pf_int
+                    mlx5_ib_eq_pf_int <span style="color:#000;font-weight:bold">-&gt;</span> net<span style="color:#000;font-weight:bold">/</span>mlx5<span style="color:#a61717;background-color:#e3d2d2">：将中断处理程序更改为调用链式通知程序，多个</span> EQ <span style="color:#a61717;background-color:#e3d2d2">可能会在后续补丁中共享同一个</span> IRQ<span style="color:#a61717;background-color:#e3d2d2">。</span>EQ <span style="color:#a61717;background-color:#e3d2d2">将注册到原子链式通知程序，而不是直接调用</span> IRQ <span style="color:#a61717;background-color:#e3d2d2">处理程序。不使用</span> Linux <span style="color:#a61717;background-color:#e3d2d2">内置共享</span> IRQ<span style="color:#a61717;background-color:#e3d2d2">，因为它会强制调用者在调用</span> free_irq() <span style="color:#a61717;background-color:#e3d2d2">之前禁用</span> IRQ <span style="color:#a61717;background-color:#e3d2d2">并清除关联。此补丁是分离</span> IRQ <span style="color:#a61717;background-color:#e3d2d2">和</span> EQ <span style="color:#a61717;background-color:#e3d2d2">逻辑的第一步</span>
+                        mlx5_ib_eq_pf_process
+                            INIT_WORK(<span style="color:#000;font-weight:bold">&amp;</span>pfault<span style="color:#000;font-weight:bold">-&gt;</span>work, mlx5_ib_eqe_pf_action)
+                                mlx5_ib_pfault
+                                    mlx5_ib_page_fault_resume
+                                        MLX5_SET(page_fault_resume_in, in, opcode, MLX5_CMD_OP_PAGE_FAULT_RESUME)
+                eq<span style="color:#000;font-weight:bold">-&gt;</span>core <span style="color:#000;font-weight:bold">=</span> mlx5_eq_create_generic(dev<span style="color:#000;font-weight:bold">-&gt;</span>mdev, <span style="color:#000;font-weight:bold">&amp;</span>param) <span style="color:#000;font-weight:bold">-&gt;</span> net<span style="color:#000;font-weight:bold">/</span>mlx5<span style="color:#a61717;background-color:#e3d2d2">：将</span> IRQ <span style="color:#a61717;background-color:#e3d2d2">请求</span><span style="color:#000;font-weight:bold">/</span><span style="color:#a61717;background-color:#e3d2d2">释放与</span> EQ <span style="color:#a61717;background-color:#e3d2d2">生命周期分开，不再在</span> EQ <span style="color:#a61717;background-color:#e3d2d2">创建时请求</span> IRQ<span style="color:#a61717;background-color:#e3d2d2">，而是在</span> EQ <span style="color:#a61717;background-color:#e3d2d2">表创建之前请求</span> IRQ<span style="color:#a61717;background-color:#e3d2d2">。不再在</span> EQ <span style="color:#a61717;background-color:#e3d2d2">销毁后释放</span> IRQ<span style="color:#a61717;background-color:#e3d2d2">，而是在</span> eq <span style="color:#a61717;background-color:#e3d2d2">表销毁后释放</span> IRQ
+                    create_async_eq(dev, eq, param)
+                        <span style="color:#000;font-weight:bold">struct</span> mlx5_eq_table <span style="color:#000;font-weight:bold">*</span>eq_table
+                        create_map_eq(dev, eq, param)
+                            u8 log_eq_size <span style="color:#000;font-weight:bold">=</span> order_base_2(param<span style="color:#000;font-weight:bold">-&gt;</span>nent <span style="color:#000;font-weight:bold">+</span> MLX5_NUM_SPARE_EQE)
+                            INIT_RADIX_TREE(<span style="color:#000;font-weight:bold">&amp;</span>cq_table<span style="color:#000;font-weight:bold">-&gt;</span>tree, GFP_ATOMIC)
+                            mlx5_frag_buf_alloc_node(dev, wq_get_byte_sz(log_eq_size, log_eq_stride), <span style="color:#000;font-weight:bold">&amp;</span>eq<span style="color:#000;font-weight:bold">-&gt;</span>frag_buf, dev<span style="color:#000;font-weight:bold">-&gt;</span>priv.numa_node) <span style="color:#000;font-weight:bold">-&gt;</span> net<span style="color:#000;font-weight:bold">/</span>mlx5e<span style="color:#a61717;background-color:#e3d2d2">：实现碎片工作队列</span> (WQ)<span style="color:#a61717;background-color:#e3d2d2">，添加新类型的</span> <span style="color:#000;font-weight:bold">struct</span> mlx5_frag_buf<span style="color:#a61717;background-color:#e3d2d2">，用于分配碎片缓冲区而不是连续缓冲区，并使完成队列</span> (CQ) <span style="color:#a61717;background-color:#e3d2d2">使用它，因为它们很大（</span>Striding RQ <span style="color:#a61717;background-color:#e3d2d2">中每个</span> CQ <span style="color:#a61717;background-color:#e3d2d2">的默认值为</span> <span style="color:#099">2</span>MB<span style="color:#a61717;background-color:#e3d2d2">）</span>
+                            mlx5_init_fbc
+                            init_eq_buf
+                            mlx5_irq_get_index
+                            mlx5_fill_page_frag_array
+                            MLX5_SET(create_eq_in, in, opcode, MLX5_CMD_OP_CREATE_EQ)
+                            mlx5_cmd_exec(dev, in, inlen, out, <span style="color:#000;font-weight:bold">sizeof</span>(out))
+                            mlx5_debug_eq_add(dev, eq)
+                mlx5_eq_enable(dev<span style="color:#000;font-weight:bold">-&gt;</span>mdev, eq<span style="color:#000;font-weight:bold">-&gt;</span>core, <span style="color:#000;font-weight:bold">&amp;</span>eq<span style="color:#000;font-weight:bold">-&gt;</span>irq_nb)
+            <span style="color:#000;font-weight:bold">if</span> (<span style="color:#000;font-weight:bold">!</span>start <span style="color:#000;font-weight:bold">&amp;&amp;</span> length <span style="color:#000;font-weight:bold">==</span> U64_MAX) <span style="color:#000;font-weight:bold">-&gt;</span> start <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span> and max len
+                mlx5_ib_alloc_implicit_mr(to_mpd(pd), access_flags)
+                    ib_init_umem_odp
+                        mmu_interval_notifier_insert <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">先注册</span>, <span style="color:#a61717;background-color:#e3d2d2">再通过</span> hmm_range_fault <span style="color:#a61717;background-color:#e3d2d2">填充</span>, <span style="color:#a61717;background-color:#e3d2d2">参考异构内存管理</span><span style="color:#900;font-weight:bold">HMM</span>: <span style="color:#900;font-weight:bold">https</span>:<span style="color:#998;font-style:italic">//blog.csdn.net/Rong_Toa/article/details/117910321
+</span><span style="color:#998;font-style:italic"></span>            <span style="color:#000;font-weight:bold">if</span> (<span style="color:#000;font-weight:bold">!</span>mlx5r_umr_can_load_pas(dev, length))
+            odp <span style="color:#000;font-weight:bold">=</span> ib_umem_odp_get(<span style="color:#000;font-weight:bold">&amp;</span>dev<span style="color:#000;font-weight:bold">-&gt;</span>ib_dev, start, length, access_flags, <span style="color:#000;font-weight:bold">&amp;</span>mlx5_mn_ops)
+                ib_init_umem_odp(umem_odp, ops)
+            mr <span style="color:#000;font-weight:bold">=</span> alloc_cacheable_mr(pd, <span style="color:#000;font-weight:bold">&amp;</span>odp<span style="color:#000;font-weight:bold">-&gt;</span>umem, iova, access_flags)
+                page_size <span style="color:#000;font-weight:bold">=</span> mlx5_umem_dmabuf_default_pgsz(umem, iova)
+                or mlx5_umem_find_best_pgsz
+                    ib_umem_find_best_pgsz
+                rb_key.ats <span style="color:#000;font-weight:bold">=</span> mlx5_umem_needs_ats(dev, umem, access_flags)
+                ent <span style="color:#000;font-weight:bold">=</span> mkey_cache_ent_from_rb_key(dev, rb_key) <span style="color:#000;font-weight:bold">-&gt;</span> RDMA<span style="color:#000;font-weight:bold">/</span>mlx5<span style="color:#a61717;background-color:#e3d2d2">：引入</span> mlx5r_cache_rb_key<span style="color:#a61717;background-color:#e3d2d2">，从使用</span> mkey <span style="color:#a61717;background-color:#e3d2d2">顺序切换到使用新结构作为缓存条目</span> RB <span style="color:#a61717;background-color:#e3d2d2">树的键。该键是</span> UMR <span style="color:#a61717;background-color:#e3d2d2">操作无法修改的所有</span> mkey <span style="color:#a61717;background-color:#e3d2d2">属性。使用此键定义缓存条目并搜索和创建缓存</span> mkey
+                mr <span style="color:#000;font-weight:bold">=</span> reg_create(pd, umem, iova, access_flags, page_size, <span style="color:#0086b3">false</span>) <span style="color:#000;font-weight:bold">-&gt;</span> no cache
+                    mr <span style="color:#000;font-weight:bold">=</span> kzalloc(<span style="color:#000;font-weight:bold">sizeof</span>(<span style="color:#000;font-weight:bold">*</span>mr), GFP_KERNEL)
+                    mr<span style="color:#000;font-weight:bold">-&gt;</span>page_shift <span style="color:#000;font-weight:bold">=</span> order_base_2(page_size)
+                    mlx5_ib_create_mkey(dev, <span style="color:#000;font-weight:bold">&amp;</span>mr<span style="color:#000;font-weight:bold">-&gt;</span>mmkey, in, inlen)
+                        mlx5_core_create_mkey
+                            MLX5_SET(create_mkey_in, in, opcode, MLX5_CMD_OP_CREATE_MKEY)
+                    set_mr_fields(dev, mr, umem<span style="color:#000;font-weight:bold">-&gt;</span>length, access_flags, iova)
+                mr <span style="color:#000;font-weight:bold">=</span> _mlx5_mr_cache_alloc(dev, ent, access_flags)
+                    <span style="color:#000;font-weight:bold">if</span> (<span style="color:#000;font-weight:bold">!</span>ent<span style="color:#000;font-weight:bold">-&gt;</span>mkeys_queue.ci)
+                        create_cache_mkey(ent, <span style="color:#000;font-weight:bold">&amp;</span>mr<span style="color:#000;font-weight:bold">-&gt;</span>mmkey.key)
+                            mlx5_core_create_mkey <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">创建缓存</span>
+                    <span style="color:#000;font-weight:bold">else</span>
+                        mr<span style="color:#000;font-weight:bold">-&gt;</span>mmkey.key <span style="color:#000;font-weight:bold">=</span> pop_mkey_locked(ent) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">从缓存中获取</span>
+                            last_page <span style="color:#000;font-weight:bold">=</span> list_last_entry(<span style="color:#000;font-weight:bold">&amp;</span>ent<span style="color:#000;font-weight:bold">-&gt;</span>mkeys_queue.pages_list, <span style="color:#000;font-weight:bold">struct</span> mlx5_mkeys_page, list)
+                            ent<span style="color:#000;font-weight:bold">-&gt;</span>mkeys_queue.ci<span style="color:#000;font-weight:bold">--</span>
+                        queue_adjust_cache_locked
+                set_mr_fields(dev, mr, umem<span style="color:#000;font-weight:bold">-&gt;</span>length, access_flags, iova)
+            xa_init(<span style="color:#000;font-weight:bold">&amp;</span>mr<span style="color:#000;font-weight:bold">-&gt;</span>implicit_children)
+            mlx5r_store_odp_mkey(dev, <span style="color:#000;font-weight:bold">&amp;</span>mr<span style="color:#000;font-weight:bold">-&gt;</span>mmkey) <span style="color:#000;font-weight:bold">-&gt;</span> RDMA<span style="color:#000;font-weight:bold">/</span>mlx5<span style="color:#a61717;background-color:#e3d2d2">：从</span> ODP <span style="color:#a61717;background-color:#e3d2d2">流中清除</span> synchronize_srcu()<span style="color:#a61717;background-color:#e3d2d2">，从</span> ODP <span style="color:#a61717;background-color:#e3d2d2">流中清除</span> synchronize_srcu()<span style="color:#a61717;background-color:#e3d2d2">，因为作为</span> dereg_mr <span style="color:#a61717;background-color:#e3d2d2">的一部分，它被发现非常耗时。例如，注销</span> <span style="color:#099">10000</span> <span style="color:#a61717;background-color:#e3d2d2">个</span> ODP MR<span style="color:#a61717;background-color:#e3d2d2">，每个</span> MR <span style="color:#a61717;background-color:#e3d2d2">的大小为</span> <span style="color:#099">2</span>M <span style="color:#a61717;background-color:#e3d2d2">大页面，耗时</span> <span style="color:#099">19.6</span> <span style="color:#a61717;background-color:#e3d2d2">秒，相比之下，注销相同数量的非</span> ODP MR <span style="color:#a61717;background-color:#e3d2d2">耗时</span> <span style="color:#099">172</span> <span style="color:#a61717;background-color:#e3d2d2">毫秒。新的锁定方案使用</span> wait_event() <span style="color:#a61717;background-color:#e3d2d2">机制，该机制遵循</span> MR <span style="color:#a61717;background-color:#e3d2d2">的使用计数，而不是使用</span> synchronize_srcu()<span style="color:#a61717;background-color:#e3d2d2">。通过这一改变，上述测试所需的时间为</span> <span style="color:#099">95</span> <span style="color:#a61717;background-color:#e3d2d2">毫秒，这甚至比非</span> ODP <span style="color:#a61717;background-color:#e3d2d2">流更好。一旦完全放弃</span> srcu <span style="color:#a61717;background-color:#e3d2d2">使用，就必须使用锁来保护</span> XA <span style="color:#a61717;background-color:#e3d2d2">访问。作为使用上述机制的一部分，我们还可以清理</span> num_deferred_work <span style="color:#a61717;background-color:#e3d2d2">内容并改为遵循使用计数</span>
+                xa_store(<span style="color:#000;font-weight:bold">&amp;</span>dev<span style="color:#000;font-weight:bold">-&gt;</span>odp_mkeys, mlx5_base_mkey(mmkey<span style="color:#000;font-weight:bold">-&gt;</span>key), mmkey, GFP_KERNEL)
+            mlx5_ib_init_odp_mr(mr)
+                pagefault_real_mr(mr, to_ib_umem_odp(mr<span style="color:#000;font-weight:bold">-&gt;</span>umem), mr<span style="color:#000;font-weight:bold">-&gt;</span>umem<span style="color:#000;font-weight:bold">-&gt;</span>address, mr<span style="color:#000;font-weight:bold">-&gt;</span>umem<span style="color:#000;font-weight:bold">-&gt;</span>length, <span style="color:#0086b3">NULL</span>, MLX5_PF_FLAGS_SNAPSHOT <span style="color:#000;font-weight:bold">|</span> MLX5_PF_FLAGS_ENABLE) <span style="color:#000;font-weight:bold">-&gt;</span> RDMA<span style="color:#000;font-weight:bold">/</span>mlx5<span style="color:#a61717;background-color:#e3d2d2">：从</span> pagefault_mr <span style="color:#a61717;background-color:#e3d2d2">中分离隐式处理，单个例程在处理隐式父级时，前进到下一个子</span> MR <span style="color:#a61717;background-color:#e3d2d2">的方案非常混乱。此方案只能在处理隐式父级时使用，在处理正常</span> MR <span style="color:#a61717;background-color:#e3d2d2">时不得触发。通过将所有单个</span> MR <span style="color:#a61717;background-color:#e3d2d2">内容直接放入一个函数并在隐式情况下循环调用它来重新安排事物。简化新</span> pagefault_real_mr() <span style="color:#a61717;background-color:#e3d2d2">中的一些错误处理以删除不需要的</span> <span style="color:#000;font-weight:bold">goto</span>
+                    ib_umem_odp_map_dma_and_lock <span style="color:#000;font-weight:bold">-&gt;</span> DMA <span style="color:#a61717;background-color:#e3d2d2">映射</span> ODP MR <span style="color:#a61717;background-color:#e3d2d2">中的用户空间内存并锁定它。将参数中传递的范围映射到</span> DMA <span style="color:#a61717;background-color:#e3d2d2">地址。映射页面的</span> DMA <span style="color:#a61717;background-color:#e3d2d2">地址在</span> umem_odp<span style="color:#000;font-weight:bold">-&gt;</span>dma_list <span style="color:#a61717;background-color:#e3d2d2">中更新。成功后，</span>ODP MR <span style="color:#a61717;background-color:#e3d2d2">将被锁定，以让调用者完成其设备页表更新。成功时返回映射的页面数，失败时返回负错误代码</span>
+                        current_seq <span style="color:#000;font-weight:bold">=</span> range.notifier_seq <span style="color:#000;font-weight:bold">=</span> mmu_interval_read_begin(<span style="color:#000;font-weight:bold">&amp;</span>umem_odp<span style="color:#000;font-weight:bold">-&gt;</span>notifier)
+                        hmm_range_fault(<span style="color:#000;font-weight:bold">&amp;</span>range) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">设备驱动程序填充一系列虚拟地址</span>
+                        mmu_interval_read_retry
+                        hmm_order <span style="color:#000;font-weight:bold">=</span> hmm_pfn_to_map_order(range.hmm_pfns[pfn_index])
+                        ib_umem_odp_map_dma_single_page(umem_odp, dma_index, hmm_pfn_to_page(range.hmm_pfns[pfn_index]),access_mask)
+                            <span style="color:#000;font-weight:bold">*</span>dma_addr <span style="color:#000;font-weight:bold">=</span> ib_dma_map_page(dev, page, <span style="color:#099">0</span>, <span style="color:#099">1</span> <span style="color:#000;font-weight:bold">&lt;&lt;</span> umem_odp<span style="color:#000;font-weight:bold">-&gt;</span>page_shift, DMA_BIDIRECTIONAL)
+                                dma_map_page(dev<span style="color:#000;font-weight:bold">-&gt;</span>dma_device, page, offset, size, direction)
+                    mlx5r_umr_update_xlt
+                        mlx5r_umr_create_xlt
+                            mlx5r_umr_alloc_xlt
+                            dma <span style="color:#000;font-weight:bold">=</span> dma_map_single(ddev, xlt, sg<span style="color:#000;font-weight:bold">-&gt;</span>length, DMA_TO_DEVICE)
+                        mlx5r_umr_set_update_xlt_ctrl_seg
+                        mlx5r_umr_set_update_xlt_mkey_seg
+                        mlx5r_umr_set_update_xlt_data_seg
+                    <span style="color:#000;font-weight:bold">return</span> np <span style="color:#000;font-weight:bold">&lt;&lt;</span> (page_shift <span style="color:#000;font-weight:bold">-</span> PAGE_SHIFT)
+            <span style="color:#000;font-weight:bold">return</span> <span style="color:#000;font-weight:bold">&amp;</span>mr<span style="color:#000;font-weight:bold">-&gt;</span>ibmr
+
+<span style="color:#000;font-weight:bold">const</span> <span style="color:#000;font-weight:bold">struct</span> mmu_interval_notifier_ops mlx5_mn_ops <span style="color:#000;font-weight:bold">=</span> {
+	.invalidate <span style="color:#000;font-weight:bold">=</span> mlx5_ib_invalidate_range,
+};
+
+
+mlx5_ib_eq_pf_process
+    <span style="color:#000;font-weight:bold">switch</span> (eqe<span style="color:#000;font-weight:bold">-&gt;</span>sub_type)
+    ...
+    INIT_WORK(<span style="color:#000;font-weight:bold">&amp;</span>pfault<span style="color:#000;font-weight:bold">-&gt;</span>work, mlx5_ib_eqe_pf_action)
+    cc <span style="color:#000;font-weight:bold">=</span> mlx5_eq_update_cc(eq<span style="color:#000;font-weight:bold">-&gt;</span>core, <span style="color:#000;font-weight:bold">++</span>cc)
+    mlx5_eq_update_ci(eq<span style="color:#000;font-weight:bold">-&gt;</span>core, cc, <span style="color:#099">1</span>)
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="总结-1">总结</h1>
+<ul>
+<li>ODP需要软硬件做整体设计, 处理好缺页异常/失效/状态恢复等逻辑</li>
+<li>MLX5采用mkey结合红黑树做缓存, EQ事件队列用于异步处理缺页等逻辑</li>
+<li>依赖Linux内核异构内存管理API支持(HMM)</li>
+</ul>
+<h1 id="参考">参考</h1>
+<p>在SoftRoCE上支持ODP: <a href="https://lwn.net/Articles/918463/">https://lwn.net/Articles/918463/</a></p>
+<p>MLX5支持ODP: <a href="https://www.spinics.net/lists/linux-rdma/msg18906.html#google_vignette">https://www.spinics.net/lists/linux-rdma/msg18906.html#google_vignette</a></p>
+<p>MLX5支持隐式ODP提交记录: <a href="https://github.com/ssbandjl/linux/commit/81713d3788d2e6bc005f15ee1c59d0eb06050a6b">https://github.com/ssbandjl/linux/commit/81713d3788d2e6bc005f15ee1c59d0eb06050a6b</a></p>
+<p>Nvidia RDMA优化内存访问: <a href="https://docs.nvidia.com/networking/display/mlnxofedv492240/optimized+memory+access">https://docs.nvidia.com/networking/display/mlnxofedv492240/optimized+memory+access</a></p>
+<p>ODP SSD相关论文(TeRM：使用 SSD 扩展 RDMA 连接内存): <a href="https://www.usenix.org/system/files/fast24-yang-zhe.pdf">https://www.usenix.org/system/files/fast24-yang-zhe.pdf</a></p>
+<p>OFA ODP(用户级网络的按需分页): <a href="https://openfabrics.org/images/eventpresos/workshops2013/2013_Workshop_Tues_0930_liss_odp.pdf">https://openfabrics.org/images/eventpresos/workshops2013/2013_Workshop_Tues_0930_liss_odp.pdf</a></p>
+<p>rdma-core ODP提交记录, ibv_query_device_ex 报告按需分页功能的功能。 该补丁还添加了 IBV_ACCESS_ON_DEMAND 访问标志，以允许注册启用按需分页的内存区域: <a href="https://patchwork.kernel.org/project/linux-rdma/patch/1441292199-8371-3-git-send-email-haggaie@mellanox.com/">https://patchwork.kernel.org/project/linux-rdma/patch/1441292199-8371-3-git-send-email-haggaie@mellanox.com/</a></p>
+<p>Linux内核-HMM异构内存管理: <a href="https://docs.kernel.org/translations/zh_CN/mm/hmm.html">https://docs.kernel.org/translations/zh_CN/mm/hmm.html</a></p>
+<h1 id="晓兵ssbandjl"><strong>晓兵(ssbandjl)</strong></h1>
+<p>博客: <a href="https://cloud.tencent.com/developer/user/5060293/articles?from_column=20421&amp;from=20421">https://cloud.tencent.com/developer/user/5060293/articles</a> | <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Flogread.cn%2F&amp;source=article&amp;objectId=2384290&amp;from_column=20421&amp;from=20421">https://logread.cn</a> | <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fblog.csdn.net%2Fssbandjl&amp;source=article&amp;objectId=2384290&amp;from_column=20421&amp;from=20421">https://blog.csdn.net/ssbandjl</a> | <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fwww.zhihu.com%2Fpeople%2Fssbandjl%2Fposts&amp;source=article&amp;objectId=2384290&amp;from_column=20421&amp;from=20421">https://www.zhihu.com/people/ssbandjl/posts</a> | <a href="https://chattoyou.cn/">https://chattoyou.cn</a></p>
+<h2 id="dpu专栏"><strong>DPU专栏</strong></h2>
+<p><a href="https://cloud.tencent.com/developer/column/101987?from_column=20421&amp;from=20421">https://cloud.tencent.com/developer/column/101987</a></p>
+<p>技术会友: 欢迎对DPU/智能网卡/卸载/网络,存储加速/安全隔离等技术感兴趣的朋友加入<strong>DPU技术</strong>交流群</p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/rdma/rdma_odp/">https://logread.cn/post/rdma/rdma_odp/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/nvidia/nvidia_network_tech/">Nvidia网络技术-端到端网络解决方案</a></li>
+        
+        <li><a href="/post/nvidia/gpu_direct_rdma/">Nvidia 迈络思 OFED GPU直接RDMA</a></li>
+        
+        <li><a href="/post/rdma/rdma_perf/">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</a></li>
+        
+        <li><a href="/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/">DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</a></li>
+        
+        <li><a href="/post/ofa/libfabric_tutorial_rdma_gpu_intel_dma_video_panda/">英特尔开放结构接口Libfabric教程 rdma verbs network gpu panda</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/rdma'>rdma</a></li>
+                
+                <li><a href='/tags/network'>network</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2024
+    <a href="https://logread.cn"
+      >晓兵(ssbandjl)-技术兴国 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_odp/" title="RDMA - ODP按需分页设计原理-优点-源码浅析">RDMA - ODP按需分页设计原理-优点-源码浅析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/nvidia/nvidia_doca/" title="Nvidia DOCA-芯片上的数据中心软硬件架构简介">Nvidia DOCA-芯片上的数据中心软硬件架构简介</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/linux_kernel_driver/" title="Linux内核-驱动技术杂谈">Linux内核-驱动技术杂谈</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/stor/beegfs_storage/" title="Beegfs存储">Beegfs存储</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/nvidia/nvidia_network_tech/" title="Nvidia网络技术-端到端网络解决方案">Nvidia网络技术-端到端网络解决方案</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/nvidia/gpu_direct_rdma/" title="Nvidia 迈络思 OFED GPU直接RDMA">Nvidia 迈络思 OFED GPU直接RDMA</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_perf/" title="优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/virtio/" title="VirtIO简介">VirtIO简介</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/net_ucx_stor_ucp_uct/" title="统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022">统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/" title="DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解">DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpu/">dpu (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/gpu/">gpu (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/iscsi/">iscsi (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/kernel/">kernel (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/libfabric/">libfabric (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/multipath/">multipath (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/net/">net (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/network/">network (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvidia/">nvidia (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvmeof/">nvmeof (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/qemu/">qemu (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (9)</a></li>
+    
+    <li><a href="https://logread.cn/categories/roce/">roce (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (31)</a></li>
+    
+    <li><a href="https://logread.cn/categories/virtio/">virtio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (36)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (6)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/dpu/">dpu</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/gpu/">gpu</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/iscsi/">iscsi</a>
+  
+  <a href="https://logread.cn/tags/kernel/">kernel</a>
+  
+  <a href="https://logread.cn/tags/libfabric/">libfabric</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/network/">network</a>
+  
+  <a href="https://logread.cn/tags/nvidia/">nvidia</a>
+  
+  <a href="https://logread.cn/tags/nvmeof/">nvmeof</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/roce/">roce</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/virtio/">virtio</a>
+  
+  <a href="https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/">多路径</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://cloud.tencent.com/developer/user/5060293/articles" title="晓兵">晓兵</a>
+        </li>
+        
+        <li>
+            <a target="_blank" href="https://chattoyou.cn" title="AI吐槽工具">AI吐槽工具(小喇叭)</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

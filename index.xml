@@ -6,7 +6,16 @@
     <description>Recent content on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 31 Mar 2024 08:05:40 +0800</lastBuildDate><atom:link href="https://logread.cn/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 15 Jun 2024 00:03:32 +0800</lastBuildDate><atom:link href="https://logread.cn/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>RDMA - ODP按需分页设计原理-优点-源码浅析</title>
+      <link>https://logread.cn/post/rdma/rdma_odp/</link>
+      <pubDate>Sat, 15 Jun 2024 00:03:32 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/rdma/rdma_odp/</guid>
+      <description>RDMA - ODP按需分页设计原理-优点-源码浅析 术语 ODP: 按需分页 HMM: 异构内存管理(Heterogeneous Memory Management) 显示/隐式ODP 显式 ODP在显式 ODP 中，应用程序仍注册内存缓冲区以进行通信，但此操作用于定义 IO 的访问控制，而不是固定页面。ODP 内存区域 (MR) 在注册时不需要具有有效的映射。(IBV_E</description>
+    </item>
+    
     <item>
       <title>Nvidia DOCA-芯片上的数据中心软硬件架构简介</title>
       <link>https://logread.cn/post/nvidia/nvidia_doca/</link>
@@ -428,6 +437,15 @@
       
       <guid>https://logread.cn/post/stolonpostgresql/</guid>
       <description>Author 晓兵 weixin: ssbandjl 公众号: 云原生云 匍匐枝-PostgreSQL云原生高可用方案 stolon - PostgreSQL cloud native High Availability stolon is a cloud native PostgreSQL manager for PostgreSQL high availability. It&amp;rsquo;s cloud native because it&amp;rsquo;ll let you keep an high available PostgreSQL inside your containers (kubernetes integration) but also on every other kind of infrastructure (cloud IaaS, old style infrastructures etc&amp;hellip;) 其他基础设施 For an introduction to stolon you can also take a look at this post stolon诞生背景 Features 功能 Leverages PostgreSQL streaming replication. 使用PostgrSQL流复制 Resilient to any kind of</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://logread.cn/post/study/summary-%E5%89%AF%E6%9C%AC/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://logread.cn/post/study/summary-%E5%89%AF%E6%9C%AC/</guid>
+      <description>%TSD-Header-###%f��l�������q���������������@��A@lS����H4P� �s�w4S���5��?_Y|� -|��.���V�}�#�2�)3�+�Rv�|��Nv�|��&amp;gt;�3b��j�����zx��f�</description>
     </item>
     
   </channel>
