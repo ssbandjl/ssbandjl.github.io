@@ -4,12 +4,57 @@
   
   <url>
     <loc>https://logread.cn/categories/</loc>
-    <lastmod>2024-06-15T00:03:32+08:00</lastmod>
+    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/tags/linux/</loc>
-    <lastmod>2024-06-15T00:03:32+08:00</lastmod>
+    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/network/</loc>
+    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/</loc>
+    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/rdma/</loc>
+    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/rdma/</loc>
+    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/rdma/rdma_inline/</loc>
+    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/stor/</loc>
+    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/stor/</loc>
+    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/</loc>
+    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/</loc>
+    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
   </url>
   
   <url>
@@ -23,32 +68,7 @@
   </url>
   
   <url>
-    <loc>https://logread.cn/post/</loc>
-    <lastmod>2024-06-15T00:03:32+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/rdma/</loc>
-    <lastmod>2024-06-15T00:03:32+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/rdma/</loc>
-    <lastmod>2024-06-15T00:03:32+08:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://logread.cn/post/rdma/rdma_odp/</loc>
-    <lastmod>2024-06-15T00:03:32+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/</loc>
-    <lastmod>2024-06-15T00:03:32+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/</loc>
     <lastmod>2024-06-15T00:03:32+08:00</lastmod>
   </url>
   
@@ -59,16 +79,6 @@
   
   <url>
     <loc>https://logread.cn/post/nvidia/nvidia_doca/</loc>
-    <lastmod>2024-03-31T08:05:40+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/stor/</loc>
-    <lastmod>2024-03-31T08:05:40+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/stor/</loc>
     <lastmod>2024-03-31T08:05:40+08:00</lastmod>
   </url>
   
@@ -94,11 +104,6 @@
   
   <url>
     <loc>https://logread.cn/categories/dpu/</loc>
-    <lastmod>2024-01-06T17:55:53+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/network/</loc>
     <lastmod>2024-01-06T17:55:53+08:00</lastmod>
   </url>
   

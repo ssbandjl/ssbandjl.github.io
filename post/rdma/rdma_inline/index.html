@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7571343657358120"
+     crossorigin="anonymous"></script>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟) | 晓兵(ssbandjl)-技术兴国</title>
+    <meta property="og:title" content="RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟) - 晓兵(ssbandjl)-技术兴国">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2024-06-16T10:25:44&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2024-06-16T10:25:44&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储,ceph,分布式块存储,云计算,daos,rdma,spdk,nvmeof,linux,kernel,内核,分布式存储,dpdk,rpc">
+    <meta name="description" content="RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟)">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/rdma/rdma_inline/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵(ssbandjl)-技术兴国
+                    </a>
+                
+                <p class="description">存储 | DPU | 高性能 | RDMA | DAOS | 内核等, AI吐槽工具: https://chattoyou.cn</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#背景知识---ib与pcie是如何工作的"><strong>背景知识 - IB与PCIE是如何工作的?</strong></a>
+      <ul>
+        <li><a href="#摘要"><strong>摘要</strong></a></li>
+        <li><a href="#快速-pcie-背景"><strong>快速 PCIe 背景</strong></a></li>
+        <li><a href="#涉及的基本机制"><strong>涉及的基本机制</strong></a></li>
+        <li><a href="#nvidia-rdma-inline-receive---nvidia-rdma-内联接收"><strong>Nvidia RDMA inline receive - Nvidia RDMA 内联接收</strong></a></li>
+        <li><a href="#inline-receive-experimental-verbshttpscloudtencentcomdevelopertoolsblog-entrytargethttps3a2f2fdocsnvidiacom2fnetworking2fdisplay2frdmacore502finline2breceive23src-25138101_inlinereceive-inlinereceiveexperimentalverbssourcearticleobjectid2428296---内联接收的实验verbsapi"><a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fdocs.nvidia.com%2Fnetworking%2Fdisplay%2Frdmacore50%2Finline%2Breceive%23src-25138101_InlineReceive-InlineReceiveExperimentalVerbs&amp;source=article&amp;objectId=2428296"><strong>Inline Receive Experimental Verbs</strong></a> <strong>- 内联接收的实验VerbsAPI</strong></a></li>
+        <li><a href="#inline-receive-experimental-device-attributeshttpscloudtencentcomdevelopertoolsblog-entrytargethttps3a2f2fdocsnvidiacom2fnetworking2fdisplay2frdmacore502finline2breceive23src-25138101_inlinereceive-inlinereceiveexperimentaldeviceattributessourcearticleobjectid2428296---设备内联接收属性"><a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fdocs.nvidia.com%2Fnetworking%2Fdisplay%2Frdmacore50%2Finline%2Breceive%23src-25138101_InlineReceive-InlineReceiveExperimentalDeviceAttributes&amp;source=article&amp;objectId=2428296"><strong>Inline Receive Experimental Device Attributes</strong></a> <strong>- 设备内联接收属性</strong></a></li>
+        <li><a href="#inline-receive-rdma-core-verbshttpscloudtencentcomdevelopertoolsblog-entrytargethttps3a2f2fdocsnvidiacom2fnetworking2fdisplay2frdmacore502finline2breceive23src-25138101_inlinereceive-inlinereceiverdma-coreverbssourcearticleobjectid2428296---创建qp时允许内联接收"><a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fdocs.nvidia.com%2Fnetworking%2Fdisplay%2Frdmacore50%2Finline%2Breceive%23src-25138101_InlineReceive-InlineReceiveRDMA-CoreVerbs&amp;source=article&amp;objectId=2428296"><strong>Inline Receive RDMA-Core Verbs</strong></a> <strong>- 创建QP时允许内联接收</strong></a></li>
+        <li><a href="#inline-receive-rdma-core-environmental-variables---开启散列小包到cqe的环境变量httpscloudtencentcomdevelopertoolsblog-entrytargethttps3a2f2fdocsnvidiacom2fnetworking2fdisplay2frdmacore502finline2breceive23src-25138101_inlinereceive-inlinereceiverdma-coreenvironmentalvariablessourcearticleobjectid2428296"><a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fdocs.nvidia.com%2Fnetworking%2Fdisplay%2Frdmacore50%2Finline%2Breceive%23src-25138101_InlineReceive-InlineReceiveRDMA-CoreEnvironmentalVariables&amp;source=article&amp;objectId=2428296"><strong>Inline Receive RDMA-Core Environmental Variables - 开启散列小包到CQE的环境变量</strong></a></a></li>
+        <li><a href="#relevant-man-pageshttpscloudtencentcomdevelopertoolsblog-entrytargethttps3a2f2fdocsnvidiacom2fnetworking2fdisplay2frdmacore502finline2breceive23src-25138101_inlinereceive-relevantmanpagessourcearticleobjectid2428296---更多关于散列内联的内容请参考创建qp的文档"><a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fdocs.nvidia.com%2Fnetworking%2Fdisplay%2Frdmacore50%2Finline%2Breceive%23src-25138101_InlineReceive-RelevantManPages&amp;source=article&amp;objectId=2428296"><strong>Relevant Man Pages</strong></a> <strong>- 更多关于散列/内联的内容请参考创建QP的文档</strong></a></li>
+        <li><a href="#mlx5dv_qp_create_disable_scatter_to_cqe---禁用散列到完成队列元素cqe"><strong>MLX5DV_QP_CREATE_DISABLE_SCATTER_TO_CQE - 禁用散列到完成队列元素CQE</strong></a></li>
+      </ul>
+    </li>
+    <li><a href="#代码分析"><strong>代码分析</strong></a></li>
+    <li><a href="#总结"><strong>总结</strong></a></li>
+    <li><a href="#参考"><strong>参考</strong></a></li>
+    <li><a href="#晓兵ssbandjl"><strong>晓兵(ssbandjl)</strong></a>
+      <ul>
+        <li><a href="#dpu专栏"><strong>DPU专栏</strong></a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟)</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2024年6月16日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/rdma'>rdma</a></span>
+            
+            <span class="meta-category"><a href='/categories/network'>network</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <h1 id="rdma---inline-内联提高小包性能-降低时延减少两个-pcie-往返延迟">RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟)</h1>
+<h2 id="背景知识---ib与pcie是如何工作的"><strong>背景知识 - IB与PCIE是如何工作的?</strong></h2>
+<h3 id="摘要"><strong>摘要</strong></h3>
+<p>这篇文章描述了通过 PCI Express 结构在 CPU 和 NIC 之间发生的一系列协调事件，以通过 InfiniBand 互连传输消息并发出其完成信号。</p>
+<p>通过 InfiniBand 发送消息的主要方法是通过 Verbs API。libibverbs 是此 API 的标准实现，由 Linux-RDMA 社区维护。Verbs 中有两种函数：慢速路径函数和快速路径函数。慢速路径函数（例如 ibv_open_device、ibv_alloc_pd 等）与资源（例如上下文、保护域和内存区域）的创建和配置有关。它们之所以被称为“慢速”，是因为它们涉及内核，因此会产生上下文切换的昂贵开销。快速路径函数（例如 ibv_post_send、ibv_poll_cq 等）处理操作的启动和完成。它们之所以被称为“快速”，是因为它们绕过内核，因此比慢速路径函数快得多。通信的关键路径主要由快速路径函数组成，有时还包括慢速路径函数（例如 ibv_reg_mr），用于动态注册内存区域（取决于通信<a href="https://cloud.tencent.com/product/tdmq?from_column=20065&amp;from=20065">中间件</a>）。这篇文章重点介绍程序员执行 ibv_post_send 后发生的机制。</p>
+<h3 id="快速-pcie-背景"><strong>快速 PCIe 背景</strong></h3>
+<p>网络接口卡 (NIC) 通常通过 PCI Express (PCIe) 插槽连接到<a href="https://cloud.tencent.com/act/pro/promotion-cvm?from_column=20065&amp;from=20065">服务器</a>。PCIe I/O 子系统的主要导体是根复合体 (RC)。RC 将处理器和内存连接到 PCIe 结构。PCIe 结构可能由设备层次结构组成。连接到 PCIe 结构的外围设备称为 PCIe 端点。PCIe 协议由三层组成：事务层、数据链路层和物理层。第一层，即最上层，描述发生的事务类型。对于这篇文章，两种类型的事务层数据包 (TLP) 是相关的：MemoryWrite (MWr) 和 Memory Read (MRd)。与独立的 MWr TLP 不同，MRd TLP 与来自目标 PCIe 端点的带数据完成 (CplD) 事务相结合，其中包含发起者请求的数据。数据链路层使用数据链路层数据包 (DLLP) 确认 (ACK/NACK) 和基于信用的流控制机制确保所有事务的成功执行。只要发起者有足够的信用额度，它就可以发起事务。当它从邻居那里收到更新流控制 (UpdateFC) DLLP 时，它的信用额度就会得到补充。这种流控制机制允许 PCIe 协议有多个未完成的事务</p>
+<h3 id="涉及的基本机制"><strong>涉及的基本机制</strong></h3>
+<p>首先，我将描述如何使用完全卸载方法发送消息，即 CPU 仅通知 NIC 有消息要传输；NIC 将完成传输数据的其他所有工作。在这种方法中，剩余CPU 可用于计算活动(业务)。但是，这种方法可能会损害小消息的通信性能（很快就会变得明显）。为了提高此类情况下的通信性能，InfiniBand 提供了某些操作功能，我将在下一节中描述这些功能。</p>
+<p>从 CPU 程序员的角度来看，存在一个传输队列（Verbs 中的发送队列是队列对 (QP)）和一个完成队列（Verbs 中的 CQ 的长格式）。用户将其消息描述符（Verbs 中的 MD；工作队列元素/条目 (WQE；wookie)）发布到传输队列，然后轮询 CQ 以确认已发布消息的完成。用户还可以请求通过中断通知完成情况。但是，轮询方法是面向延迟的，因为关键路径中没有上下文切换到内核。网络上消息的实际传输是通过处理器芯片和 NIC 之间的协调进行的，使用内存映射 I/O (MMIO) 和直接内存访问 (DMA) 读写。我将在下图下方描述这些步骤</p>
+<p>
+        <img class="mx-auto" alt="img" src="https://developer.qcloudimg.com/http-save/yehe-5060293/354cb9513581347e05131abd864279eb.jpg" />   
+    </p>
+<p>步骤 0：用户首先将消息描述符 MD 排队到 TxQ 中。然后，网络驱动程序准备包含 NIC 标头和指向有效负载的指针的设备特定 MD。</p>
+<p>步骤 1：使用 <strong>8 字节原子写</strong>入内存映射位置，CPU（网络驱动程序）通知 NIC 已准备好发送消息。这称为敲响门铃(DoorBell)。PCIE的RC 使用 MWr PCIe 事务执行门铃。</p>
+<p>步骤 2：门铃响后，NIC 使用 DMA 读取获取 MD。MRd PCIe 事务执行 <strong>DMA 读取</strong>, 大小为64字节。</p>
+<p>步骤 3：然后，NIC 将使用另一个 DMA 读取（另一个 MRd TLP）从已注册的内存区域获取有效负载。请注意，在 NIC 执行 DMA 读取之前，必须将虚拟地址转换为其物理地址。</p>
+<p>步骤 4：一旦 NIC 收到有效负载，它就会通过网络传输读取的数据。成功传输后，NIC 会收到来自目标 NIC 的确认 (ACK)。</p>
+<p>步骤 5：收到 ACK 后，NIC 将通过 DMA 写入（使用 MWr TLP）完成队列条目 (CQE；在 Verbs 中又称为 cookie；在 Mellanox InfiniBand 中为 64 字节）到与 TxQ 关联的 CQ。然后 CPU 将轮询此完成以取得进展。</p>
+<p>总之，每个提交的关键数据路径需要<strong>一次 MMIO 写入</strong>(CPU通知网卡的DoorBell)、<strong>两次 DMA 读取(先读描述符,再读数据)<strong>和</strong>一次 DMA 写入(写入发送完成CQE)</strong>。DMA 读取转换为昂贵的往返 PCIe 延迟。例如，ThunderX2 机器的往返 PCIe 延迟约为 125 纳秒。</p>
+<p>操作功能 内联Inline、Postlist、无信号完成(Unsignaled Completions)和编程 I/O(Programmed I/O ) 是 IB 的操作功能，有助于减少这种开销。我将在下文中描述它们，其中考虑 QP 的深度为 n。</p>
+<p>Postlist：IB 允许应用程序通过一次调用 ibv_post_send 来发布 WQE 链接列表，而不是每次 ibv_post_send 只发布一个 WQE。它可以将 DoorBell 响铃次数从 n 减少到 1。</p>
+<p>内联：发送数据时，CPU（网络驱动程序）将数据复制到 WQE 中。因此，通过对 WQE 的第一次 DMA 读取，NIC 也会获得有效负载，从而消除了对有效负载的第二次 DMA 读取。</p>
+<p>未发出信号的完成：IB 允许应用程序关闭 WQE 的完成，而不是为每个 WQE 发出完成信号，前提是每 n 个 WQE 中至少有一个发出信号(CQE)。关闭完成会减少 NIC 对 CQE 的 DMA 写入。此外，应用程序轮询更少的 CQE，从而减少取得进展的开销。</p>
+<p>BlueFlame：BlueFlame 是 Mellanox 的编程 I/O 术语——它与 DoorBell 一起写入 WQE，从而切断 WQE 本身的 DMA 读取。请注意，BlueFlame 仅在没有 Postlist 的情况下使用。使用 Postlist，NIC 将 DMA 读取链接列表中的 WQE。</p>
+<p>为了减少 PCIe 往返延迟的开销，开发人员通常将 Inlining 和 BlueFlame 一起用于小消息。它消除了两个 PCIe 往返延迟。虽然 Inlining 和 BlueFlame 的使用取决于消息大小，但 Postlist 和 Unsignaled Completions 的使用主要取决于用户的设计选择和应用程序语义。</p>
+<h3 id="nvidia-rdma-inline-receive---nvidia-rdma-内联接收"><strong>Nvidia RDMA inline receive - Nvidia RDMA 内联接收</strong></h3>
+<p>当 Inline-Receive 处于活动状态时，HCA 可以<strong>将接收到的数据写入接收 WQE</strong> 或 <strong>CQE</strong>。使用 Inline-Receive 可节省 PCIe 读取事务，因为 HCA 不需要读取散列表SGL，<strong>因此在接收短消息的情况下可提高性能(降低时延)</strong>。在轮询 CQ 时，<strong>驱动程序</strong>将接收到的数据从 WQE/CQE 复制到用户的缓冲区。因此，除了查询 Inline-Receive 功能和 Inline-Receive 激活之外，该功能对用户应用程序是透明的</p>
+<h3 id="inline-receive-experimental-verbshttpscloudtencentcomdevelopertoolsblog-entrytargethttps3a2f2fdocsnvidiacom2fnetworking2fdisplay2frdmacore502finline2breceive23src-25138101_inlinereceive-inlinereceiveexperimentalverbssourcearticleobjectid2428296---内联接收的实验verbsapi"><a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fdocs.nvidia.com%2Fnetworking%2Fdisplay%2Frdmacore50%2Finline%2Breceive%23src-25138101_InlineReceive-InlineReceiveExperimentalVerbs&amp;source=article&amp;objectId=2428296"><strong>Inline Receive Experimental Verbs</strong></a> <strong>- 内联接收的实验VerbsAPI</strong></h3>
+<ul>
+<li>ibv_exp_query_device - 查询设备内联接收的大小
+<ul>
+<li>inline_recv_size</li>
+</ul>
+</li>
+<li>ibv_exp_create_qp - 创建QP
+<ul>
+<li>max_inl_recv</li>
+</ul>
+</li>
+<li>ibv_exp_create_dct - 创建动态连接目标端
+<ul>
+<li>inline_size</li>
+</ul>
+</li>
+</ul>
+<h3 id="inline-receive-experimental-device-attributeshttpscloudtencentcomdevelopertoolsblog-entrytargethttps3a2f2fdocsnvidiacom2fnetworking2fdisplay2frdmacore502finline2breceive23src-25138101_inlinereceive-inlinereceiveexperimentaldeviceattributessourcearticleobjectid2428296---设备内联接收属性"><a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fdocs.nvidia.com%2Fnetworking%2Fdisplay%2Frdmacore50%2Finline%2Breceive%23src-25138101_InlineReceive-InlineReceiveExperimentalDeviceAttributes&amp;source=article&amp;objectId=2428296"><strong>Inline Receive Experimental Device Attributes</strong></a> <strong>- 设备内联接收属性</strong></h3>
+<p>IBV_EXP_DEVICE_ATTR_INLINE_RECV_SZ</p>
+<h3 id="inline-receive-rdma-core-verbshttpscloudtencentcomdevelopertoolsblog-entrytargethttps3a2f2fdocsnvidiacom2fnetworking2fdisplay2frdmacore502finline2breceive23src-25138101_inlinereceive-inlinereceiverdma-coreverbssourcearticleobjectid2428296---创建qp时允许内联接收"><a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fdocs.nvidia.com%2Fnetworking%2Fdisplay%2Frdmacore50%2Finline%2Breceive%23src-25138101_InlineReceive-InlineReceiveRDMA-CoreVerbs&amp;source=article&amp;objectId=2428296"><strong>Inline Receive RDMA-Core Verbs</strong></a> <strong>- 创建QP时允许内联接收</strong></h3>
+<ul>
+<li>mlx5dv_create_qp
+<ul>
+<li>MLX5DV_QP_CREATE_ALLOW_SCATTER_TO_CQE</li>
+</ul>
+</li>
+</ul>
+<h3 id="inline-receive-rdma-core-environmental-variables---开启散列小包到cqe的环境变量httpscloudtencentcomdevelopertoolsblog-entrytargethttps3a2f2fdocsnvidiacom2fnetworking2fdisplay2frdmacore502finline2breceive23src-25138101_inlinereceive-inlinereceiverdma-coreenvironmentalvariablessourcearticleobjectid2428296"><a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fdocs.nvidia.com%2Fnetworking%2Fdisplay%2Frdmacore50%2Finline%2Breceive%23src-25138101_InlineReceive-InlineReceiveRDMA-CoreEnvironmentalVariables&amp;source=article&amp;objectId=2428296"><strong>Inline Receive RDMA-Core Environmental Variables - 开启散列小包到CQE的环境变量</strong></a></h3>
+<p>MLX5_SCATTER_TO_CQE</p>
+<h3 id="relevant-man-pageshttpscloudtencentcomdevelopertoolsblog-entrytargethttps3a2f2fdocsnvidiacom2fnetworking2fdisplay2frdmacore502finline2breceive23src-25138101_inlinereceive-relevantmanpagessourcearticleobjectid2428296---更多关于散列内联的内容请参考创建qp的文档"><a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fdocs.nvidia.com%2Fnetworking%2Fdisplay%2Frdmacore50%2Finline%2Breceive%23src-25138101_InlineReceive-RelevantManPages&amp;source=article&amp;objectId=2428296"><strong>Relevant Man Pages</strong></a> <strong>- 更多关于散列/内联的内容请参考创建QP的文档</strong></h3>
+<p>mlx5dv_create_qp: <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fgithub.com%2Flinux-rdma%2Frdma-core%2Fblob%2Fmaster%2Fproviders%2Fmlx5%2Fman%2Fmlx5dv_create_qp.3.md&amp;source=article&amp;objectId=2428296">https://github.com/linux-rdma/rdma-core/blob/master/providers/mlx5/man/mlx5dv_create_qp.3.md</a></p>
+<h3 id="mlx5dv_qp_create_disable_scatter_to_cqe---禁用散列到完成队列元素cqe"><strong>MLX5DV_QP_CREATE_DISABLE_SCATTER_TO_CQE - 禁用散列到完成队列元素CQE</strong></h3>
+<p>如果 IOVA 与进程的 VA 不匹配，并且消息有效负载大小足够小以触发散射到 CQE 功能，则应设置MLX5DV_QP_CREATE_DISABLE_SCATTER_TO_CQE 标志。当使用设备内存时，不应使用 IBV_SEND_INLINE 和散射到 CQE，因为无法进行 memcpy</p>
+<h2 id="代码分析"><strong>代码分析</strong></h2>
+<p>rdma-core用户态驱动项目及内核态驱动</p>
+<p>代码语言：javascript</p>
+<p>复制</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript">wr.send_flags <span style="color:#000;font-weight:bold">=</span> IBV_SEND_SIGNALED <span style="color:#000;font-weight:bold">|</span> IBV_SEND_INLINE <span style="color:#998;font-style:italic">//下发WQE前开启发送内联功能
+</span><span style="color:#998;font-style:italic"></span>irdma_uk_inline_send <span style="color:#998;font-style:italic">//以E810代码为例
+</span><span style="color:#998;font-style:italic"></span>    quanta <span style="color:#000;font-weight:bold">=</span> qp<span style="color:#000;font-weight:bold">-&gt;</span>wqe_ops.iw_inline_data_size_to_quanta(total_size)
+    FIELD_PREP(IRDMAQPSQ_INLINEDATALEN, total_size)  <span style="color:#998;font-style:italic">//设置内联数据长度和标记,稍后通知硬件
+</span><span style="color:#998;font-style:italic"></span>    FIELD_PREP(IRDMAQPSQ_INLINEDATAFLAG, <span style="color:#099">1</span>)
+    qp<span style="color:#000;font-weight:bold">-&gt;</span>wqe_ops.iw_copy_inline_data((__u8 <span style="color:#000;font-weight:bold">*</span>)wqe, op_info<span style="color:#000;font-weight:bold">-&gt;</span>sg_list, op_info<span style="color:#000;font-weight:bold">-&gt;</span>num_sges, qp<span style="color:#000;font-weight:bold">-&gt;</span>swqe_polarity) <span style="color:#000;font-weight:bold">-&gt;</span> irdma_copy_inline_data
+        __u8 inline_valid <span style="color:#000;font-weight:bold">=</span> polarity <span style="color:#000;font-weight:bold">&lt;&lt;</span> IRDMA_INLINE_VALID_S
+        memcpy(wqe, cur_sge, bytes_copied) <span style="color:#998;font-style:italic">// 将用户数据拷贝到WQE
+</span><span style="color:#998;font-style:italic"></span>
+scatter 散列相关标记
+MLX5DV_QP_CREATE_DISABLE_SCATTER_TO_CQE <span style="color:#998;font-style:italic">// 禁止散列到完成队列元素
+</span><span style="color:#998;font-style:italic"></span>MLX5DV_QP_CREATE_ALLOW_SCATTER_TO_CQE  <span style="color:#998;font-style:italic">// 允许散列到完成队列元数
+</span><span style="color:#998;font-style:italic"></span>
+
+nvidia inline
+env <span style="color:#000;font-weight:bold">=</span> getenv(<span style="color:#d14">&#34;MLX5_SCATTER_TO_CQE&#34;</span>) <span style="color:#998;font-style:italic">//设置环境变量, 允许散列到完成队列元素
+</span><span style="color:#998;font-style:italic"></span>MLX5_QP_FLAG_SCATTER_CQE
+MLX5_QP_FLAG_ALLOW_SCATTER_CQE
+
+
+轮询完成队列
+mlx5_poll_cq <span style="color:#000;font-weight:bold">-&gt;</span> poll_cq
+    mlx5_stall_cycles_poll_cq
+    or mlx5_stall_poll_cq
+    mlx5_poll_one
+        mlx5_get_next_cqe <span style="color:#000;font-weight:bold">-&gt;</span> 添加惰性CQ轮询<span style="color:#a61717;background-color:#e3d2d2">，</span>目前<span style="color:#a61717;background-color:#e3d2d2">，</span>当用户想要轮询CQ是否完成时<span style="color:#a61717;background-color:#e3d2d2">，</span>他别无选择<span style="color:#a61717;background-color:#e3d2d2">，</span>只能获得整个工作完成<span style="color:#a61717;background-color:#e3d2d2">（</span>WC<span style="color:#a61717;background-color:#e3d2d2">）。</span> 这有几个含义 <span style="color:#000;font-weight:bold">-</span> 例如<span style="color:#a61717;background-color:#e3d2d2">：</span> <span style="color:#000;font-weight:bold">*</span> 扩展 WC 是有限的<span style="color:#a61717;background-color:#e3d2d2">，</span>因为添加新字段会使 WC 更大并且可能占用更多缓存行<span style="color:#a61717;background-color:#e3d2d2">。</span> <span style="color:#000;font-weight:bold">*</span> 每个字段都被复制到 WC <span style="color:#000;font-weight:bold">-</span> 甚至是用户不关心的字段<span style="color:#a61717;background-color:#e3d2d2">。</span> 此补丁添加了对以惰性方式处理 CQE 的一些支持<span style="color:#a61717;background-color:#e3d2d2">。</span> 新的惰性模式将在下游补丁中调用<span style="color:#a61717;background-color:#e3d2d2">。</span> 我们只解析必需的字段<span style="color:#a61717;background-color:#e3d2d2">，</span>以便找出 CQE<span style="color:#a61717;background-color:#e3d2d2">，</span>例如类型<span style="color:#a61717;background-color:#e3d2d2">、</span>状态<span style="color:#a61717;background-color:#e3d2d2">、</span>wr_id 等<span style="color:#a61717;background-color:#e3d2d2">。</span>为了与遗留模式共享代码而不影响性能<span style="color:#a61717;background-color:#e3d2d2">，</span>对遗留代码进行了重构<span style="color:#a61717;background-color:#e3d2d2">，</span>并使用了<span style="color:#a61717;background-color:#e3d2d2">“</span>always_inline<span style="color:#a61717;background-color:#e3d2d2">”</span>机制<span style="color:#a61717;background-color:#e3d2d2">，</span>以便 分支条件将在编译时被删除
+            next_cqe_sw
+                ...
+                <span style="color:#000;font-weight:bold">return</span> cq<span style="color:#000;font-weight:bold">-&gt;</span>active_buf<span style="color:#000;font-weight:bold">-&gt;</span>buf <span style="color:#000;font-weight:bold">+</span> n <span style="color:#000;font-weight:bold">*</span> cq<span style="color:#000;font-weight:bold">-&gt;</span>cqe_sz
+            VALGRIND_MAKE_MEM_DEFINED <span style="color:#000;font-weight:bold">-&gt;</span> memory check
+            dump_cqe
+        mlx5_parse_cqe(cq, cqe64, cqe, cur_rsc, cur_srq, wc, cqe_ver, <span style="color:#099">0</span>) <span style="color:#000;font-weight:bold">-&gt;</span> 多分支函数
+            opcode <span style="color:#000;font-weight:bold">=</span> mlx5dv_get_cqe_opcode(cqe64)
+            <span style="color:#000;font-weight:bold">switch</span> (opcode)
+            mlx5_handle_error_cqe
+                <span style="color:#000;font-weight:bold">case</span> MLX5_CQE_SYNDROME_TRANSPORT_RETRY_EXC_ERR<span style="color:#000;font-weight:bold">:</span>
+                    <span style="color:#000;font-weight:bold">return</span> IBV_WC_RETRY_EXC_ERR
+            <span style="color:#000;font-weight:bold">case</span> MLX5_CQE_REQ
+                <span style="color:#000;font-weight:bold">if</span> (lazy)
+                    <span style="color:#000;font-weight:bold">case</span> MLX5_OPCODE_RDMA_READ<span style="color:#000;font-weight:bold">:</span>
+                        <span style="color:#000;font-weight:bold">goto</span> scatter_out <span style="color:#000;font-weight:bold">-&gt;</span> 散开<span style="color:#000;font-weight:bold">/</span>内联相关
+                    <span style="color:#000;font-weight:bold">if</span> (cqe64<span style="color:#000;font-weight:bold">-&gt;</span>op_own <span style="color:#000;font-weight:bold">&amp;</span> MLX5_INLINE_SCATTER_32) <span style="color:#000;font-weight:bold">-&gt;</span> or MLX5_INLINE_SCATTER_64
+                        mlx5_copy_to_send_wqe(mqp, wqe_ctr, cqe, wc_byte_len)
+                            scat <span style="color:#000;font-weight:bold">=</span> mlx5_get_send_wqe(qp, <span style="color:#099">0</span>)
+                                qp<span style="color:#000;font-weight:bold">-&gt;</span>sq_start <span style="color:#000;font-weight:bold">+</span> (n <span style="color:#000;font-weight:bold">&lt;&lt;</span> MLX5_SEND_WQE_SHIFT)
+                            copy_to_scat(scat, buf, <span style="color:#000;font-weight:bold">&amp;</span>size, max, ctx)
+                                <span style="color:#000;font-weight:bold">if</span> (likely(scat<span style="color:#000;font-weight:bold">-&gt;</span>lkey <span style="color:#000;font-weight:bold">!=</span> ctx<span style="color:#000;font-weight:bold">-&gt;</span>dump_fill_mkey_be)) <span style="color:#000;font-weight:bold">-&gt;</span> mlx5<span style="color:#a61717;background-color:#e3d2d2">：</span>添加对 ibv_alloc_null_mr 的支持<span style="color:#a61717;background-color:#e3d2d2">，</span>如果支持<span style="color:#a61717;background-color:#e3d2d2">，</span>mlx5_alloc_null_mr 会分配 MR 并使用 mlx5_context 中的 dump_fill_mkey 设置其 lkey 成员<span style="color:#a61717;background-color:#e3d2d2">。</span>此 MR 中的 dump_fill_mkey 稍后会在 ibv_post_receive() 和 ibv_post_send() 中用于分别排除使用转储和填充内存键设置的 ibv_sge 的写入和读取
+                                    memcpy((<span style="color:#000;font-weight:bold">void</span> <span style="color:#000;font-weight:bold">*</span>)(unsigned <span style="color:#000;font-weight:bold">long</span>)be64toh(scat<span style="color:#000;font-weight:bold">-&gt;</span>addr), buf, copy)  <span style="color:#998;font-style:italic">// 拷贝数据
+</span><span style="color:#998;font-style:italic"></span>    update_cons_index
+    mlx5_get_cycles
+                                  
+...
+<span style="color:#000;font-weight:bold">if</span> (cqe<span style="color:#000;font-weight:bold">-&gt;</span>op_own <span style="color:#000;font-weight:bold">&amp;</span> MLX5_INLINE_SCATTER_64)
+  mlx5_copy_to_recv_wqe <span style="color:#998;font-style:italic">// 接收工作队列请求元素时,拷贝数据
+</span><span style="color:#998;font-style:italic"></span>      scat <span style="color:#000;font-weight:bold">=</span> get_recv_wqe(qp, idx)
+          qp<span style="color:#000;font-weight:bold">-&gt;</span>buf.buf <span style="color:#000;font-weight:bold">+</span> qp<span style="color:#000;font-weight:bold">-&gt;</span>rq.offset <span style="color:#000;font-weight:bold">+</span> (n <span style="color:#000;font-weight:bold">&lt;&lt;</span> qp<span style="color:#000;font-weight:bold">-&gt;</span>rq.wqe_shift)
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="总结"><strong>总结</strong></h2>
+<ul>
+<li>应用开启小包内联后, 由驱动来完成内存拷贝</li>
+<li>拷贝有三种形态: 将用户发送的小包拷贝到发送WQE, 将完成的数据拷贝到CQE, 将接收的小包拷贝到接收WQE</li>
+</ul>
+<h2 id="参考"><strong>参考</strong></h2>
+<p>IB与PCIE是如何工作的(发包流程): <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fwww.rohitzambre.com%2Fblog%2F2019%2F4%2F27%2Fhow-are-messages-transmitted-on-infiniband&amp;source=article&amp;objectId=2428296">https://www.rohitzambre.com/blog/2019/4/27/how-are-messages-transmitted-on-infiniband</a></p>
+<p>Nvidia inline receive: <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fdocs.nvidia.com%2Fnetworking%2Fdisplay%2Frdmacore50%2Finline%2Breceive&amp;source=article&amp;objectId=2428296">https://docs.nvidia.com/networking/display/rdmacore50/inline+receive</a></p>
+<p>create_qp: <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fgithub.com%2Flinux-rdma%2Frdma-core%2Fblob%2Fmaster%2Fproviders%2Fmlx5%2Fman%2Fmlx5dv_create_qp.3.md&amp;source=article&amp;objectId=2428296">https://github.com/linux-rdma/rdma-core/blob/master/providers/mlx5/man/mlx5dv_create_qp.3.md</a></p>
+<p>【RDMA】IBV_SEND_INLINE和IBV_SEND_SIGNALED的原理|RDMA小消息通信性能优化 <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fblog.csdn.net%2Fbandaoyu%2Farticle%2Fdetails%2F119207147&amp;source=article&amp;objectId=2428296">https://blog.csdn.net/bandaoyu/article/details/119207147</a></p>
+<p>【RDMA】InfiniBand如何工作和小消息通信性能优化方案: <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fblog.csdn.net%2Fbandaoyu%2Farticle%2Fdetails%2F119204643&amp;source=article&amp;objectId=2428296">https://blog.csdn.net/bandaoyu/article/details/119204643</a></p>
+<p><a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fwww.rohitzambre.com%2Fblog%2F2019%2F4%2F27%2Fhow-are-messages-transmitted-on-infiniband&amp;source=article&amp;objectId=2428296">https://www.rohitzambre.com/blog/2019/4/27/how-are-messages-transmitted-on-infiniband</a></p>
+<h2 id="晓兵ssbandjl"><strong>晓兵(ssbandjl)</strong></h2>
+<p>博客: <a href="https://cloud.tencent.com/developer/user/5060293/articles?from_column=20421&amp;from=20421">https://cloud.tencent.com/developer/user/5060293/articles</a> | <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Flogread.cn%2F&amp;source=article&amp;objectId=2384290&amp;from_column=20421&amp;from=20421">https://logread.cn</a> | <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fblog.csdn.net%2Fssbandjl&amp;source=article&amp;objectId=2384290&amp;from_column=20421&amp;from=20421">https://blog.csdn.net/ssbandjl</a> | <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fwww.zhihu.com%2Fpeople%2Fssbandjl%2Fposts&amp;source=article&amp;objectId=2384290&amp;from_column=20421&amp;from=20421">https://www.zhihu.com/people/ssbandjl/posts</a></p>
+<p><a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fchattoyou.cn%2F&amp;source=article&amp;objectId=2428296">https://chattoyou.cn</a>(吐槽/留言)</p>
+<h3 id="dpu专栏"><strong>DPU专栏</strong></h3>
+<p><a href="https://cloud.tencent.com/developer/column/101987?from_column=20421&amp;from=20421">https://cloud.tencent.com/developer/column/101987</a></p>
+<p>技术会友: 欢迎对DPU/智能网卡/卸载/网络,存储加速/安全隔离等技术感兴趣的朋友加入<strong>DPU技术</strong>交流群</p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/rdma/rdma_inline/">https://logread.cn/post/rdma/rdma_inline/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/nvidia/gpu_direct_rdma/">Nvidia 迈络思 OFED GPU直接RDMA</a></li>
+        
+        <li><a href="/post/rdma/rdma_perf/">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</a></li>
+        
+        <li><a href="/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/">DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</a></li>
+        
+        <li><a href="/post/net/libfabric_hpc_net_api_rdma_daos_mercury/">OpenFabrics 接口简介-用于最大限度提高-高性能应用程序效率的新网络接口(API)</a></li>
+        
+        <li><a href="/post/rdma/rdma_rocev2_lossless_lossy/">Nvidia_Mellanox_CX5和6DX系列网卡_RDMA_RoCE_无损和有损_DCQCN拥塞控制等技术简介</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+                <li><a href='/tags/rdma'>rdma</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2024
+    <a href="https://logread.cn"
+      >晓兵(ssbandjl)-技术兴国 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_inline/" title="RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟)">RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_odp/" title="RDMA - ODP按需分页设计原理-优点-源码浅析">RDMA - ODP按需分页设计原理-优点-源码浅析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/nvidia/nvidia_doca/" title="Nvidia DOCA-芯片上的数据中心软硬件架构简介">Nvidia DOCA-芯片上的数据中心软硬件架构简介</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/linux_kernel_driver/" title="Linux内核-驱动技术杂谈">Linux内核-驱动技术杂谈</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/stor/beegfs_storage/" title="Beegfs存储">Beegfs存储</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/nvidia/nvidia_network_tech/" title="Nvidia网络技术-端到端网络解决方案">Nvidia网络技术-端到端网络解决方案</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/nvidia/gpu_direct_rdma/" title="Nvidia 迈络思 OFED GPU直接RDMA">Nvidia 迈络思 OFED GPU直接RDMA</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_perf/" title="优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/virtio/" title="VirtIO简介">VirtIO简介</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/net/net_ucx_stor_ucp_uct/" title="统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022">统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpu/">dpu (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/gpu/">gpu (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/iscsi/">iscsi (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/kernel/">kernel (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/libfabric/">libfabric (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/multipath/">multipath (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/net/">net (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/network/">network (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvidia/">nvidia (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvmeof/">nvmeof (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/qemu/">qemu (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (10)</a></li>
+    
+    <li><a href="https://logread.cn/categories/roce/">roce (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (32)</a></li>
+    
+    <li><a href="https://logread.cn/categories/virtio/">virtio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (36)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (6)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/dpu/">dpu</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/gpu/">gpu</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/iscsi/">iscsi</a>
+  
+  <a href="https://logread.cn/tags/kernel/">kernel</a>
+  
+  <a href="https://logread.cn/tags/libfabric/">libfabric</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/network/">network</a>
+  
+  <a href="https://logread.cn/tags/nvidia/">nvidia</a>
+  
+  <a href="https://logread.cn/tags/nvmeof/">nvmeof</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/roce/">roce</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/virtio/">virtio</a>
+  
+  <a href="https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/">多路径</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://cloud.tencent.com/developer/user/5060293/articles" title="晓兵">晓兵</a>
+        </li>
+        
+        <li>
+            <a target="_blank" href="https://chattoyou.cn" title="AI吐槽工具">AI吐槽工具(小喇叭)</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

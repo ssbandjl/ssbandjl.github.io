@@ -78,6 +78,35 @@
     <article class="post">
         <header>
             <h1 class="post-title">
+                <a href="https://logread.cn/post/rdma/rdma_inline/" title="RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟)">RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟)</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2024年6月16日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/rdma'>rdma</a></span>
+            
+            <span class="meta-category"><a href='/categories/network'>network</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟) 背景知识 - IB与PCIE是如何工作的? 摘要 这篇文章描述了通过 PCI Express 结构在 CPU 和 NIC 之间发生的一系列协调事件，以通过 InfiniBand 互连传输消息并发出其完成信号。 通过 InfiniBand 发送消息的主要方法是通过 Verbs API。libibverbs 是此 API 的标准实现，由 Linux-RDMA 社区……
+        </div>
+        <p class="readmore"><a href="https://logread.cn/post/rdma/rdma_inline/">阅读全文</a></p>
+    </article>
+    
+    
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
                 <a href="https://logread.cn/post/rdma/rdma_odp/" title="RDMA - ODP按需分页设计原理-优点-源码浅析">RDMA - ODP按需分页设计原理-优点-源码浅析</a>
             </h1>
         </header>
@@ -338,37 +367,6 @@
     
     
     
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/" title="DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解">DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2023年10月5日
-        </date>
-        
-        <div class="post-meta">
-            <span>|</span>
-            
-            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
-            
-            <span class="meta-category"><a href='/categories/%E5%AD%98%E5%82%A8'>存储</a></span>
-            
-            <span class="meta-category"><a href='/categories/%E7%BD%91%E7%BB%9C'>网络</a></span>
-            
-            <span class="meta-category"><a href='/categories/rdma'>rdma</a></span>
-            
-        </div>
-        
-        <div class="post-content">
-            DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解 简介 参考之前的分享中, DAOS与RDMA分层关系如下图, DAOS引擎 -&gt; CART(RPC/大块数据/集合RPC请求) -&gt; Mercury(HG: RPC注册/回调/RPC操作/预期/非预期消息/大块消息/轮训/阻塞/网络抽象等) -&gt; Libfabric(网络抽象层,对rxm,r……
-        </div>
-        <p class="readmore"><a href="https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/">阅读全文</a></p>
-    </article>
-    
-    
-    
 
 
 
@@ -477,6 +475,10 @@
 <ul class="widget-list">
     
     <li>
+        <a href="https://logread.cn/post/rdma/rdma_inline/" title="RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟)">RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟)</a>
+    </li>
+    
+    <li>
         <a href="https://logread.cn/post/rdma/rdma_odp/" title="RDMA - ODP按需分页设计原理-优点-源码浅析">RDMA - ODP按需分页设计原理-优点-源码浅析</a>
     </li>
     
@@ -510,10 +512,6 @@
     
     <li>
         <a href="https://logread.cn/post/net/net_ucx_stor_ucp_uct/" title="统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022">统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022</a>
-    </li>
-    
-    <li>
-        <a href="https://logread.cn/post/daos/daos_mercury_libfabric_rxm_rdma_verbs_rpc_bulk_api/" title="DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解">DAOS Mercury(HG) Libfabric(OFI) RDMA 分层verbs接口调用详解</a>
     </li>
     
 </ul>
@@ -555,7 +553,7 @@
     
     <li><a href="https://logread.cn/categories/net/">net (1)</a></li>
     
-    <li><a href="https://logread.cn/categories/network/">network (2)</a></li>
+    <li><a href="https://logread.cn/categories/network/">network (3)</a></li>
     
     <li><a href="https://logread.cn/categories/nvidia/">nvidia (1)</a></li>
     
@@ -565,7 +563,7 @@
     
     <li><a href="https://logread.cn/categories/qemu/">qemu (1)</a></li>
     
-    <li><a href="https://logread.cn/categories/rdma/">rdma (9)</a></li>
+    <li><a href="https://logread.cn/categories/rdma/">rdma (10)</a></li>
     
     <li><a href="https://logread.cn/categories/roce/">roce (1)</a></li>
     
@@ -573,7 +571,7 @@
     
     <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
     
-    <li><a href="https://logread.cn/categories/stor/">stor (31)</a></li>
+    <li><a href="https://logread.cn/categories/stor/">stor (32)</a></li>
     
     <li><a href="https://logread.cn/categories/virtio/">virtio (1)</a></li>
     

@@ -6,7 +6,16 @@
     <description>Recent content in network on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sat, 06 Jan 2024 17:55:53 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/network/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 16 Jun 2024 10:25:44 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/network/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟)</title>
+      <link>https://logread.cn/post/rdma/rdma_inline/</link>
+      <pubDate>Sun, 16 Jun 2024 10:25:44 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/rdma/rdma_inline/</guid>
+      <description>RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟) 背景知识 - IB与PCIE是如何工作的? 摘要 这篇文章描述了通过 PCI Express 结构在 CPU 和 NIC 之间发生的一系列协调事件，以通过 InfiniBand 互连传输消息并发出其完成信号。 通过 InfiniBand 发送消息的主要方法是通过 Verbs API。libibverbs 是此 API 的标准实现，由 Linux-RDMA 社区</description>
+    </item>
+    
     <item>
       <title>Nvidia网络技术-端到端网络解决方案</title>
       <link>https://logread.cn/post/nvidia/nvidia_network_tech/</link>
