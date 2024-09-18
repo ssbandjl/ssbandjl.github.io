@@ -85,6 +85,60 @@
     <article class="post">
         <header>
             <h1 class="post-title">
+                <a href="https://logread.cn/post/linux/qemu_vdpa_vduse/">用户态vdpa设备vduse简介及结合QEMU源码分析</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2024年9月18日
+        </date>
+        
+        <div class="post-meta meta-category">
+            |
+            
+            <a href='/categories/stor'>stor</a>
+            
+            <a href='/categories/qemu'>qemu</a>
+            
+            <a href='/categories/virt'>virt</a>
+            
+        </div>
+        
+        <div class="post-content">
+            本文链接: https://cloud.tencent.com/developer/article/2436757 术语 vduse: VDUSE（vDPA Device in Userspace） 用户态vdpa设备 VDUSE 简介：virtio 软件定义的数据路径 2022 年 7 月 14 日 谢永吉, 王杰森 标签: 存储 虚拟化 用户空间中的 vDPA 设备 ( VDUSE ) 是一种为虚拟机 (VM) 和容器工作负载提供软件定义存储和网络服务的新兴方法，vDPA（virtio 数据路……
+            <p class="readmore"><a href="https://logread.cn/post/linux/qemu_vdpa_vduse/">阅读全文</a></p>
+        </div>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://logread.cn/post/linux/qemu_vdpa_sim_blk/">vDPA：支持 Linux 和 QEMU 中的块设备及内核VDPA块仿真设备vdpa-sim-blk源码分析</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2024年9月18日
+        </date>
+        
+        <div class="post-meta meta-category">
+            |
+            
+            <a href='/categories/stor'>stor</a>
+            
+            <a href='/categories/qemu'>qemu</a>
+            
+            <a href='/categories/virt'>virt</a>
+            
+        </div>
+        
+        <div class="post-content">
+            本文链接: https://cloud.tencent.com/developer/article/2436531 使用 libblkio、QEMU 存储守护进程和 VDUSE vDPA 设备是一种遵循virtio 数据路径规范但具有特定于供应商的控制路径的设备。 vDPA 设备既可以物理位于硬件上，也可以通过软件模拟。 主机内核中只需要一个小型 vDPA 父驱动程序来处理控制路径。主要优点是所有 vDPA 设备都具有统一的软件堆栈： 用于……
+            <p class="readmore"><a href="https://logread.cn/post/linux/qemu_vdpa_sim_blk/">阅读全文</a></p>
+        </div>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
                 <a href="https://logread.cn/post/linux/virtio/">VirtIO简介</a>
             </h1>
         </header>
@@ -189,6 +243,14 @@
 <ul class="widget-list">
     
     <li>
+        <a href="https://logread.cn/post/linux/qemu_vdpa_vduse/" title="用户态vdpa设备vduse简介及结合QEMU源码分析">用户态vdpa设备vduse简介及结合QEMU源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/qemu_vdpa_sim_blk/" title="vDPA：支持 Linux 和 QEMU 中的块设备及内核VDPA块仿真设备vdpa-sim-blk源码分析">vDPA：支持 Linux 和 QEMU 中的块设备及内核VDPA块仿真设备vdpa-sim-blk源码分析</a>
+    </li>
+    
+    <li>
         <a href="https://logread.cn/post/rdma/rdma_inline/" title="RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟)">RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟)</a>
     </li>
     
@@ -218,14 +280,6 @@
     
     <li>
         <a href="https://logread.cn/post/rdma/rdma_perf/" title="优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</a>
-    </li>
-    
-    <li>
-        <a href="https://logread.cn/post/linux/virtio/" title="VirtIO简介">VirtIO简介</a>
-    </li>
-    
-    <li>
-        <a href="https://logread.cn/post/net/net_ucx_stor_ucp_uct/" title="统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022">统一通信 X(UCX) 实现高性能便携式网络加速-UCX入门教程HOTI2022</a>
     </li>
     
 </ul>
@@ -275,7 +329,7 @@
     
     <li><a href="https://logread.cn/categories/ofa/">ofa (2)</a></li>
     
-    <li><a href="https://logread.cn/categories/qemu/">qemu (1)</a></li>
+    <li><a href="https://logread.cn/categories/qemu/">qemu (3)</a></li>
     
     <li><a href="https://logread.cn/categories/rdma/">rdma (10)</a></li>
     
@@ -285,7 +339,9 @@
     
     <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
     
-    <li><a href="https://logread.cn/categories/stor/">stor (32)</a></li>
+    <li><a href="https://logread.cn/categories/stor/">stor (34)</a></li>
+    
+    <li><a href="https://logread.cn/categories/virt/">virt (2)</a></li>
     
     <li><a href="https://logread.cn/categories/virtio/">virtio (1)</a></li>
     
@@ -360,6 +416,8 @@
   
   <a href="https://logread.cn/tags/pm/">pm</a>
   
+  <a href="https://logread.cn/tags/qemu/">qemu</a>
+  
   <a href="https://logread.cn/tags/rdma/">rdma</a>
   
   <a href="https://logread.cn/tags/roce/">roce</a>
@@ -369,6 +427,8 @@
   <a href="https://logread.cn/tags/spdk/">spdk</a>
   
   <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/virt/">virt</a>
   
   <a href="https://logread.cn/tags/virtio/">virtio</a>
   

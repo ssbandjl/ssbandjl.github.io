@@ -1,0 +1,1517 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7571343657358120"
+     crossorigin="anonymous"></script>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+
+    <title>vDPA：支持 Linux 和 QEMU 中的块设备及内核VDPA块仿真设备vdpa-sim-blk源码分析 | 晓兵(ssbandjl)-技术兴国</title>
+    <meta property="og:title" content="vDPA：支持 Linux 和 QEMU 中的块设备及内核VDPA块仿真设备vdpa-sim-blk源码分析 - 晓兵(ssbandjl)-技术兴国">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2024-09-18T21:55:02&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2024-09-18T21:55:02&#43;08:00'>
+        
+    <meta name="Keywords" content="c,c&#43;&#43;,golang,python,存储,ceph,分布式块存储,云计算,daos,rdma,spdk,nvmeof,linux,kernel,内核,分布式存储,dpdk,rpc">
+    <meta name="description" content="vDPA：支持 Linux 和 QEMU 中的块设备及内核VDPA块仿真设备vdpa-sim-blk源码分析">
+        
+    <meta name="author" content="晓兵">
+    <meta property="og:url" content="https://logread.cn/post/linux/qemu_vdpa_sim_blk/">
+    <link rel="shortcut icon" href='/favicon.ico'  type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+    
+    
+    
+        <link rel="stylesheet" href='/css/douban.css'>
+    
+        <link rel="stylesheet" href='/css/other.css'>
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://logread.cn">
+                        晓兵(ssbandjl)-技术兴国
+                    </a>
+                
+                <p class="description">存储 | DPU | 高性能 | RDMA | DAOS | 内核等, AI吐槽工具: https://chattoyou.cn</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://logread.cn">首页</a>
+                    
+                    <a  href="https://logread.cn/archives/" title="归档">归档</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#有用的资源"><strong>有用的资源</strong></a></li>
+      </ul>
+    </li>
+    <li><a href="#块设备"><strong>块设备</strong></a></li>
+    <li><a href="#软件设备"><strong>软件设备</strong></a>
+      <ul>
+        <li><a href="#内核设备"><strong>内核设备</strong></a></li>
+        <li><a href="#用户空间设备"><strong>用户空间设备</strong></a></li>
+      </ul>
+    </li>
+    <li><a href="#容器虚拟机或裸机"><strong>容器、虚拟机或裸机</strong></a></li>
+    <li><a href="#例子"><strong>例子</strong></a>
+      <ul>
+        <li><a href="#qcow2-镜像可用于主机应用程序和容器"><strong>qcow2 镜像可用于主机应用程序和容器</strong></a></li>
+        <li><a href="#使用-vdpa-设备启动-vm"><strong>使用 vDPA 设备启动 VM</strong></a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#加载模块"><strong>加载模块</strong></a></li>
+    <li><a href="#添加设备及io处理函数工作队列"><strong>添加设备及IO处理函数(工作队列)</strong></a></li>
+    <li><a href="#实现其vdpa回调函数"><strong>实现其vdpa回调函数</strong></a></li>
+    <li><a href="#vdpa总线及操作记录"><strong>VDPA总线及操作记录</strong></a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#dpu专栏"><strong>DPU专栏</strong></a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">vDPA：支持 Linux 和 QEMU 中的块设备及内核VDPA块仿真设备vdpa-sim-blk源码分析</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2024年9月18日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='/categories/stor'>stor</a></span>
+            
+            <span class="meta-category"><a href='/categories/qemu'>qemu</a></span>
+            
+            <span class="meta-category"><a href='/categories/virt'>virt</a></span>
+            
+        </div>
+        
+        
+        <div class="post-meta">
+            <span id="busuanzi_container_page_pv">|<span id="busuanzi_value_page_pv"></span><span>
+                    阅读</span></span>
+        </div>
+        
+        
+        <div class="post-content">
+            <p>本文链接: <a href="https://cloud.tencent.com/developer/article/2436531">https://cloud.tencent.com/developer/article/2436531</a></p>
+<h1 id="使用-libblkioqemu-存储守护进程和-vduse"><strong>使用 libblkio、QEMU 存储守护进程和 VDUSE</strong></h1>
+<p><em>vDPA 设备</em>是一种遵循<strong>virtio 数据路径</strong>规范但具有<strong>特定于供应商的控制路径的</strong>设备。</p>
+<p>vDPA 设备既可以物理位于硬件上，也可以通过软件模拟。</p>
+<p>
+        <img class="mx-auto" alt="img" src="https://developer.qcloudimg.com/http-save/5060293/01a38149d5bc685477a1509e5aa05c22.webp" />   
+    </p>
+<p>主机内核中只需要一个小型 vDPA 父驱动程序来处理控制路径。主要优点是所有 vDPA 设备都具有<strong>统一的软件堆栈：</strong></p>
+<ul>
+<li><em>用于用户空间或客户 virtio 驱动程序的vhost 接口</em>(vhost-vdpa)，例如在 QEMU 中运行的虚拟机</li>
+<li><em>virtio 接口</em>(virtio-vdpa)，用于在主机中运行的裸机或容器化应用程序</li>
+<li><em>用于实例化设备和配置 virtio 参数的管理接口</em>(vdpa netlink)</li>
+</ul>
+<h3 id="有用的资源"><strong>有用的资源</strong></h3>
+<p>近年来，已经发表了许多博客文章和演讲，可以帮助您更好地了解 vDPA 和用例。我们在vdpa-dev.gitlab.io上 收集了其中一些；我建议您至少探索以下内容：</p>
+<ul>
+<li>vDPA内核框架介绍</li>
+<li>介绍 VDUSE：virtio 的软件定义数据路径</li>
+</ul>
+<h2 id="块设备"><strong>块设备</strong></h2>
+<p>vDPA 中的大部分工作是由网络设备驱动的，但近年来，我们也开发了对块设备的支持。</p>
+<p>主要用例肯定是利用硬件直接模拟 virtio-blk 设备并支持不同的网络后端，例如 Ceph RBD 或 iSCSI。这是某些 SmartNIC 或 DPU 的目标，它们当然能够模拟 virtio-net 设备，但也能模拟用于网络存储的 virtio-blk。</p>
+<p>vDPA 提供的抽象还使软件加速器成为可能，类似于现有的 vhost 或 vhost-user 设备。我们在 2021 年 KVM 论坛上讨论过这个问题。</p>
+<p>我们在那次演讲中讨论了快速路径和慢速路径。当 QEMU 需要处理请求（例如支持实时迁移或执行 I/O 限制）时，它会使用<strong>慢速路径</strong>。在慢速路径期间，暴露给客户机的设备在 QEMU 中模拟。QEMU 利用 libblkio 中实现的驱动程序拦截请求并将其转发到 vDPA 设备。另一方面，当 QEMU 不需要干预时，快速路径就会发挥作用。在这种情况下，vDPA 设备可以直接暴露给客户机，<strong>绕过 QEMU 的模拟</strong>。</p>
+<p>libblkio公开了用于在用户空间中访问块设备的通用 API。它支持多个驱动程序。我们将重点介绍QEMU 中块设备virtio-blk-vhost-vdpa使用的驱动程序virtio-blk-vhost-vdpa 。它目前仅支持慢速路径，但将来应该能够自动切换到快速路径。自 QEMU 7.2 以来，它支持 libblkio 驱动程序，因此您可以使用以下选项将 vDPA 块设备连接到虚拟机：</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript">  <span style="color:#000;font-weight:bold">-</span>blockdev node<span style="color:#000;font-weight:bold">-</span>name<span style="color:#000;font-weight:bold">=</span>drive_src1,driver<span style="color:#000;font-weight:bold">=</span>virtio<span style="color:#000;font-weight:bold">-</span>blk<span style="color:#000;font-weight:bold">-</span>vhost<span style="color:#000;font-weight:bold">-</span>vdpa,path<span style="color:#000;font-weight:bold">=</span><span style="color:#a61717;background-color:#e3d2d2">/dev/vhost-vdpa-0,cache.direct=on \</span>
+  <span style="color:#000;font-weight:bold">-</span>device virtio<span style="color:#000;font-weight:bold">-</span>blk<span style="color:#000;font-weight:bold">-</span>pci,id<span style="color:#000;font-weight:bold">=</span>src1,bootindex<span style="color:#000;font-weight:bold">=</span><span style="color:#099">2</span>,drive<span style="color:#000;font-weight:bold">=</span>drive_src1 <span style="color:#000;font-weight:bold">\</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>无论如何，为了充分利用 vDPA 硬件设备的性能，我们始终可以使用QEMU 提供的通用设备vhost-vdpa-device-pci，该设备支持任何 vDPA 设备并将其直接公开给客户机。当然，QEMU 无法在这种情况下拦截请求，因此其块层提供的一些功能（例如实时迁移、磁盘格式等）不受支持。从 QEMU 8.0 开始，您可以使用以下选项将通用 vDPA 设备连接到 VM：</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript">   <span style="color:#000;font-weight:bold">-</span>device vhost<span style="color:#000;font-weight:bold">-</span>vdpa<span style="color:#000;font-weight:bold">-</span>device<span style="color:#000;font-weight:bold">-</span>pci,vhostdev<span style="color:#000;font-weight:bold">=</span><span style="color:#a61717;background-color:#e3d2d2">/dev/vhost-vdpa-0</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在 2022 年 KVM 论坛上，Alberto Faria 和 Stefan Hajnoczi 介绍了 libblkio，而Kevin Wolf 和我讨论了它在 QEMU 存储守护进程 (QSD) 中的用法。</p>
+<h2 id="软件设备"><strong>软件设备</strong></h2>
+<p>vDPA 的一大优势是其强大的抽象性，支持在硬件和软件中实现 virtio 设备（无论是在内核还是用户空间中）。这种统一在单一框架下，设备对于 QEMU 而言是相同的，有助于无缝集成硬件和软件组件。</p>
+<h3 id="内核设备"><strong>内核设备</strong></h3>
+<p>关于内核设备，从 Linux v5.13 开始，存在一个专为开发和调试目的而设计的简单模拟器。它可通过vdpa-sim-blk内核模块使用，该模块模拟 128 MB 的 ramdisk。正如 KVM Forum 2021 上的演讲中所强调的那样，内核中的未来设备（类似于反复提出但从未合并的vhost-blk）可能会提供出色的性能。当硬件不可用时，这种设备可以用作替代方案，例如，促进任何系统中的实时迁移，无论目标系统是否具有 SmartNIC/DPU。</p>
+<h3 id="用户空间设备"><strong>用户空间设备</strong></h3>
+<p>相反，关于用户空间，我们可以使用 VDUSE。QSD 支持它，因此允许我们以这种方式导出 QEMU 支持的任何磁盘映像，例如导出vDPA 设备vduse0：</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript">qemu<span style="color:#000;font-weight:bold">-</span>storage<span style="color:#000;font-weight:bold">-</span>daemon <span style="color:#000;font-weight:bold">\</span>
+   <span style="color:#000;font-weight:bold">--</span>blockdev file,filename<span style="color:#000;font-weight:bold">=</span><span style="color:#a61717;background-color:#e3d2d2">/path/to/disk.qcow2,node-name=file \</span>
+   <span style="color:#000;font-weight:bold">--</span>blockdev qcow2,file<span style="color:#000;font-weight:bold">=</span>file,node<span style="color:#000;font-weight:bold">-</span>name<span style="color:#000;font-weight:bold">=</span>qcow2 <span style="color:#000;font-weight:bold">\</span>
+   <span style="color:#000;font-weight:bold">--</span><span style="color:#000;font-weight:bold">export</span> type<span style="color:#000;font-weight:bold">=</span>vduse<span style="color:#000;font-weight:bold">-</span>blk,id<span style="color:#000;font-weight:bold">=</span>vduse0,name<span style="color:#000;font-weight:bold">=</span>vduse0,node<span style="color:#000;font-weight:bold">-</span>name<span style="color:#000;font-weight:bold">=</span>qcow2,writable<span style="color:#000;font-weight:bold">=</span>on
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="容器虚拟机或裸机"><strong>容器、虚拟机或裸机</strong></h2>
+<p>如介绍中所述，vDPA 支持不同的总线，例如 vhost-vdpa和virtio-vdpa。驱动:vhost-vdpa, 这种灵活性使得可以通过总线将 vDPA 设备与虚拟机或用户空间驱动程序（例如 libblkio）一起使用。此外，virtio-vdpa驱动还允许通过总线与直接在主机上或容器内运行的应用程序进行交互。</p>
+<p>iproute2中的工具vdpa可以通过netlink方便的管理vdpa设备，可以分配和释放这些设备。</p>
+<p>从 Linux 5.17 开始，vDPA 驱动程序支持driver_ovveride。此增强功能允许在运行时进行动态重新配置，从而允许设备以这种方式从一条总线迁移到另一条总线：</p>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#a61717;background-color:#e3d2d2">#</span> load vdpa buses
+$ modprobe <span style="color:#000;font-weight:bold">-</span>a virtio<span style="color:#000;font-weight:bold">-</span>vdpa vhost<span style="color:#000;font-weight:bold">-</span>vdpa
+<span style="color:#a61717;background-color:#e3d2d2">#</span> load vdpa<span style="color:#000;font-weight:bold">-</span>blk <span style="color:#000;font-weight:bold">in</span><span style="color:#000;font-weight:bold">-</span>kernel simulator
+$ modprobe vdpa<span style="color:#000;font-weight:bold">-</span>sim<span style="color:#000;font-weight:bold">-</span>blk
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> instantiate a <span style="color:#000;font-weight:bold">new</span> vdpasim_blk device called <span style="color:#d14">`vdpa0`</span>
+$ vdpa dev add mgmtdev vdpasim_blk name vdpa0
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> <span style="color:#d14">`vdpa0`</span> is attached to the first vDPA bus driver loaded
+$ driverctl <span style="color:#000;font-weight:bold">-</span>b vdpa list<span style="color:#000;font-weight:bold">-</span>devices
+vdpa0 virtio_vdpa
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> change the <span style="color:#d14">`vdpa0`</span> bus to <span style="color:#d14">`vhost-vdpa`</span> 迁移总线vdpa0 <span style="color:#000;font-weight:bold">-&gt;</span> vhost<span style="color:#000;font-weight:bold">-</span>vdpa
+$ driverctl <span style="color:#000;font-weight:bold">-</span>b vdpa set<span style="color:#000;font-weight:bold">-</span>override vdpa0 vhost_vdpa
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> <span style="color:#d14">`vdpa0`</span> is now attached to the <span style="color:#d14">`vhost-vdpa`</span> bus
+$ driverctl <span style="color:#000;font-weight:bold">-</span>b vdpa list<span style="color:#000;font-weight:bold">-</span>devices
+vdpa0 vhost_vdpa [<span style="color:#000;font-weight:bold">*</span>]
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> Note<span style="color:#000;font-weight:bold">:</span> driverctl(<span style="color:#099">8</span>) integrates <span style="color:#000;font-weight:bold">with</span> udev so the binding is preserved.
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="例子"><strong>例子</strong></h2>
+<p>以下是关于如何将<em>VDUSE</em>和<em>QEMU 存储守护进程</em> 与虚拟机 ( QEMU) 或容器 ( podman) 结合使用的几个示例。这些步骤可轻松适应通过 vDPA 支持 virtio-blk 设备的任何硬件。</p>
+<h3 id="qcow2-镜像可用于主机应用程序和容器"><strong>qcow2 镜像可用于主机应用程序和容器</strong></h3>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#a61717;background-color:#e3d2d2">#</span> load vdpa buses
+$ modprobe <span style="color:#000;font-weight:bold">-</span>a virtio<span style="color:#000;font-weight:bold">-</span>vdpa vhost<span style="color:#000;font-weight:bold">-</span>vdpa
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> create an empty qcow2 image
+$ qemu<span style="color:#000;font-weight:bold">-</span>img create <span style="color:#000;font-weight:bold">-</span>f qcow2 test.qcow2 <span style="color:#099">10</span>G
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> load vduse kernel module
+$ modprobe vduse
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> launch QSD exposing the <span style="color:#d14">`test.qcow2`</span> image as <span style="color:#d14">`vduse0`</span> vDPA device
+$ qemu<span style="color:#000;font-weight:bold">-</span>storage<span style="color:#000;font-weight:bold">-</span>daemon <span style="color:#000;font-weight:bold">--</span>blockdev file,filename<span style="color:#000;font-weight:bold">=</span>test.qcow2,node<span style="color:#000;font-weight:bold">-</span>name<span style="color:#000;font-weight:bold">=</span>file <span style="color:#000;font-weight:bold">\</span>
+ <span style="color:#000;font-weight:bold">--</span>blockdev qcow2,file<span style="color:#000;font-weight:bold">=</span>file,node<span style="color:#000;font-weight:bold">-</span>name<span style="color:#000;font-weight:bold">=</span>qcow2 <span style="color:#000;font-weight:bold">\</span>
+ <span style="color:#000;font-weight:bold">--</span><span style="color:#000;font-weight:bold">export</span> vduse<span style="color:#000;font-weight:bold">-</span>blk,id<span style="color:#000;font-weight:bold">=</span>vduse0,name<span style="color:#000;font-weight:bold">=</span>vduse0,num<span style="color:#000;font-weight:bold">-</span>queues<span style="color:#000;font-weight:bold">=</span><span style="color:#099">1</span>,node<span style="color:#000;font-weight:bold">-</span>name<span style="color:#000;font-weight:bold">=</span>qcow2,writable<span style="color:#000;font-weight:bold">=</span>on <span style="color:#000;font-weight:bold">&amp;</span>
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> instantiate the <span style="color:#d14">`vduse0`</span> device (same name used <span style="color:#000;font-weight:bold">in</span> QSD)
+$ vdpa dev add name vduse0 mgmtdev vduse
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> be sure to attach it to the <span style="color:#d14">`virtio-vdpa`</span> device to use <span style="color:#000;font-weight:bold">with</span> host applications
+$ driverctl <span style="color:#000;font-weight:bold">-</span>b vdpa set<span style="color:#000;font-weight:bold">-</span>override vduse0 virtio_vdpa
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> device exposed as a virtio device, but attached to the host kernel
+$ lsblk <span style="color:#000;font-weight:bold">-</span>pv
+NAME     TYPE TRAN   SIZE RQ<span style="color:#000;font-weight:bold">-</span>SIZE MQ
+<span style="color:#a61717;background-color:#e3d2d2">/dev/vda disk virtio 10G     256   1</span>
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> start a container <span style="color:#000;font-weight:bold">with</span> <span style="color:#d14">`/dev/vda`</span> attached
+podman run <span style="color:#000;font-weight:bold">-</span>it <span style="color:#000;font-weight:bold">--</span>rm <span style="color:#000;font-weight:bold">--</span>device <span style="color:#000;font-weight:bold">/</span>dev<span style="color:#000;font-weight:bold">/</span>vda <span style="color:#000;font-weight:bold">--</span>group<span style="color:#000;font-weight:bold">-</span>add keep<span style="color:#000;font-weight:bold">-</span>groups fedora<span style="color:#000;font-weight:bold">:</span><span style="color:#099">39</span> bash
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="使用-vdpa-设备启动-vm"><strong>使用 vDPA 设备启动 VM</strong></h3>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">68
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#a61717;background-color:#e3d2d2">#</span> download Fedora cloud image (or use any other bootable image you want)
+$ wget https<span style="color:#000;font-weight:bold">:</span><span style="color:#998;font-style:italic">//download.fedoraproject.org/pub/fedora/linux/releases/39/Cloud/x86_64/images/Fedora-Cloud-Base-39-1.5.x86_64.qcow2
+</span><span style="color:#998;font-style:italic"></span>
+<span style="color:#a61717;background-color:#e3d2d2">#</span> launch QSD exposing the VM image as <span style="color:#d14">`vduse1`</span> vDPA device
+$ qemu<span style="color:#000;font-weight:bold">-</span>storage<span style="color:#000;font-weight:bold">-</span>daemon <span style="color:#000;font-weight:bold">\</span>
+ <span style="color:#000;font-weight:bold">--</span>blockdev file,filename<span style="color:#000;font-weight:bold">=</span>Fedora<span style="color:#000;font-weight:bold">-</span>Cloud<span style="color:#000;font-weight:bold">-</span>Base<span style="color:#000;font-weight:bold">-</span><span style="color:#099">39</span><span style="color:#000;font-weight:bold">-</span><span style="color:#099">1.5</span>.x86_64.qcow2,node<span style="color:#000;font-weight:bold">-</span>name<span style="color:#000;font-weight:bold">=</span>file <span style="color:#000;font-weight:bold">\</span>
+ <span style="color:#000;font-weight:bold">--</span>blockdev qcow2,file<span style="color:#000;font-weight:bold">=</span>file,node<span style="color:#000;font-weight:bold">-</span>name<span style="color:#000;font-weight:bold">=</span>qcow2 <span style="color:#000;font-weight:bold">\</span>
+ <span style="color:#000;font-weight:bold">--</span><span style="color:#000;font-weight:bold">export</span> vduse<span style="color:#000;font-weight:bold">-</span>blk,id<span style="color:#000;font-weight:bold">=</span>vduse1,name<span style="color:#000;font-weight:bold">=</span>vduse1,num<span style="color:#000;font-weight:bold">-</span>queues<span style="color:#000;font-weight:bold">=</span><span style="color:#099">1</span>,node<span style="color:#000;font-weight:bold">-</span>name<span style="color:#000;font-weight:bold">=</span>qcow2,writable<span style="color:#000;font-weight:bold">=</span>on <span style="color:#000;font-weight:bold">&amp;</span>
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> instantiate the <span style="color:#d14">`vduse1`</span> device (same name used <span style="color:#000;font-weight:bold">in</span> QSD)
+$ vdpa dev add name vduse1 mgmtdev vduse
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> initially it<span style="color:#a61717;background-color:#e3d2d2">&#39;</span>s attached to the host (<span style="color:#d14">`/dev/vdb`</span>), because <span style="color:#d14">`virtio-vdpa`</span>
+<span style="color:#a61717;background-color:#e3d2d2">#</span> is the first kernel module we loaded
+$ lsblk <span style="color:#000;font-weight:bold">-</span>pv
+NAME     TYPE TRAN   SIZE RQ<span style="color:#000;font-weight:bold">-</span>SIZE MQ
+<span style="color:#a61717;background-color:#e3d2d2">/dev/vda disk virtio 10G     256   1</span>
+<span style="color:#a61717;background-color:#e3d2d2">/dev/vdb disk virtio   5G     256   1</span>
+$ lsblk <span style="color:#000;font-weight:bold">/</span>dev<span style="color:#000;font-weight:bold">/</span>vdb
+NAME   MAJ<span style="color:#000;font-weight:bold">:</span>MIN RM SIZE RO TYPE MOUNTPOINTS
+vdb    <span style="color:#099">251</span><span style="color:#000;font-weight:bold">:</span><span style="color:#099">16</span>   <span style="color:#099">0</span>   <span style="color:#099">5</span>G  <span style="color:#099">0</span> disk
+<span style="color:#a61717;background-color:#e3d2d2">├─</span>vdb1 <span style="color:#099">251</span><span style="color:#000;font-weight:bold">:</span><span style="color:#099">17</span>   <span style="color:#099">0</span>   <span style="color:#099">1</span>M  <span style="color:#099">0</span> part
+<span style="color:#a61717;background-color:#e3d2d2">├─</span>vdb2 <span style="color:#099">251</span><span style="color:#000;font-weight:bold">:</span><span style="color:#099">18</span>   <span style="color:#099">0</span> <span style="color:#099">1000</span>M  <span style="color:#099">0</span> part
+<span style="color:#a61717;background-color:#e3d2d2">├─</span>vdb3 <span style="color:#099">251</span><span style="color:#000;font-weight:bold">:</span><span style="color:#099">19</span>   <span style="color:#099">0</span> <span style="color:#099">100</span>M  <span style="color:#099">0</span> part
+<span style="color:#a61717;background-color:#e3d2d2">├─</span>vdb4 <span style="color:#099">251</span><span style="color:#000;font-weight:bold">:</span><span style="color:#099">20</span>   <span style="color:#099">0</span>   <span style="color:#099">4</span>M  <span style="color:#099">0</span> part
+<span style="color:#a61717;background-color:#e3d2d2">└─</span>vdb5 <span style="color:#099">251</span><span style="color:#000;font-weight:bold">:</span><span style="color:#099">21</span>   <span style="color:#099">0</span>  <span style="color:#099">3.9</span>G  <span style="color:#099">0</span> part
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> and it is identified as <span style="color:#d14">`virtio1`</span> <span style="color:#000;font-weight:bold">in</span> the host
+$ ls <span style="color:#000;font-weight:bold">/</span>sys<span style="color:#000;font-weight:bold">/</span>bus<span style="color:#000;font-weight:bold">/</span>vdpa<span style="color:#000;font-weight:bold">/</span>devices<span style="color:#000;font-weight:bold">/</span>vduse1<span style="color:#000;font-weight:bold">/</span>
+driver driver_override power subsystem uevent virtio1
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> attach it to the <span style="color:#d14">`vhost-vdpa`</span> device to use the device <span style="color:#000;font-weight:bold">with</span> VMs
+$ driverctl <span style="color:#000;font-weight:bold">-</span>b vdpa set<span style="color:#000;font-weight:bold">-</span>override vduse1 vhost_vdpa
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> <span style="color:#d14">`/dev/vdb`</span> is not available anymore
+$ lsblk <span style="color:#000;font-weight:bold">-</span>pv
+NAME     TYPE TRAN   SIZE RQ<span style="color:#000;font-weight:bold">-</span>SIZE MQ
+<span style="color:#a61717;background-color:#e3d2d2">/dev/vda disk virtio 10G     256   1</span>
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> the device is identified as <span style="color:#d14">`vhost-vdpa-1`</span> <span style="color:#000;font-weight:bold">in</span> the host
+$ ls <span style="color:#000;font-weight:bold">/</span>sys<span style="color:#000;font-weight:bold">/</span>bus<span style="color:#000;font-weight:bold">/</span>vdpa<span style="color:#000;font-weight:bold">/</span>devices<span style="color:#000;font-weight:bold">/</span>vduse1<span style="color:#000;font-weight:bold">/</span>
+driver driver_override power subsystem uevent vhost<span style="color:#000;font-weight:bold">-</span>vdpa<span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>
+$ ls <span style="color:#000;font-weight:bold">-</span>l <span style="color:#000;font-weight:bold">/</span>dev<span style="color:#000;font-weight:bold">/</span>vhost<span style="color:#000;font-weight:bold">-</span>vdpa<span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>
+crw<span style="color:#000;font-weight:bold">-------</span>. <span style="color:#099">1</span> root root <span style="color:#099">511</span>, <span style="color:#099">0</span> Feb <span style="color:#099">12</span> <span style="color:#099">17</span><span style="color:#000;font-weight:bold">:</span><span style="color:#099">58</span> <span style="color:#000;font-weight:bold">/</span>dev<span style="color:#000;font-weight:bold">/</span>vhost<span style="color:#000;font-weight:bold">-</span>vdpa<span style="color:#000;font-weight:bold">-</span><span style="color:#099">1</span>
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> launch QEMU using <span style="color:#d14">`/dev/vhost-vdpa-1`</span> device <span style="color:#000;font-weight:bold">with</span> the
+<span style="color:#a61717;background-color:#e3d2d2">#</span> <span style="color:#d14">`virtio-blk-vhost-vdpa`</span> libblkio driver
+$ qemu<span style="color:#000;font-weight:bold">-</span>system<span style="color:#000;font-weight:bold">-</span>x86_64 <span style="color:#000;font-weight:bold">-</span>m <span style="color:#099">512</span>M <span style="color:#000;font-weight:bold">-</span>smp <span style="color:#099">2</span> <span style="color:#000;font-weight:bold">-</span>M q35,accel<span style="color:#000;font-weight:bold">=</span>kvm,memory<span style="color:#000;font-weight:bold">-</span>backend<span style="color:#000;font-weight:bold">=</span>mem <span style="color:#000;font-weight:bold">\</span>
+ <span style="color:#000;font-weight:bold">-</span>object memory<span style="color:#000;font-weight:bold">-</span>backend<span style="color:#000;font-weight:bold">-</span>memfd,share<span style="color:#000;font-weight:bold">=</span>on,id<span style="color:#000;font-weight:bold">=</span>mem,size<span style="color:#000;font-weight:bold">=</span><span style="color:#d14">&#34;512M&#34;</span> <span style="color:#000;font-weight:bold">\</span>
+ <span style="color:#000;font-weight:bold">-</span>blockdev node<span style="color:#000;font-weight:bold">-</span>name<span style="color:#000;font-weight:bold">=</span>drive0,driver<span style="color:#000;font-weight:bold">=</span>virtio<span style="color:#000;font-weight:bold">-</span>blk<span style="color:#000;font-weight:bold">-</span>vhost<span style="color:#000;font-weight:bold">-</span>vdpa,path<span style="color:#000;font-weight:bold">=</span><span style="color:#a61717;background-color:#e3d2d2">/dev/vhost-vdpa-1,cache.direct=on \</span>
+ <span style="color:#000;font-weight:bold">-</span>device virtio<span style="color:#000;font-weight:bold">-</span>blk<span style="color:#000;font-weight:bold">-</span>pci,drive<span style="color:#000;font-weight:bold">=</span>drive0
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> <span style="color:#d14">`virtio-blk-vhost-vdpa`</span> blockdev can be used <span style="color:#000;font-weight:bold">with</span> any QEMU block layer
+<span style="color:#a61717;background-color:#e3d2d2">#</span> features (e.g live migration, I<span style="color:#000;font-weight:bold">/</span>O throttling).
+<span style="color:#a61717;background-color:#e3d2d2">#</span> In <span style="color:#000;font-weight:bold">this</span> example we are using I<span style="color:#000;font-weight:bold">/</span>O throttling<span style="color:#000;font-weight:bold">:</span>
+$ qemu<span style="color:#000;font-weight:bold">-</span>system<span style="color:#000;font-weight:bold">-</span>x86_64 <span style="color:#000;font-weight:bold">-</span>m <span style="color:#099">512</span>M <span style="color:#000;font-weight:bold">-</span>smp <span style="color:#099">2</span> <span style="color:#000;font-weight:bold">-</span>M q35,accel<span style="color:#000;font-weight:bold">=</span>kvm,memory<span style="color:#000;font-weight:bold">-</span>backend<span style="color:#000;font-weight:bold">=</span>mem <span style="color:#000;font-weight:bold">\</span>
+ <span style="color:#000;font-weight:bold">-</span>object memory<span style="color:#000;font-weight:bold">-</span>backend<span style="color:#000;font-weight:bold">-</span>memfd,share<span style="color:#000;font-weight:bold">=</span>on,id<span style="color:#000;font-weight:bold">=</span>mem,size<span style="color:#000;font-weight:bold">=</span><span style="color:#d14">&#34;512M&#34;</span> <span style="color:#000;font-weight:bold">\</span>
+ <span style="color:#000;font-weight:bold">-</span>blockdev node<span style="color:#000;font-weight:bold">-</span>name<span style="color:#000;font-weight:bold">=</span>drive0,driver<span style="color:#000;font-weight:bold">=</span>virtio<span style="color:#000;font-weight:bold">-</span>blk<span style="color:#000;font-weight:bold">-</span>vhost<span style="color:#000;font-weight:bold">-</span>vdpa,path<span style="color:#000;font-weight:bold">=</span><span style="color:#a61717;background-color:#e3d2d2">/dev/vhost-vdpa-1,cache.direct=on \</span>
+ <span style="color:#000;font-weight:bold">-</span>blockdev node<span style="color:#000;font-weight:bold">-</span>name<span style="color:#000;font-weight:bold">=</span>throttle0,driver<span style="color:#000;font-weight:bold">=</span>throttle,file<span style="color:#000;font-weight:bold">=</span>drive0,throttle<span style="color:#000;font-weight:bold">-</span>group<span style="color:#000;font-weight:bold">=</span>limits0 <span style="color:#000;font-weight:bold">\</span>
+ <span style="color:#000;font-weight:bold">-</span>object throttle<span style="color:#000;font-weight:bold">-</span>group,id<span style="color:#000;font-weight:bold">=</span>limits0,x<span style="color:#000;font-weight:bold">-</span>iops<span style="color:#000;font-weight:bold">-</span>total<span style="color:#000;font-weight:bold">=</span><span style="color:#099">2000</span> <span style="color:#000;font-weight:bold">\</span>
+ <span style="color:#000;font-weight:bold">-</span>device virtio<span style="color:#000;font-weight:bold">-</span>blk<span style="color:#000;font-weight:bold">-</span>pci,drive<span style="color:#000;font-weight:bold">=</span>throttle0
+
+<span style="color:#a61717;background-color:#e3d2d2">#</span> Alternatively, we can use the generic <span style="color:#d14">`vhost-vdpa-device-pci`</span> to take
+<span style="color:#a61717;background-color:#e3d2d2">#</span> advantage <span style="color:#000;font-weight:bold">of</span> all the performance, but without having any QEMU block layer
+<span style="color:#a61717;background-color:#e3d2d2">#</span> features available
+$ qemu<span style="color:#000;font-weight:bold">-</span>system<span style="color:#000;font-weight:bold">-</span>x86_64 <span style="color:#000;font-weight:bold">-</span>m <span style="color:#099">512</span>M <span style="color:#000;font-weight:bold">-</span>smp <span style="color:#099">2</span> <span style="color:#000;font-weight:bold">-</span>M q35,accel<span style="color:#000;font-weight:bold">=</span>kvm,memory<span style="color:#000;font-weight:bold">-</span>backend<span style="color:#000;font-weight:bold">=</span>mem <span style="color:#000;font-weight:bold">\</span>
+ <span style="color:#000;font-weight:bold">-</span>object memory<span style="color:#000;font-weight:bold">-</span>backend<span style="color:#000;font-weight:bold">-</span>memfd,share<span style="color:#000;font-weight:bold">=</span>on,id<span style="color:#000;font-weight:bold">=</span>mem,size<span style="color:#000;font-weight:bold">=</span><span style="color:#d14">&#34;512M&#34;</span> <span style="color:#000;font-weight:bold">\</span>
+ <span style="color:#000;font-weight:bold">-</span>device vhost<span style="color:#000;font-weight:bold">-</span>vdpa<span style="color:#000;font-weight:bold">-</span>device<span style="color:#000;font-weight:bold">-</span>pci,vhostdev<span style="color:#000;font-weight:bold">=</span><span style="color:#a61717;background-color:#e3d2d2">/dev/vhost-vdpa-0</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>virtio  vdpa  vduse  linux  qemu 会议 演讲</p>
+<h4 id="也可以看看"><strong>也可以看看</strong></h4>
+<ul>
+<li>SOCAT 现在支持 AF_VSOCK</li>
+<li>AF_VSOCK：提供嵌套虚拟机和环回支持</li>
+<li>QEMU 4.2 mmap(2)s 内核和 initrd</li>
+<li>KVM 论坛 2019：QEMU、Firecracker 和 Linux 中的 virtio-vsock</li>
+<li>如何使用 QEMU/KVM 测量 Linux VM 的启动时间</li>
+</ul>
+<h1 id="vhost-vdpa-device-pci与virtio-blk-vhost-vdpa对比"><strong>vhost-vdpa-device-pci与virtio-blk-vhost-vdpa对比</strong></h1>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">QEMU设备类型</th>
+<th style="text-align:left">快路径</th>
+<th style="text-align:left">QEMU拦截请求</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">vhost-vdpa-device-pci (更通用)</td>
+<td style="text-align:left">支持</td>
+<td style="text-align:left">不支持</td>
+</tr>
+<tr>
+<td style="text-align:left">virtio-blk-vhost-vdpa(与libblkio配合)</td>
+<td style="text-align:left">不支持</td>
+<td style="text-align:left">支持(实时迁移,磁盘格式,IO流控等)</td>
+</tr>
+</tbody>
+</table>
+<h1 id="linux-vdpa-sim-blk设备源码分析"><strong>Linux vdpa-sim-blk设备源码分析</strong></h1>
+<h2 id="加载模块"><strong>加载模块</strong></h2>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript">modprobe vdpa<span style="color:#000;font-weight:bold">-</span>sim<span style="color:#000;font-weight:bold">-</span>blk, insmod vdpa_sim_blk.ko
+drivers<span style="color:#000;font-weight:bold">/</span>vdpa<span style="color:#000;font-weight:bold">/</span>vdpa_sim<span style="color:#000;font-weight:bold">/</span>vdpa_sim_blk.c
+module_init(vdpasim_blk_init) <span style="color:#000;font-weight:bold">-&gt;</span> sim
+   module_param(shared_backend, bool, <span style="color:#099">0444</span>)
+   device_register(<span style="color:#000;font-weight:bold">&amp;</span>vdpasim_blk_mgmtdev)
+   vdpa_mgmtdev_register(<span style="color:#000;font-weight:bold">&amp;</span>mgmt_dev)
+   <span style="color:#000;font-weight:bold">if</span> (shared_backend)
+       shared_buffer <span style="color:#000;font-weight:bold">=</span> kvzalloc(VDPASIM_BLK_CAPACITY <span style="color:#000;font-weight:bold">&lt;&lt;</span> SECTOR_SHIFT, GFP_KERNEL)
+<span style="color:#000;font-weight:bold">static</span> struct vdpa_mgmt_dev mgmt_dev <span style="color:#000;font-weight:bold">=</span> {
+.device <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">&amp;</span>vdpasim_blk_mgmtdev,
+.id_table <span style="color:#000;font-weight:bold">=</span> id_table,
+.ops <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">&amp;</span>vdpasim_blk_mgmtdev_ops,
+};
+
+<span style="color:#000;font-weight:bold">static</span> <span style="color:#000;font-weight:bold">const</span> struct vdpa_mgmtdev_ops vdpasim_blk_mgmtdev_ops <span style="color:#000;font-weight:bold">=</span> {
+.dev_add <span style="color:#000;font-weight:bold">=</span> vdpasim_blk_dev_add,
+.dev_del <span style="color:#000;font-weight:bold">=</span> vdpasim_blk_dev_del
+};
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="添加设备及io处理函数工作队列"><strong>添加设备及IO处理函数(工作队列)</strong></h2>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">78
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#a61717;background-color:#e3d2d2">#</span> Add <span style="color:#d14">`vdpa-blk1`</span> device through <span style="color:#d14">`vdpasim_blk`</span> management device
+$ vdpa dev add name vdpa<span style="color:#000;font-weight:bold">-</span>blk1 mgmtdev vdpasim_blk
+<span style="color:#000;font-weight:bold">static</span> <span style="color:#000;font-weight:bold">int</span> vdpasim_blk_dev_add(struct vdpa_mgmt_dev <span style="color:#000;font-weight:bold">*</span>mdev, <span style="color:#000;font-weight:bold">const</span> <span style="color:#000;font-weight:bold">char</span> <span style="color:#000;font-weight:bold">*</span>name, <span style="color:#000;font-weight:bold">const</span> struct vdpa_dev_set_config <span style="color:#000;font-weight:bold">*</span>config)
+   dev_attr.id <span style="color:#000;font-weight:bold">=</span> VIRTIO_ID_BLOCK
+   dev_attr.supported_features <span style="color:#000;font-weight:bold">=</span> VDPASIM_BLK_FEATURES
+   dev_attr.nvqs <span style="color:#000;font-weight:bold">=</span> VDPASIM_BLK_VQ_NUM <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#099">1</span>
+   dev_attr.get_config <span style="color:#000;font-weight:bold">=</span> vdpasim_blk_get_config
+       blk_config<span style="color:#000;font-weight:bold">-&gt;</span>capacity <span style="color:#000;font-weight:bold">=</span> cpu_to_vdpasim64(vdpasim, VDPASIM_BLK_CAPACITY) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#099">0x40000</span> <span style="color:#000;font-weight:bold">-&gt;</span> print(<span style="color:#099">0x40000</span>) <span style="color:#099">262144</span> <span style="color:#000;font-weight:bold">*</span> <span style="color:#099">512</span> <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">134217728</span> <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">128</span>MB <span style="color:#000;font-weight:bold">-&gt;</span> lsblk vda    <span style="color:#099">252</span><span style="color:#000;font-weight:bold">:</span><span style="color:#099">0</span>    <span style="color:#099">0</span>   <span style="color:#099">128</span>M  <span style="color:#099">0</span> block<span style="color:#000;font-weight:bold">:</span>virtio<span style="color:#000;font-weight:bold">:</span>vdpa
+       blk_config<span style="color:#000;font-weight:bold">-&gt;</span>size_max <span style="color:#000;font-weight:bold">=</span> cpu_to_vdpasim32(vdpasim, VDPASIM_BLK_SIZE_MAX) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#099">4096</span>
+       blk_config<span style="color:#000;font-weight:bold">-&gt;</span>seg_max <span style="color:#000;font-weight:bold">=</span> cpu_to_vdpasim32(vdpasim, VDPASIM_BLK_SEG_MAX) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#099">32</span>
+       blk_config<span style="color:#000;font-weight:bold">-&gt;</span>blk_size <span style="color:#000;font-weight:bold">=</span> cpu_to_vdpasim32(vdpasim, SECTOR_SIZE) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#099">1</span><span style="color:#000;font-weight:bold">&lt;&lt;</span><span style="color:#099">9</span> <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">512</span>
+      ...
+   dev_attr.work_fn <span style="color:#000;font-weight:bold">=</span> vdpasim_blk_work <span style="color:#000;font-weight:bold">-&gt;</span> IO处理函数<span style="color:#000;font-weight:bold">/</span>工作队列
+       <span style="color:#000;font-weight:bold">for</span> (i <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>; i <span style="color:#000;font-weight:bold">&lt;</span> VDPASIM_BLK_VQ_NUM; i<span style="color:#000;font-weight:bold">++</span>)
+           <span style="color:#000;font-weight:bold">while</span> (vdpasim_blk_handle_req(vdpasim, vq))
+               vdpasim_blk_handle_req
+                   struct virtio_blk_outhdr hdr
+                   vringh_getdesc_iotlb(<span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>vring, <span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>out_iov, <span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>in_iov, <span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>head, GFP_ATOMIC) <span style="color:#000;font-weight:bold">-&gt;</span> 不再需要使用 riov 和 wiov 时<span style="color:#a61717;background-color:#e3d2d2">，</span>您应该通过调用 vringh_kiov_cleanup() 来清理它们以释放内存
+                       __vringh_iov(vrh, <span style="color:#000;font-weight:bold">*</span>head, riov, wiov, no_range_check, NULL,gfp, copydesc_iotlb)
+                   to_push <span style="color:#000;font-weight:bold">=</span> vringh_kiov_length(<span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>in_iov) <span style="color:#000;font-weight:bold">-</span> <span style="color:#099">1</span>
+                   to_pull <span style="color:#000;font-weight:bold">=</span> vringh_kiov_length(<span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>out_iov)
+                   bytes <span style="color:#000;font-weight:bold">=</span> vringh_iov_pull_iotlb(<span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>vring, <span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>out_iov, <span style="color:#000;font-weight:bold">&amp;</span>hdr, sizeof(hdr)) <span style="color:#000;font-weight:bold">-&gt;</span> copy bytes from vring_iov to hdr(从GUEST获取消息头)
+                       vringh_iov_xfer(vrh, riov, dst, len, xfer_from_iotlb)
+                           err <span style="color:#000;font-weight:bold">=</span> xfer(vrh, iov<span style="color:#000;font-weight:bold">-&gt;</span>iov[iov<span style="color:#000;font-weight:bold">-&gt;</span>i].iov_base, ptr, partlen) <span style="color:#000;font-weight:bold">-&gt;</span> xfer_from_iotlb
+                               copy_from_iotlb(vrh, dst, src, len)
+                   type <span style="color:#000;font-weight:bold">=</span> vdpasim32_to_cpu(vdpasim, hdr.type);
+                   sector <span style="color:#000;font-weight:bold">=</span> vdpasim64_to_cpu(vdpasim, hdr.sector);
+                   offset <span style="color:#000;font-weight:bold">=</span> sector <span style="color:#000;font-weight:bold">&lt;&lt;</span> SECTOR_SHIFT;
+                   status <span style="color:#000;font-weight:bold">=</span> VIRTIO_BLK_S_OK;
+                   <span style="color:#000;font-weight:bold">switch</span> (type)
+                   <span style="color:#000;font-weight:bold">case</span> VIRTIO_BLK_T_IN <span style="color:#000;font-weight:bold">-&gt;</span> GUEST READ
+                       vringh_iov_push_iotlb(<span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>vring, <span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>in_iov, blk<span style="color:#000;font-weight:bold">-&gt;</span>buffer <span style="color:#000;font-weight:bold">+</span> offset, to_push) <span style="color:#000;font-weight:bold">-&gt;</span> copy bytes into vring_iov <span style="color:#000;font-weight:bold">-&gt;</span> vringh_iov_xfer(vrh, wiov, (<span style="color:#000;font-weight:bold">void</span> <span style="color:#000;font-weight:bold">*</span>)src, len, xfer_to_iotlb) <span style="color:#000;font-weight:bold">-&gt;</span> read from blk<span style="color:#000;font-weight:bold">-&gt;</span>buffer <span style="color:#000;font-weight:bold">+</span> offset
+                           err <span style="color:#000;font-weight:bold">=</span> xfer(vrh, iov<span style="color:#000;font-weight:bold">-&gt;</span>iov[iov<span style="color:#000;font-weight:bold">-&gt;</span>i].iov_base, ptr, partlen)
+                               copy_to_iotlb(vrh, dst, src, len)
+                                   ret <span style="color:#000;font-weight:bold">=</span> iotlb_translate(vrh, (u64)(uintptr_t)dst
+                                   copy_to_iter
+                   <span style="color:#000;font-weight:bold">case</span> VIRTIO_BLK_T_OUT<span style="color:#000;font-weight:bold">:</span> <span style="color:#000;font-weight:bold">-&gt;</span>  GUEST WRITE
+                       bytes <span style="color:#000;font-weight:bold">=</span> vringh_iov_pull_iotlb(<span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>vring, <span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>out_iov, blk<span style="color:#000;font-weight:bold">-&gt;</span>buffer <span style="color:#000;font-weight:bold">+</span> offset, to_pull) <span style="color:#000;font-weight:bold">-&gt;</span>  copy bytes from vring_iov to blk buffer(将IO写入blk指向的缓冲区(偏移))
+                   <span style="color:#000;font-weight:bold">case</span> VIRTIO_BLK_T_GET_ID
+                       bytes <span style="color:#000;font-weight:bold">=</span> vringh_iov_push_iotlb(<span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>vring, <span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>in_iov, vdpasim_blk_id, VIRTIO_BLK_ID_BYTES)
+                   <span style="color:#000;font-weight:bold">case</span> VIRTIO_BLK_T_FLUSH<span style="color:#000;font-weight:bold">:</span>
+                       <span style="color:#000;font-weight:bold">break</span>
+                   <span style="color:#000;font-weight:bold">case</span> VIRTIO_BLK_T_DISCARD<span style="color:#000;font-weight:bold">:</span>
+                   <span style="color:#000;font-weight:bold">case</span> VIRTIO_BLK_T_WRITE_ZEROES<span style="color:#000;font-weight:bold">:</span>
+                       struct virtio_blk_discard_write_zeroes range
+                       bytes <span style="color:#000;font-weight:bold">=</span> vringh_iov_pull_iotlb(<span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>vring, <span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>out_iov, <span style="color:#000;font-weight:bold">&amp;</span>range, to_pull) <span style="color:#000;font-weight:bold">-&gt;</span> vring <span style="color:#000;font-weight:bold">-&gt;</span> range
+                       vdpasim_blk_check_range(vdpasim, sector, num_sectors, VDPASIM_BLK_DWZ_MAX_SECTORS)
+                       memset(blk<span style="color:#000;font-weight:bold">-&gt;</span>buffer <span style="color:#000;font-weight:bold">+</span> offset, <span style="color:#099">0</span>, num_sectors <span style="color:#000;font-weight:bold">&lt;&lt;</span> SECTOR_SHIFT) <span style="color:#000;font-weight:bold">-&gt;</span> reset blk buffer
+               smp_wmb()
+               local_bh_disable
+               <span style="color:#000;font-weight:bold">if</span> (vringh_need_notify_iotlb(<span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>vring) <span style="color:#000;font-weight:bold">&gt;</span> <span style="color:#099">0</span>)
+                   vringh_notify(<span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>vring)
+                       vrh<span style="color:#000;font-weight:bold">-&gt;</span>notify(vrh)
+               local_bh_enable()
+       <span style="color:#000;font-weight:bold">if</span> (reschedule)
+           vdpasim_schedule_work
+   simdev <span style="color:#000;font-weight:bold">=</span> vdpasim_create(<span style="color:#000;font-weight:bold">&amp;</span>dev_attr, config)
+       ops <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">&amp;</span>vdpasim_batch_config_ops
+       or ops <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">&amp;</span>vdpasim_config_ops
+       vdpa <span style="color:#000;font-weight:bold">=</span> __vdpa_alloc_device(NULL, ops, dev_attr<span style="color:#000;font-weight:bold">-&gt;</span>ngroups, dev_attr<span style="color:#000;font-weight:bold">-&gt;</span>nas, dev_attr<span style="color:#000;font-weight:bold">-&gt;</span>alloc_size, dev_attr<span style="color:#000;font-weight:bold">-&gt;</span>name, use_va) <span style="color:#000;font-weight:bold">-&gt;</span> allocate and initilaize a vDPA device
+           vdev<span style="color:#000;font-weight:bold">-&gt;</span>dev.bus <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">&amp;</span>vdpa_bus
+           vdev<span style="color:#000;font-weight:bold">-&gt;</span>config <span style="color:#000;font-weight:bold">=</span> config <span style="color:#000;font-weight:bold">-&gt;</span> ops
+           device_initialize(<span style="color:#000;font-weight:bold">&amp;</span>vdev<span style="color:#000;font-weight:bold">-&gt;</span>dev)
+       kthread_init_work(<span style="color:#000;font-weight:bold">&amp;</span>vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>work, vdpasim_work_fn)
+       vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>worker <span style="color:#000;font-weight:bold">=</span> kthread_create_worker(<span style="color:#099">0</span>, <span style="color:#d14">&#34;vDPA sim worker: %s&#34;</span>, dev_attr<span style="color:#000;font-weight:bold">-&gt;</span>name)
+       <span style="color:#000;font-weight:bold">if</span> (dma_set_mask_and_coherent(dev, DMA_BIT_MASK(<span style="color:#099">64</span>)))
+       vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>vqs <span style="color:#000;font-weight:bold">=</span> kcalloc(dev_attr<span style="color:#000;font-weight:bold">-&gt;</span>nvqs
+       vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>iommu <span style="color:#000;font-weight:bold">=</span> kmalloc_array(vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>dev_attr.nas, sizeof(<span style="color:#000;font-weight:bold">*</span>vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>iommu), GFP_KERNEL)
+       vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>iommu_pt <span style="color:#000;font-weight:bold">=</span> kmalloc_array(vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>dev_attr.nas, sizeof(<span style="color:#000;font-weight:bold">*</span>vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>iommu_pt), GFP_KERNEL)
+       <span style="color:#000;font-weight:bold">for</span> (i <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>; i <span style="color:#000;font-weight:bold">&lt;</span> vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>dev_attr.nas; i<span style="color:#000;font-weight:bold">++</span>)
+           vhost_iotlb_init(<span style="color:#000;font-weight:bold">&amp;</span>vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>iommu[i], max_iotlb_entries, <span style="color:#099">0</span>) <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#099">2048</span> <span style="color:#000;font-weight:bold">-&gt;</span> initialize a vhost IOTLB
+           vhost_iotlb_add_range                vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>iommu_pt[i] <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">true</span>
+       <span style="color:#000;font-weight:bold">for</span> (i <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>; i <span style="color:#000;font-weight:bold">&lt;</span> dev_attr<span style="color:#000;font-weight:bold">-&gt;</span>nvqs; i<span style="color:#000;font-weight:bold">++</span>)
+           vringh_set_iotlb(<span style="color:#000;font-weight:bold">&amp;</span>vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>vqs[i].vring, <span style="color:#000;font-weight:bold">&amp;</span>vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>iommu[<span style="color:#099">0</span>], <span style="color:#000;font-weight:bold">&amp;</span>vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>iommu_lock) <span style="color:#000;font-weight:bold">-&gt;</span> initialize a vringh <span style="color:#000;font-weight:bold">for</span> a ring <span style="color:#000;font-weight:bold">with</span> IOTLB, associated vring and iotlb
+   blk <span style="color:#000;font-weight:bold">=</span> sim_to_blk(simdev)
+   blk<span style="color:#000;font-weight:bold">-&gt;</span>shared_backend <span style="color:#000;font-weight:bold">=</span> shared_backend
+   blk<span style="color:#000;font-weight:bold">-&gt;</span>buffer <span style="color:#000;font-weight:bold">=</span> kvzalloc
+   _vdpa_register_device(<span style="color:#000;font-weight:bold">&amp;</span>simdev<span style="color:#000;font-weight:bold">-&gt;</span>vdpa, VDPASIM_BLK_VQ_NUM)
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="实现其vdpa回调函数"><strong>实现其vdpa回调函数</strong></h2>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">76
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">77
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">78
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">79
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">80
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">81
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#000;font-weight:bold">static</span> <span style="color:#000;font-weight:bold">const</span> struct vdpa_config_ops vdpasim_config_ops <span style="color:#000;font-weight:bold">=</span> {
+.set_vq_address         <span style="color:#000;font-weight:bold">=</span> vdpasim_set_vq_address,
+       vq<span style="color:#000;font-weight:bold">-&gt;</span>desc_addr <span style="color:#000;font-weight:bold">=</span> desc_area;
+       vq<span style="color:#000;font-weight:bold">-&gt;</span>driver_addr <span style="color:#000;font-weight:bold">=</span> driver_area
+       vq<span style="color:#000;font-weight:bold">-&gt;</span>device_addr <span style="color:#000;font-weight:bold">=</span> device_area
+.set_vq_num             <span style="color:#000;font-weight:bold">=</span> vdpasim_set_vq_num, <span style="color:#000;font-weight:bold">-&gt;</span> vq<span style="color:#000;font-weight:bold">-&gt;</span>num <span style="color:#000;font-weight:bold">=</span> num
+.kick_vq                <span style="color:#000;font-weight:bold">=</span> vdpasim_kick_vq, <span style="color:#000;font-weight:bold">-&gt;</span> vdpasim_schedule_work(vdpasim) <span style="color:#000;font-weight:bold">-&gt;</span> vdpasim_work_fn <span style="color:#000;font-weight:bold">-&gt;</span> 关键函数, 当用户态Guest准备好IO BUF后通知VQ后执行此IO处理函数
+       vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>dev_attr.work_fn(vdpasim) <span style="color:#000;font-weight:bold">-&gt;</span> vdpasim_blk_work <span style="color:#000;font-weight:bold">-&gt;</span> handle IO
+.set_vq_cb              <span style="color:#000;font-weight:bold">=</span> vdpasim_set_vq_cb,
+       vq<span style="color:#000;font-weight:bold">-&gt;</span>cb <span style="color:#000;font-weight:bold">=</span> cb<span style="color:#000;font-weight:bold">-&gt;</span>callback
+       vq<span style="color:#000;font-weight:bold">-&gt;</span><span style="color:#000;font-weight:bold">private</span> <span style="color:#000;font-weight:bold">=</span> cb<span style="color:#000;font-weight:bold">-&gt;</span><span style="color:#000;font-weight:bold">private</span>
+.set_vq_ready           <span style="color:#000;font-weight:bold">=</span> vdpasim_set_vq_ready,
+       vdpasim_queue_ready(vdpasim, idx)
+           vq<span style="color:#000;font-weight:bold">-&gt;</span>vring.last_avail_idx <span style="color:#000;font-weight:bold">=</span> last_avail_idx;
+           vq<span style="color:#000;font-weight:bold">-&gt;</span>vring.last_used_idx <span style="color:#000;font-weight:bold">=</span> last_avail_idx
+           vq<span style="color:#000;font-weight:bold">-&gt;</span>vring.notify <span style="color:#000;font-weight:bold">=</span> vdpasim_vq_notify
+               vq<span style="color:#000;font-weight:bold">-&gt;</span>cb(vq<span style="color:#000;font-weight:bold">-&gt;</span><span style="color:#000;font-weight:bold">private</span>)
+.get_vq_ready           <span style="color:#000;font-weight:bold">=</span> vdpasim_get_vq_ready,
+.set_vq_state           <span style="color:#000;font-weight:bold">=</span> vdpasim_set_vq_state,
+       vrh<span style="color:#000;font-weight:bold">-&gt;</span>last_avail_idx <span style="color:#000;font-weight:bold">=</span> state<span style="color:#000;font-weight:bold">-&gt;</span>split.avail_index
+.get_vendor_vq_stats    <span style="color:#000;font-weight:bold">=</span> vdpasim_get_vq_stats,
+.get_vq_state           <span style="color:#000;font-weight:bold">=</span> vdpasim_get_vq_state,
+.get_vq_align           <span style="color:#000;font-weight:bold">=</span> vdpasim_get_vq_align, <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#a61717;background-color:#e3d2d2">#</span>define VDPASIM_QUEUE_ALIGN PAGE_SIZE <span style="color:#000;font-weight:bold">-&gt;</span> <span style="color:#099">4</span>K
+.get_vq_group           <span style="color:#000;font-weight:bold">=</span> vdpasim_get_vq_group,
+.get_device_features    <span style="color:#000;font-weight:bold">=</span> vdpasim_get_device_features,
+       vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>dev_attr.supported_features
+.get_backend_features   <span style="color:#000;font-weight:bold">=</span> vdpasim_get_backend_features,
+       BIT_ULL(VHOST_BACKEND_F_ENABLE_AFTER_DRIVER_OK)
+.set_driver_features    <span style="color:#000;font-weight:bold">=</span> vdpasim_set_driver_features,
+.get_driver_features    <span style="color:#000;font-weight:bold">=</span> vdpasim_get_driver_features,
+.set_config_cb          <span style="color:#000;font-weight:bold">=</span> vdpasim_set_config_cb,
+.get_vq_num_max         <span style="color:#000;font-weight:bold">=</span> vdpasim_get_vq_num_max,
+.get_device_id          <span style="color:#000;font-weight:bold">=</span> vdpasim_get_device_id,
+.get_vendor_id          <span style="color:#000;font-weight:bold">=</span> vdpasim_get_vendor_id,
+.get_status             <span style="color:#000;font-weight:bold">=</span> vdpasim_get_status,
+.set_status             <span style="color:#000;font-weight:bold">=</span> vdpasim_set_status,
+       vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>status <span style="color:#000;font-weight:bold">=</span> status
+.reset<span style="color:#000;font-weight:bold">=</span> vdpasim_reset,
+.compat_reset<span style="color:#000;font-weight:bold">=</span> vdpasim_compat_reset,
+       vdpasim_do_reset(vdpasim, flags)
+           <span style="color:#000;font-weight:bold">for</span> (i <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>; i <span style="color:#000;font-weight:bold">&lt;</span> vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>dev_attr.nvqs; i<span style="color:#000;font-weight:bold">++</span>)
+               vdpasim_vq_reset(vdpasim, <span style="color:#000;font-weight:bold">&amp;</span>vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>vqs[i])
+                   vq<span style="color:#000;font-weight:bold">-&gt;</span>ready <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">false</span>;
+                   vq<span style="color:#000;font-weight:bold">-&gt;</span>desc_addr <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>;
+                   vq<span style="color:#000;font-weight:bold">-&gt;</span>driver_addr <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>;
+                   vq<span style="color:#000;font-weight:bold">-&gt;</span>device_addr <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>;
+                   vq<span style="color:#000;font-weight:bold">-&gt;</span>cb <span style="color:#000;font-weight:bold">=</span> NULL;
+                   vq<span style="color:#000;font-weight:bold">-&gt;</span><span style="color:#000;font-weight:bold">private</span> <span style="color:#000;font-weight:bold">=</span> NULL;
+                   vringh_init_iotlb(<span style="color:#000;font-weight:bold">&amp;</span>vq<span style="color:#000;font-weight:bold">-&gt;</span>vring, vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>dev_attr.supported_features, VDPASIM_QUEUE_MAX, <span style="color:#000;font-weight:bold">false</span>, NULL, NULL, NULL);
+                   vq<span style="color:#000;font-weight:bold">-&gt;</span>vring.notify <span style="color:#000;font-weight:bold">=</span> NULL;
+               vringh_set_iotlb(<span style="color:#000;font-weight:bold">&amp;</span>vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>vqs[i].vring, <span style="color:#000;font-weight:bold">&amp;</span>vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>iommu[<span style="color:#099">0</span>], <span style="color:#000;font-weight:bold">&amp;</span>vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>iommu_lock)
+           <span style="color:#000;font-weight:bold">for</span> (i <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>; i <span style="color:#000;font-weight:bold">&lt;</span> vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>dev_attr.nas; i<span style="color:#000;font-weight:bold">++</span>)
+               vhost_iotlb_reset(<span style="color:#000;font-weight:bold">&amp;</span>vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>iommu[i])
+               vhost_iotlb_add_range(<span style="color:#000;font-weight:bold">&amp;</span>vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>iommu[i], <span style="color:#099">0</span>, ULONG_MAX, <span style="color:#099">0</span>, VHOST_MAP_RW)
+.suspend<span style="color:#000;font-weight:bold">=</span> vdpasim_suspend,
+       vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>running <span style="color:#000;font-weight:bold">=</span> <span style="color:#000;font-weight:bold">false</span>
+.resume<span style="color:#000;font-weight:bold">=</span> vdpasim_resume,
+       <span style="color:#000;font-weight:bold">if</span> (vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>pending_kick)
+           <span style="color:#000;font-weight:bold">for</span> (i <span style="color:#000;font-weight:bold">=</span> <span style="color:#099">0</span>; i <span style="color:#000;font-weight:bold">&lt;</span> vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>dev_attr.nvqs; <span style="color:#000;font-weight:bold">++</span>i)
+               vdpasim_kick_vq(vdpa, i)
+.get_config_size        <span style="color:#000;font-weight:bold">=</span> vdpasim_get_config_size,
+.get_config             <span style="color:#000;font-weight:bold">=</span> vdpasim_get_config,
+.set_config             <span style="color:#000;font-weight:bold">=</span> vdpasim_set_config,
+       vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>dev_attr.set_config(vdpasim, vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>config) <span style="color:#000;font-weight:bold">-&gt;</span> 中转
+.get_generation         <span style="color:#000;font-weight:bold">=</span> vdpasim_get_generation,
+.get_iova_range         <span style="color:#000;font-weight:bold">=</span> vdpasim_get_iova_range,
+.set_group_asid         <span style="color:#000;font-weight:bold">=</span> vdpasim_set_group_asid,
+.dma_map                <span style="color:#000;font-weight:bold">=</span> vdpasim_dma_map,
+       vhost_iotlb_add_range_ctx(<span style="color:#000;font-weight:bold">&amp;</span>vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>iommu[asid], iova, iova <span style="color:#000;font-weight:bold">+</span> size <span style="color:#000;font-weight:bold">-</span> <span style="color:#099">1</span>, pa, perm, opaque)
+.dma_unmap              <span style="color:#000;font-weight:bold">=</span> vdpasim_dma_unmap,
+       vhost_iotlb_reset(<span style="color:#000;font-weight:bold">&amp;</span>vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>iommu[asid])
+       vhost_iotlb_del_range(<span style="color:#000;font-weight:bold">&amp;</span>vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>iommu[asid], iova, iova <span style="color:#000;font-weight:bold">+</span> size <span style="color:#000;font-weight:bold">-</span> <span style="color:#099">1</span>)
+.reset_map              <span style="color:#000;font-weight:bold">=</span> vdpasim_reset_map,
+.bind_mm<span style="color:#000;font-weight:bold">=</span> vdpasim_bind_mm,
+       mm_work.mm_to_bind <span style="color:#000;font-weight:bold">=</span> mm
+       vdpasim_worker_change_mm_sync(vdpasim, <span style="color:#000;font-weight:bold">&amp;</span>mm_work)
+           vdpasim_mm_work_fn
+               vdpasim<span style="color:#000;font-weight:bold">-&gt;</span>mm_bound <span style="color:#000;font-weight:bold">=</span> mm_work<span style="color:#000;font-weight:bold">-&gt;</span>mm_to_bind
+.unbind_mm<span style="color:#000;font-weight:bold">=</span> vdpasim_unbind_mm,
+.free                   <span style="color:#000;font-weight:bold">=</span> vdpasim_free,
+};
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="vdpa总线及操作记录"><strong>VDPA总线及操作记录</strong></h2>
+<div class="highlight"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">68
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript">vdpa, linux commit<span style="color:#000;font-weight:bold">:</span> https<span style="color:#000;font-weight:bold">:</span><span style="color:#998;font-style:italic">//git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=4c8cf31885f69e86be0b5b9e6677a26797365e1d
+</span><span style="color:#998;font-style:italic"></span>modprobe vdpa
+core_initcall(vdpa_init) <span style="color:#000;font-weight:bold">-&gt;</span> vDPA<span style="color:#a61717;background-color:#e3d2d2">：</span>介绍 vDPA 总线<span style="color:#a61717;background-color:#e3d2d2">，</span>vDPA 设备是一种使用符合 virtio 规范的数据路径并带有供应商特定控制路径的设备<span style="color:#a61717;background-color:#e3d2d2">。</span>vDPA 设备既可以物理位于硬件上<span style="color:#a61717;background-color:#e3d2d2">，</span>也可以通过软件模拟<span style="color:#a61717;background-color:#e3d2d2">。</span>vDPA 硬件设备通常通过 PCIE 实现<span style="color:#a61717;background-color:#e3d2d2">，</span>具有以下类型<span style="color:#a61717;background-color:#e3d2d2">：</span> <span style="color:#000;font-weight:bold">-</span> PF<span style="color:#a61717;background-color:#e3d2d2">（</span>物理功能<span style="color:#a61717;background-color:#e3d2d2">）</span> <span style="color:#000;font-weight:bold">-</span> 单个物理功能 <span style="color:#000;font-weight:bold">-</span> VF<span style="color:#a61717;background-color:#e3d2d2">（</span>虚拟功能<span style="color:#a61717;background-color:#e3d2d2">）</span> <span style="color:#000;font-weight:bold">-</span> 支持单根 I<span style="color:#000;font-weight:bold">/</span>O 虚拟化<span style="color:#a61717;background-color:#e3d2d2">（</span>SR<span style="color:#000;font-weight:bold">-</span>IOV<span style="color:#a61717;background-color:#e3d2d2">）</span>的设备<span style="color:#a61717;background-color:#e3d2d2">。</span>其虚拟功能<span style="color:#a61717;background-color:#e3d2d2">（</span>VF<span style="color:#a61717;background-color:#e3d2d2">）</span>代表设备的虚拟化实例<span style="color:#a61717;background-color:#e3d2d2">，</span>可以分配给不同的分区 <span style="color:#000;font-weight:bold">-</span> ADI<span style="color:#a61717;background-color:#e3d2d2">（</span>可分配设备接口<span style="color:#a61717;background-color:#e3d2d2">）</span>及其等效项 <span style="color:#000;font-weight:bold">-</span> 利用 Intel 可扩展 IOV 等技术<span style="color:#a61717;background-color:#e3d2d2">，</span>由主机操作系统利用一个或多个 ADI 组成的虚拟设备<span style="color:#a61717;background-color:#e3d2d2">（</span>VDEV<span style="color:#a61717;background-color:#e3d2d2">）。</span>或者其等效项<span style="color:#a61717;background-color:#e3d2d2">，</span>如 Mellanox 的 SF<span style="color:#a61717;background-color:#e3d2d2">（</span>子功能<span style="color:#a61717;background-color:#e3d2d2">）。</span> <span style="color:#000;font-weight:bold">&gt;</span>从驱动程序的角度来看<span style="color:#a61717;background-color:#e3d2d2">，</span>根据 DMA 转换的方式和位置<span style="color:#a61717;background-color:#e3d2d2">，</span>vDPA 设备分为两种类型<span style="color:#a61717;background-color:#e3d2d2">：</span> <span style="color:#000;font-weight:bold">-</span> 平台特定的 DMA 转换 <span style="color:#000;font-weight:bold">-</span> 从驱动程序的角度来看<span style="color:#a61717;background-color:#e3d2d2">，</span>设备可以在设备访问内存中的数据受到限制和<span style="color:#000;font-weight:bold">/</span>或转换的平台上使用<span style="color:#a61717;background-color:#e3d2d2">。</span>一个例子是 PCIE vDPA<span style="color:#a61717;background-color:#e3d2d2">，</span>其 DMA 请求通过总线<span style="color:#a61717;background-color:#e3d2d2">（</span>例如 PCIE<span style="color:#a61717;background-color:#e3d2d2">）</span>特定的方式标记<span style="color:#a61717;background-color:#e3d2d2">。</span>DMA 转换和保护在 PCIE 总线 IOMMU 级别完成<span style="color:#a61717;background-color:#e3d2d2">。</span> <span style="color:#000;font-weight:bold">-</span> 设备特定的 DMA 转换 <span style="color:#000;font-weight:bold">-</span> 设备通过其自己的逻辑实现 DMA 隔离和保护<span style="color:#a61717;background-color:#e3d2d2">。</span>一个例子是使用片上 IOMMU 的 vDPA 设备<span style="color:#a61717;background-color:#e3d2d2">。</span>为了隐藏 vDPA 设备<span style="color:#000;font-weight:bold">/</span>IOMMU 选项的上述类型的差异和复杂性<span style="color:#a61717;background-color:#e3d2d2">，</span>并为了向上层展示通用的 virtio 设备<span style="color:#a61717;background-color:#e3d2d2">，</span>需要一个设备无关的框架<span style="color:#a61717;background-color:#e3d2d2">。</span>此补丁引入了软件 vDPA 总线<span style="color:#a61717;background-color:#e3d2d2">，</span>它抽象了 vDPA 设备<span style="color:#a61717;background-color:#e3d2d2">、</span>vDPA 总线驱动程序的通用属性以及 vDPA 设备抽象和 vDPA 总线驱动程序之间的通信方法 (vdpa_config_ops)<span style="color:#a61717;background-color:#e3d2d2">。</span>这允许多种类型的驱动程序用于 vDPA 设备<span style="color:#a61717;background-color:#e3d2d2">，</span>例如 virtio_vdpa 和 vhost_vdpa 驱动程序在总线上运行<span style="color:#a61717;background-color:#e3d2d2">，</span>并允许内核 virtio 驱动程序或用户空间 vhost 驱动程序使用 vDPA 设备<span style="color:#a61717;background-color:#e3d2d2">：</span> <span style="color:#000;font-weight:bold">-&gt;</span> commit<span style="color:#000;font-weight:bold">:</span> https<span style="color:#000;font-weight:bold">:</span><span style="color:#998;font-style:italic">//github.com/ssbandjl/linux/commit/961e9c84077f6c8579d7a628cbe94a675cb67ae4, 通过对 vDPA 总线和 vDPA 总线操作的抽象，底层硬件的差异和复杂性对上层隐藏起来。上层的 vDPA 总线驱动程序可以使用统一的 vdpa_config_ops 来控制不同类型的 vDPA 设备
+</span><span style="color:#998;font-style:italic"></span>virtio drivers  vhost drivers
+       <span style="color:#000;font-weight:bold">|</span>             <span style="color:#000;font-weight:bold">|</span>
+[virtio bus]   [vhost uAPI]
+       <span style="color:#000;font-weight:bold">|</span>             <span style="color:#000;font-weight:bold">|</span>
+virtio device   vhost device
+virtio_vdpa drv vhost_vdpa drv
+           <span style="color:#a61717;background-color:#e3d2d2">\</span>       <span style="color:#000;font-weight:bold">/</span>
+      [vDPA bus]
+               <span style="color:#000;font-weight:bold">|</span>
+       vDPA device
+       hardware drv
+               <span style="color:#000;font-weight:bold">|</span>
+      [hardware bus]
+               <span style="color:#000;font-weight:bold">|</span>
+       vDPA hardware
+
+
+root<span style="color:#a61717;background-color:#e3d2d2">@</span>host101<span style="color:#000;font-weight:bold">:</span><span style="color:#a61717;background-color:#e3d2d2">/dev# tree -L 100 /sys/bus/vdpa/</span>
+<span style="color:#a61717;background-color:#e3d2d2">/sys/bus/vdpa/</span>
+<span style="color:#a61717;background-color:#e3d2d2">├──</span> devices
+<span style="color:#a61717;background-color:#e3d2d2">├──</span> drivers
+<span style="color:#a61717;background-color:#e3d2d2">├──</span> drivers_autoprobe
+<span style="color:#a61717;background-color:#e3d2d2">├──</span> drivers_probe
+<span style="color:#a61717;background-color:#e3d2d2">└──</span> uevent
+
+
+modprobe <span style="color:#000;font-weight:bold">-</span>a virtio<span style="color:#000;font-weight:bold">-</span>vdpa vhost<span style="color:#000;font-weight:bold">-</span>vdpa
+root<span style="color:#a61717;background-color:#e3d2d2">@</span>host101<span style="color:#000;font-weight:bold">:</span><span style="color:#a61717;background-color:#e3d2d2">/sys/bus/vdpa# tree -L 10</span>
+.
+<span style="color:#a61717;background-color:#e3d2d2">├──</span> devices
+<span style="color:#a61717;background-color:#e3d2d2">├──</span> drivers
+<span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">├──</span> vhost_vdpa
+<span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">├──</span> bind
+<span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">├──</span> module <span style="color:#000;font-weight:bold">-&gt;</span> ..<span style="color:#000;font-weight:bold">/</span>..<span style="color:#000;font-weight:bold">/</span>..<span style="color:#000;font-weight:bold">/</span>..<span style="color:#000;font-weight:bold">/</span>module<span style="color:#000;font-weight:bold">/</span>vhost_vdpa
+<span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">├──</span> uevent
+<span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">└──</span> unbind
+<span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">└──</span> virtio_vdpa
+<span style="color:#a61717;background-color:#e3d2d2">│</span>       <span style="color:#a61717;background-color:#e3d2d2">├──</span> bind
+<span style="color:#a61717;background-color:#e3d2d2">│</span>       <span style="color:#a61717;background-color:#e3d2d2">├──</span> module <span style="color:#000;font-weight:bold">-&gt;</span> ..<span style="color:#000;font-weight:bold">/</span>..<span style="color:#000;font-weight:bold">/</span>..<span style="color:#000;font-weight:bold">/</span>..<span style="color:#000;font-weight:bold">/</span>module<span style="color:#000;font-weight:bold">/</span>virtio_vdpa
+<span style="color:#a61717;background-color:#e3d2d2">│</span>       <span style="color:#a61717;background-color:#e3d2d2">├──</span> uevent
+<span style="color:#a61717;background-color:#e3d2d2">│</span>       <span style="color:#a61717;background-color:#e3d2d2">└──</span> unbind
+<span style="color:#a61717;background-color:#e3d2d2">├──</span> drivers_autoprobe
+<span style="color:#a61717;background-color:#e3d2d2">├──</span> drivers_probe
+<span style="color:#a61717;background-color:#e3d2d2">└──</span> uevent
+
+root<span style="color:#a61717;background-color:#e3d2d2">@</span>host101<span style="color:#000;font-weight:bold">:</span><span style="color:#a61717;background-color:#e3d2d2">/sys/bus/vdpa# vdpa dev add mgmtdev vdpasim_blk name vdpa0</span>
+root<span style="color:#a61717;background-color:#e3d2d2">@</span>host101<span style="color:#000;font-weight:bold">:</span><span style="color:#a61717;background-color:#e3d2d2">/sys/bus/vdpa# tree -L 10</span>
+.
+<span style="color:#a61717;background-color:#e3d2d2">├──</span> devices
+<span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">└──</span> vdpa0 <span style="color:#000;font-weight:bold">-&gt;</span> ..<span style="color:#000;font-weight:bold">/</span>..<span style="color:#000;font-weight:bold">/</span>..<span style="color:#000;font-weight:bold">/</span>devices<span style="color:#000;font-weight:bold">/</span>vdpa0
+<span style="color:#a61717;background-color:#e3d2d2">├──</span> drivers
+<span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">├──</span> vhost_vdpa
+<span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">├──</span> bind
+<span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">├──</span> module <span style="color:#000;font-weight:bold">-&gt;</span> ..<span style="color:#000;font-weight:bold">/</span>..<span style="color:#000;font-weight:bold">/</span>..<span style="color:#000;font-weight:bold">/</span>..<span style="color:#000;font-weight:bold">/</span>module<span style="color:#000;font-weight:bold">/</span>vhost_vdpa
+<span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">├──</span> uevent
+<span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">└──</span> unbind
+<span style="color:#a61717;background-color:#e3d2d2">│</span>   <span style="color:#a61717;background-color:#e3d2d2">└──</span> virtio_vdpa
+<span style="color:#a61717;background-color:#e3d2d2">│</span>       <span style="color:#a61717;background-color:#e3d2d2">├──</span> bind
+<span style="color:#a61717;background-color:#e3d2d2">│</span>       <span style="color:#a61717;background-color:#e3d2d2">├──</span> module <span style="color:#000;font-weight:bold">-&gt;</span> ..<span style="color:#000;font-weight:bold">/</span>..<span style="color:#000;font-weight:bold">/</span>..<span style="color:#000;font-weight:bold">/</span>..<span style="color:#000;font-weight:bold">/</span>module<span style="color:#000;font-weight:bold">/</span>virtio_vdpa
+<span style="color:#a61717;background-color:#e3d2d2">│</span>       <span style="color:#a61717;background-color:#e3d2d2">├──</span> uevent
+<span style="color:#a61717;background-color:#e3d2d2">│</span>       <span style="color:#a61717;background-color:#e3d2d2">├──</span> unbind
+<span style="color:#a61717;background-color:#e3d2d2">│</span>       <span style="color:#a61717;background-color:#e3d2d2">└──</span> vdpa0 <span style="color:#000;font-weight:bold">-&gt;</span> ..<span style="color:#000;font-weight:bold">/</span>..<span style="color:#000;font-weight:bold">/</span>..<span style="color:#000;font-weight:bold">/</span>..<span style="color:#000;font-weight:bold">/</span>devices<span style="color:#000;font-weight:bold">/</span>vdpa0
+<span style="color:#a61717;background-color:#e3d2d2">├──</span> drivers_autoprobe
+<span style="color:#a61717;background-color:#e3d2d2">├──</span> drivers_probe
+<span style="color:#a61717;background-color:#e3d2d2">└──</span> ueven
+</code></pre></td></tr></table>
+</div>
+</div><h1 id="参考"><strong>参考</strong></h1>
+<p><a href="https://stefano-garzarella.github.io/posts/2024-02-12-vdpa-blk/">https://stefano-garzarella.github.io/posts/2024-02-12-vdpa-blk/</a></p>
+<p>kernel: drivers/vdpa/vdpa_sim/vdpa_sim_blk.c</p>
+<h1 id="晓兵ssbandjl"><strong>晓兵(ssbandjl)</strong></h1>
+<p>博客: <a href="https://cloud.tencent.com/developer/user/5060293/articles?from_column=20421&amp;from=20421">https://cloud.tencent.com/developer/user/5060293/articles</a> | <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Flogread.cn%2F&amp;source=article&amp;objectId=2384290&amp;from_column=20421&amp;from=20421">https://logread.cn</a> | <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fblog.csdn.net%2Fssbandjl&amp;source=article&amp;objectId=2384290&amp;from_column=20421&amp;from=20421">https://blog.csdn.net/ssbandjl</a> | <a href="https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fwww.zhihu.com%2Fpeople%2Fssbandjl%2Fposts&amp;source=article&amp;objectId=2384290&amp;from_column=20421&amp;from=20421">https://www.zhihu.com/people/ssbandjl/posts</a></p>
+<p><a href="https://chattoyou.cn/">https://chattoyou.cn</a>(吐槽/留言)</p>
+<h2 id="dpu专栏"><strong>DPU专栏</strong></h2>
+<p><a href="https://cloud.tencent.com/developer/column/101987?from_column=20421&amp;from=20421">https://cloud.tencent.com/developer/column/101987</a></p>
+<p>技术会友: 欢迎对DPU/智能网卡/卸载/网络,存储加速/安全隔离等技术感兴趣的朋友加入<strong>DPU技术</strong>交流群</p>
+<p>weixin: ssbandjl</p>
+<p>公众号: 云原生云</p>
+<p>
+        <img class="mx-auto" alt="云原生云" src="../../logo.gif" />   
+    </p>
+
+        </div>
+
+        
+<div class="post-archive">
+    <ul class="post-copyright">
+        <li><strong>原文作者：</strong><a rel="author" href="https://logread.cn">晓兵</a></li>
+        <li style="word-break:break-all"><strong>原文链接：</strong><a href="https://logread.cn/post/linux/qemu_vdpa_sim_blk/">https://logread.cn/post/linux/qemu_vdpa_sim_blk/</a></li>
+        <li><strong>版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+    </ul>
+</div>
+<br/>
+
+
+
+        
+
+<div class="post-archive">
+    <h2>See Also</h2>
+    <ul class="listing">
+        
+        <li><a href="/post/rdma/rdma_inline/">RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟)</a></li>
+        
+        <li><a href="/post/nvidia/nvidia_doca/">Nvidia DOCA-芯片上的数据中心软硬件架构简介</a></li>
+        
+        <li><a href="/post/linux/linux_kernel_driver/">Linux内核-驱动技术杂谈</a></li>
+        
+        <li><a href="/post/stor/beegfs_storage/">Beegfs存储</a></li>
+        
+        <li><a href="/post/nvidia/nvidia_network_tech/">Nvidia网络技术-端到端网络解决方案</a></li>
+        
+    </ul>
+</div>
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='/tags/linux'>linux</a></li>
+                
+                <li><a href='/tags/stor'>stor</a></li>
+                
+                <li><a href='/tags/qemu'>qemu</a></li>
+                
+                <li><a href='/tags/virt'>virt</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "yourdiscussshortname" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+    
+    <div class="post bg-white">
+      <script src="https://utteranc.es/client.js"
+            repo= "http://github.com/ssbandjl"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+      </script>
+    </div>
+    
+</div>
+
+                    <footer id="footer">
+  <div>
+    &copy; 2024
+    <a href="https://logread.cn"
+      >晓兵(ssbandjl)-技术兴国 By 晓兵</a
+    >
+    
+  </div>
+  <br />
+  <div>
+    <div class="github-badge">
+      <a href="https://gohugo.io/" target="_black" rel="nofollow"
+        ><span class="badge-subject">Powered by</span
+        ><span class="badge-value bg-blue">Hugo</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://www.logread.cn/" target="_black"
+        ><span class="badge-subject">Design by</span
+        ><span class="badge-value bg-brightgreen">晓兵</span></a
+      >
+    </div>
+    <div class="github-badge">
+      <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"
+        ><span class="badge-subject">Theme</span
+        ><span class="badge-value bg-yellowgreen">Maupassant</span></a
+      >
+    </div>
+  </div>
+</footer>
+
+
+
+<script type="text/javascript">
+  window.MathJax = {
+    tex2jax: {
+      inlineMath: [['$', '$']],
+      processEscapes: true,
+    },
+  }
+</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"
+  async
+></script>
+
+<a id="rocket" href="#top"></a>
+<script
+  type="text/javascript"
+  src='/js/totop.js?v=0.0.0'
+  async=""
+></script>
+ 
+<script
+  type="text/javascript"
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
+  async
+></script>
+
+
+
+
+<script src='/js/douban.js'></script>
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://logread.cn/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://logread.cn">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://logread.cn/post/linux/qemu_vdpa_vduse/" title="用户态vdpa设备vduse简介及结合QEMU源码分析">用户态vdpa设备vduse简介及结合QEMU源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/qemu_vdpa_sim_blk/" title="vDPA：支持 Linux 和 QEMU 中的块设备及内核VDPA块仿真设备vdpa-sim-blk源码分析">vDPA：支持 Linux 和 QEMU 中的块设备及内核VDPA块仿真设备vdpa-sim-blk源码分析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_inline/" title="RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟)">RDMA - inline 内联提高小包性能-降低时延(减少两个 PCIe 往返延迟)</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_odp/" title="RDMA - ODP按需分页设计原理-优点-源码浅析">RDMA - ODP按需分页设计原理-优点-源码浅析</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/nvidia/nvidia_doca/" title="Nvidia DOCA-芯片上的数据中心软硬件架构简介">Nvidia DOCA-芯片上的数据中心软硬件架构简介</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/linux/linux_kernel_driver/" title="Linux内核-驱动技术杂谈">Linux内核-驱动技术杂谈</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/stor/beegfs_storage/" title="Beegfs存储">Beegfs存储</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/nvidia/nvidia_network_tech/" title="Nvidia网络技术-端到端网络解决方案">Nvidia网络技术-端到端网络解决方案</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/nvidia/gpu_direct_rdma/" title="Nvidia 迈络思 OFED GPU直接RDMA">Nvidia 迈络思 OFED GPU直接RDMA</a>
+    </li>
+    
+    <li>
+        <a href="https://logread.cn/post/rdma/rdma_perf/" title="优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南">优化 RDMA 代码的建议和技巧-rdma性能优化技巧-避坑指南</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/categories/'>分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://logread.cn/categories/Makefile/">Makefile (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/aio/">aio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/bcache/">bcache (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/daos/">daos (5)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpdk/">dpdk (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/dpu/">dpu (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/golang/">golang (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/gpu/">gpu (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/hpc/">hpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/iscsi/">iscsi (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/kernel/">kernel (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/libfabric/">libfabric (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/linux/">linux (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/multipath/">multipath (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/net/">net (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/network/">network (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvidia/">nvidia (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/nvmeof/">nvmeof (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/ofa/">ofa (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/qemu/">qemu (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rdma/">rdma (10)</a></li>
+    
+    <li><a href="https://logread.cn/categories/roce/">roce (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/rpc/">rpc (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/spdk/">spdk (3)</a></li>
+    
+    <li><a href="https://logread.cn/categories/stor/">stor (34)</a></li>
+    
+    <li><a href="https://logread.cn/categories/virt/">virt (2)</a></li>
+    
+    <li><a href="https://logread.cn/categories/virtio/">virtio (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%98%E5%82%A8/">存储 (36)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E5%AD%A6%E4%B9%A0/">学习 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E6%A1%86%E6%9E%B6/">框架 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%93%E5%AD%98/">缓存 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BC%96%E8%AF%91/">编译 (1)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E7%BD%91%E7%BB%9C/">网络 (6)</a></li>
+    
+    <li><a href="https://logread.cn/categories/%E9%93%BE%E6%8E%A5/">链接 (1)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href='/tags/'>标签</a></h3>
+<div class="tagcloud">
+  
+  <a href="https://logread.cn/tags/aio/">aio</a>
+  
+  <a href="https://logread.cn/tags/bcache/">bcache</a>
+  
+  <a href="https://logread.cn/tags/bdev/">bdev</a>
+  
+  <a href="https://logread.cn/tags/build/">build</a>
+  
+  <a href="https://logread.cn/tags/c&#43;&#43;/">c&#43;&#43;</a>
+  
+  <a href="https://logread.cn/tags/ceph/">ceph</a>
+  
+  <a href="https://logread.cn/tags/daos/">daos</a>
+  
+  <a href="https://logread.cn/tags/dpdk/">dpdk</a>
+  
+  <a href="https://logread.cn/tags/dpu/">dpu</a>
+  
+  <a href="https://logread.cn/tags/gin/">gin</a>
+  
+  <a href="https://logread.cn/tags/golang/">golang</a>
+  
+  <a href="https://logread.cn/tags/gpu/">gpu</a>
+  
+  <a href="https://logread.cn/tags/hpc/">hpc</a>
+  
+  <a href="https://logread.cn/tags/iscsi/">iscsi</a>
+  
+  <a href="https://logread.cn/tags/kernel/">kernel</a>
+  
+  <a href="https://logread.cn/tags/libfabric/">libfabric</a>
+  
+  <a href="https://logread.cn/tags/linux/">linux</a>
+  
+  <a href="https://logread.cn/tags/makefile/">makefile</a>
+  
+  <a href="https://logread.cn/tags/net/">net</a>
+  
+  <a href="https://logread.cn/tags/network/">network</a>
+  
+  <a href="https://logread.cn/tags/nvidia/">nvidia</a>
+  
+  <a href="https://logread.cn/tags/nvmeof/">nvmeof</a>
+  
+  <a href="https://logread.cn/tags/ofa/">ofa</a>
+  
+  <a href="https://logread.cn/tags/optane/">optane</a>
+  
+  <a href="https://logread.cn/tags/pm/">pm</a>
+  
+  <a href="https://logread.cn/tags/qemu/">qemu</a>
+  
+  <a href="https://logread.cn/tags/rdma/">rdma</a>
+  
+  <a href="https://logread.cn/tags/roce/">roce</a>
+  
+  <a href="https://logread.cn/tags/rpc/">rpc</a>
+  
+  <a href="https://logread.cn/tags/spdk/">spdk</a>
+  
+  <a href="https://logread.cn/tags/stor/">stor</a>
+  
+  <a href="https://logread.cn/tags/virt/">virt</a>
+  
+  <a href="https://logread.cn/tags/virtio/">virtio</a>
+  
+  <a href="https://logread.cn/tags/%E5%A4%9A%E8%B7%AF%E5%BE%84/">多路径</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%98%E5%82%A8/">存储</a>
+  
+  <a href="https://logread.cn/tags/%E5%AD%A6%E4%B9%A0/">学习</a>
+  
+  <a href="https://logread.cn/tags/%E7%BD%91%E7%BB%9C/">网络</a>
+  
+</div>
+
+    </section>
+
+    
+<section class="widget">
+    <h3 class="widget-title">友情链接</h3>
+    <ul class="widget-list">
+        
+        <li>
+            <a target="_blank" href="https://cloud.tencent.com/developer/user/5060293/articles" title="晓兵">晓兵</a>
+        </li>
+        
+        <li>
+            <a target="_blank" href="https://chattoyou.cn" title="AI吐槽工具">AI吐槽工具(小喇叭)</a>
+        </li>
+        
+    </ul>
+</section>
+
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://logread.cn/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

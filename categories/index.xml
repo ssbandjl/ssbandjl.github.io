@@ -6,7 +6,34 @@
     <description>Recent content in Categories on 晓兵(ssbandjl)-技术兴国</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Sun, 16 Jun 2024 10:25:44 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 18 Sep 2024 22:01:01 +0800</lastBuildDate><atom:link href="https://logread.cn/categories/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>qemu</title>
+      <link>https://logread.cn/categories/qemu/</link>
+      <pubDate>Wed, 18 Sep 2024 22:01:01 +0800</pubDate>
+      
+      <guid>https://logread.cn/categories/qemu/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>stor</title>
+      <link>https://logread.cn/categories/stor/</link>
+      <pubDate>Wed, 18 Sep 2024 22:01:01 +0800</pubDate>
+      
+      <guid>https://logread.cn/categories/stor/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>virt</title>
+      <link>https://logread.cn/categories/virt/</link>
+      <pubDate>Wed, 18 Sep 2024 22:01:01 +0800</pubDate>
+      
+      <guid>https://logread.cn/categories/virt/</guid>
+      <description></description>
+    </item>
+    
     <item>
       <title>network</title>
       <link>https://logread.cn/categories/network/</link>
@@ -22,15 +49,6 @@
       <pubDate>Sun, 16 Jun 2024 10:25:44 +0800</pubDate>
       
       <guid>https://logread.cn/categories/rdma/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>stor</title>
-      <link>https://logread.cn/categories/stor/</link>
-      <pubDate>Sun, 16 Jun 2024 10:25:44 +0800</pubDate>
-      
-      <guid>https://logread.cn/categories/stor/</guid>
       <description></description>
     </item>
     
@@ -85,15 +103,6 @@
       <pubDate>Sat, 06 Jan 2024 17:45:25 +0800</pubDate>
       
       <guid>https://logread.cn/categories/gpu/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>qemu</title>
-      <link>https://logread.cn/categories/qemu/</link>
-      <pubDate>Fri, 15 Dec 2023 19:45:07 +0800</pubDate>
-      
-      <guid>https://logread.cn/categories/qemu/</guid>
       <description></description>
     </item>
     

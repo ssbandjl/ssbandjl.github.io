@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>virt on 晓兵(ssbandjl)-技术兴国</title>
+    <link>https://logread.cn/tags/virt/</link>
+    <description>Recent content in virt on 晓兵(ssbandjl)-技术兴国</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Wed, 18 Sep 2024 22:01:01 +0800</lastBuildDate><atom:link href="https://logread.cn/tags/virt/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>用户态vdpa设备vduse简介及结合QEMU源码分析</title>
+      <link>https://logread.cn/post/linux/qemu_vdpa_vduse/</link>
+      <pubDate>Wed, 18 Sep 2024 22:01:01 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/linux/qemu_vdpa_vduse/</guid>
+      <description>本文链接: https://cloud.tencent.com/developer/article/2436757 术语 vduse: VDUSE（vDPA Device in Userspace） 用户态vdpa设备 VDUSE 简介：virtio 软件定义的数据路径 2022 年 7 月 14 日 谢永吉, 王杰森 标签: 存储 虚拟化 用户空间中的 vDPA 设备 ( VDUSE ) 是一种为虚拟机 (VM) 和容器工作负载提供软件定义存储和网络服务的新兴方法，vDPA（virtio 数据路</description>
+    </item>
+    
+    <item>
+      <title>vDPA：支持 Linux 和 QEMU 中的块设备及内核VDPA块仿真设备vdpa-sim-blk源码分析</title>
+      <link>https://logread.cn/post/linux/qemu_vdpa_sim_blk/</link>
+      <pubDate>Wed, 18 Sep 2024 21:55:02 +0800</pubDate>
+      
+      <guid>https://logread.cn/post/linux/qemu_vdpa_sim_blk/</guid>
+      <description>本文链接: https://cloud.tencent.com/developer/article/2436531 使用 libblkio、QEMU 存储守护进程和 VDUSE vDPA 设备是一种遵循virtio 数据路径规范但具有特定于供应商的控制路径的设备。 vDPA 设备既可以物理位于硬件上，也可以通过软件模拟。 主机内核中只需要一个小型 vDPA 父驱动程序来处理控制路径。主要优点是所有 vDPA 设备都具有统一的软件堆栈： 用于</description>
+    </item>
+    
+  </channel>
+</rss>

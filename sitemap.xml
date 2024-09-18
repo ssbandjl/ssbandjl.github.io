@@ -4,21 +4,71 @@
   
   <url>
     <loc>https://logread.cn/categories/</loc>
-    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
+    <lastmod>2024-09-18T22:01:01+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/tags/linux/</loc>
-    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/network/</loc>
-    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
+    <lastmod>2024-09-18T22:01:01+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://logread.cn/post/</loc>
+    <lastmod>2024-09-18T22:01:01+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/qemu/</loc>
+    <lastmod>2024-09-18T22:01:01+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/qemu/</loc>
+    <lastmod>2024-09-18T22:01:01+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/stor/</loc>
+    <lastmod>2024-09-18T22:01:01+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/stor/</loc>
+    <lastmod>2024-09-18T22:01:01+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/</loc>
+    <lastmod>2024-09-18T22:01:01+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/tags/virt/</loc>
+    <lastmod>2024-09-18T22:01:01+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/virt/</loc>
+    <lastmod>2024-09-18T22:01:01+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/</loc>
+    <lastmod>2024-09-18T22:01:01+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/linux/qemu_vdpa_vduse/</loc>
+    <lastmod>2024-09-18T22:01:01+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/post/linux/qemu_vdpa_sim_blk/</loc>
+    <lastmod>2024-09-18T21:55:02+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://logread.cn/categories/network/</loc>
     <lastmod>2024-06-16T10:25:44+08:00</lastmod>
   </url>
   
@@ -34,26 +84,6 @@
   
   <url>
     <loc>https://logread.cn/post/rdma/rdma_inline/</loc>
-    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/stor/</loc>
-    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/stor/</loc>
-    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/tags/</loc>
-    <lastmod>2024-06-16T10:25:44+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/</loc>
     <lastmod>2024-06-16T10:25:44+08:00</lastmod>
   </url>
   
@@ -140,11 +170,6 @@
   <url>
     <loc>https://logread.cn/post/rdma/rdma_perf/</loc>
     <lastmod>2023-12-19T18:47:02+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://logread.cn/categories/qemu/</loc>
-    <lastmod>2023-12-15T19:45:07+08:00</lastmod>
   </url>
   
   <url>
